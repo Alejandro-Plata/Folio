@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Folio
+GenericName=Procesador de textos
+Comment=Editor de documentos para docentes
+Exec=folio
+Icon=folio
+Terminal=false
+Categories=Office;WordProcessor;
+StartupWMClass=folio

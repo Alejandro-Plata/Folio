@@ -1,0 +1,50 @@
+/* Cuenta, círculos y citas */
+.so { display: flex; flex-direction: column; gap: 12px; }
+.so p { margin: 0; }
+.so-avatar { width: 36px; height: 36px; border-radius: 50%; display: inline-grid; place-items: center; flex: none; color: #fff; font-weight: 600; background: var(--c, var(--accent)); font-size: 14px; }
+.so-avatar.is-sm { width: 26px; height: 26px; font-size: 11px; }
+.so-avatars { display: inline-flex; }
+.so-avatars .so-avatar { border: 2px solid var(--bg-elev); margin-left: -6px; }
+.so-avatars .so-avatar:first-child { margin-left: 0; }
+.so-me { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); }
+.so-me-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.so-or { display: flex; align-items: center; gap: 10px; color: var(--text-faint); font-size: 12px; }
+.so-or::before, .so-or::after { content: ''; flex: 1; border-top: 1px solid var(--border); }
+.so-google { justify-content: center; gap: 10px; height: 40px; }
+.so-google svg { flex: none; }
+.so-tabs { display: flex; gap: 4px; padding: 3px; background: var(--bg-hover); border-radius: 9px; }
+.so-tabs button { flex: 1; height: 32px; border-radius: 7px; font-weight: 500; color: var(--text-muted); }
+.so-tabs button.on { background: var(--bg-elev); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); }
+.so-colors { display: flex; flex-wrap: wrap; gap: 6px; }
+.so-color { width: 28px; height: 28px; border-radius: 50%; background: var(--c); border: 2px solid transparent; outline: 1px solid var(--border); }
+.so-color.on { border-color: var(--bg-elev); outline: 2px solid var(--text); }
+.so-kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.so-kind { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 10px; text-align: left; }
+.so-kind.on { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev)); }
+.so-kind strong { display: flex; align-items: center; gap: 6px; }
+.so-circle { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); text-align: left; width: 100%; }
+.so-circle:hover { background: var(--bg-hover); }
+.so-circle-ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--bg-elev)); }
+.so-circle-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.so-member { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.so-member + .so-member { border-top: 1px solid var(--border); }
+.so-member-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.so-badge { font-size: 11px; border-radius: 999px; padding: 1px 8px; background: var(--bg-hover); color: var(--text-muted); white-space: nowrap; }
+.so-code { font: 600 26px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.12em; text-align: center; padding: 14px; border: 1px dashed var(--border-strong); border-radius: 10px; user-select: all; }
+.so-section { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-faint); margin-top: 4px; }
+/* Citas */
+.so-date { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); }
+.so-date.is-mine { border-style: dashed; }
+.so-date-head { display: flex; align-items: center; gap: 8px; }
+.so-date-head strong { flex: 1; min-width: 0; }
+.so-opt { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; background: var(--bg-hover); }
+.so-opt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.so-opt-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 0.9fr) auto; gap: 6px; align-items: center; }
+.so-status { font-size: 12px; border-radius: 999px; padding: 1px 8px; }
+.so-status.is-accepted { background: var(--bg-tip); color: var(--c-tip); }
+.so-status.is-declined, .so-status.is-cancelled { background: var(--bg-hover); color: var(--text-muted); }
+.so-status.is-open { background: var(--bg-warning); color: var(--c-warning); }
+@media (max-width: 520px) {
+  .so-opt-row { grid-template-columns: 1fr 1fr; }
+  .so-kinds { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Folio</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%231f1e1b%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-family=%22Georgia%22 font-size=%2219%22 font-weight=%22700%22 text-anchor=%22middle%22 fill=%22white%22%3EF%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="app">
+      <aside id="sidebar" class="sidebar" aria-label="Documentos"></aside>
+      <div id="sidebar-resizer" class="sidebar-resizer" title="Arrastra para cambiar el ancho"></div>
+      <div id="sidebar-scrim" class="sidebar-scrim"></div>
+      <main class="main">
+        <header id="topbar" class="topbar"></header>
+        <div id="ribbon" class="ribbon" role="toolbar" aria-label="Formato"></div>
+        <div class="work">
+          <div id="scroller" class="scroller">
+            <div id="page" class="page">
+              <div class="page-inner">
+                <div id="doc-head" class="doc-head"></div>
+                <div id="editor"></div>
+                <div id="footnotes" class="footnotes-area" hidden></div>
+              </div>
+            </div>
+            <div id="empty" class="empty" hidden></div>
+          </div>
+          <div id="findbar"></div>
+          <aside id="panel" class="panel"></aside>
+        </div>
+        <footer id="statusbar" class="statusbar"></footer>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

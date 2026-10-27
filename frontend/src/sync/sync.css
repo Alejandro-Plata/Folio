@@ -1,0 +1,22 @@
+/* Sincronización en la nube: diálogo e indicador */
+.sy { display: flex; flex-direction: column; gap: 12px; }
+.sy p { margin: 0; }
+.sy-card { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; }
+.sy-card-ic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+.sy-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sy-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: 10px; }
+.sy-form[hidden] { display: none; }
+.sy-status { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 10px; background: var(--bg-tip); color: var(--text); }
+.sy-status > span:first-child { color: var(--c-tip); margin-top: 2px; display: grid; }
+.sy-status.is-error { background: var(--bg-warning); }
+.sy-status.is-error > span:first-child { color: var(--c-warning); }
+.sy-qr { align-items: center; text-align: center; }
+.sy-qr-img { width: min(260px, 70vw); background: #fff; padding: 8px; border-radius: 10px; }
+.sy-qr-img svg { display: block; width: 100%; height: auto; }
+.is-spinning svg { animation: ag-spin 1s linear infinite; }
+/* Indicador de la barra de estado */
+.sb-sync { display: inline-flex; align-items: center; gap: 6px; }
+.sb-sync.is-error { color: var(--c-warning); }
+.sb-sync.is-syncing svg { animation: ag-spin 1s linear infinite; }
+.sb-sync[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .is-spinning svg, .sb-sync.is-syncing svg { animation: none; } }

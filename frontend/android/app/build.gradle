@@ -1,0 +1,81 @@
+apply plugin: 'com.android.application'
+
+// Versión: ./build.sh la pasa con -PfolioVersion=1.2.3 (versionCode = 1·10000 + 2·100 + 3)
+def folioVersion = (project.findProperty('folioVersion') ?: '1.0.0').toString().replaceFirst(/^v/, '')
+def folioCode = { String v ->
+    def p = (v.split(/[-+]/)[0].split(/\./) + ['0', '0', '0']).take(3).collect { it.isInteger() ? it.toInteger() : 0 }
+    Math.max(1, p[0] * 10000 + p[1] * 100 + p[2])
+}
+// Firma de las versiones: fuera del repositorio, la crea quien publica (docs/actualizaciones.md)
+def signingFile = new File(System.getProperty('user.home'), '.config/folio-release/android-signing.properties')
+def signing = new Properties()
+if (signingFile.exists()) signingFile.withInputStream { signing.load(it) }
+
+android {
+    namespace "es.folio.app"
+    compileSdk rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "es.folio.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode folioCode(folioVersion)
+        versionName folioVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (signing.storeFile) {
+            release {
+                storeFile new File(signing.storeFile)
+                storePassword signing.storePassword
+                keyAlias signing.keyAlias
+                keyPassword signing.keyPassword
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (signing.storeFile) signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+    // Núcleo Go (lo genera ./build.sh android con gomobile bind)
+    implementation files('libs/folio-core.aar')
+    // Autorización de Google Drive y almacén cifrado de credenciales
+    implementation 'com.google.android.gms:play-services-auth:21.3.0'
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

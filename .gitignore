@@ -1,0 +1,15 @@
+build/bin/
+frontend/node_modules/
+frontend/dist/
+frontend/wailsjs/
+*.exe
+frontend/.test-out/
+build/whisper.cpp/
+frontend/android/app/build/
+frontend/android/.gradle/
+frontend/android/app/libs/*.aar
+frontend/android/local.properties
+frontend/android/keystore.properties
+frontend/android/build/
+frontend/android/capacitor-cordova-android-plugins/build/
+frontend/tests/out/
