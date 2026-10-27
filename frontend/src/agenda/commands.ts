@@ -25,6 +25,22 @@ const DELETE = /^(?:borra(?:me)?|borrar|cancela(?:me)?|cancelar|elimina(?:me)?|e
 const DONE_A = /^(?:marca(?:r)?|pon(?:er)?)\s+(.+?)\s+como\s+(?:hecha|hecho|terminada|terminado|completada|completado)$/;
 const DONE_B = /^(?:ya\s+)?(?:he\s+)?(?:hecho|terminado|acabado|completado|termine|acabe|hice)\s+(.+)$/;
 const REMIND = /^(?:avisame|recuerdame|pon(?:me)?\s+(?:un\s+)?aviso)\s+(?:de|del|para|de la|en)\s+(.+)$/;
+// «avísame 15 minutos antes de la clase de inglés»
+const REMIND_BEFORE = /^(?:avisame|recuerdamelo|recuerdame|pon(?:me)?\s+(?:un\s+)?aviso)\s+(.+?\s+antes)\s+(?:de|del)\s+(.+)$/;
+/** Verbos con los que se pide crear: «apunta…», «anótame…», «pon…». */
+export const CREATE_VERB = /^(?:apuntame|apunta|anotame|anota|ponme|pon|crea|crear|anade|añade|recuerdame|recordarme)\s+/;
+/** Une varias órdenes en una frase: «borra el dentista y apunta fisio el lunes». */
+const CLAUSE = /\s*,?\s+y\s+(?=(?:apuntame|apunta|anotame|anota|ponme|pon|crea|anade|borra|borrar|cancela|elimina|quita|mueve|pasa|cambia|aplaza|marca|avisame|recuerdame)\b)/g;
+
+/** Separa las órdenes de una frase (solo donde empieza un verbo de orden). */
+export function splitClauses(text: string): string[] {
+  const f = fold(text);
+  const out: string[] = [];
+  let last = 0;
+  for (const m of f.matchAll(CLAUSE)) { out.push(text.slice(last, m.index).trim()); last = m.index! + m[0].length; }
+  out.push(text.slice(last).trim());
+  return out.filter(Boolean);
+}
 const QUERY = /^(?:¿\s*)?(?:que\s+(?:tengo|hay|me\s+toca|toca)|tengo\s+algo|agenda\s+(?:de|del|para)|que\s+hago)\b\s*(.*?)\s*\??$/;
 
 /** Entiende una frase de la barra. Lo que no es una orden se trata como tareas nuevas. */
@@ -38,6 +54,10 @@ export function parseCommand(text: string, today: string, types: TaskType[]): Co
 
   if ((m = DONE_A.exec(f)) || (m = DONE_B.exec(f))) return { kind: 'done', ...target(m[1], today, types) };
 
+  if ((m = REMIND_BEFORE.exec(f))) {
+    const d = parse(`avisame ${m[1]}`, today, types);
+    return { kind: 'remind', ...target(m[2], today, types), minutes: d.remind ?? 0 };
+  }
   if ((m = REMIND.exec(f))) {
     // «avísame del dentista 30 minutos antes»: la frase de aviso la entiende parse
     const d = parse(m[1], today, types);

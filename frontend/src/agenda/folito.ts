@@ -3,16 +3,23 @@
 // esquina de la agenda; se le escribe como a una persona («el dentista me lo han
 // pasado al viernes por la tarde») y propone acciones que se aplican con un clic.
 //
-// El modelo no calcula fechas: devuelve un JSON con el esquema de abajo y las
-// fechas en español («el viernes a las 18»), que luego interpreta el mismo
-// analizador por reglas de la barra rápida. Así un modelo muy pequeño basta.
+// Reparto del trabajo, medido con frases reales (un modelo de 1,5B acierta la
+// intención, pero reescribe horas y se deja repeticiones):
+//  1. Si las reglas de la barra rápida entienden toda la frase (consultas,
+//     órdenes con verbo, varias unidas por «y»), se responde al instante.
+//  2. Si no, el modelo clasifica y pone nombre a cada acción (JSON con el
+//     esquema de abajo). La fecha, la hora, la repetición, la duración y el
+//     aviso de una tarea nueva se leen por reglas de la frase original.
+//  3. Si propone actuar sobre una tarea que no existe y la frase dice cuándo,
+//     es que hay que crearla.
 import { api, onEvent, type FolitoInfo } from '../api';
 import { h, toast } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { WEEKDAYS, MONTHS, addDays, duration, relativeDate, timeLabel, toDate, weekday } from './dates';
 import { fold } from './time';
 import { parse } from './parse';
-import { parseCommand, type Command } from './commands';
+import { CREATE_VERB, matchTasks, parseCommand, splitClauses, type Command } from './commands';
+import type { Draft } from './parse';
 import { applyOrder, draftToTask, findTargets, type Order } from './orders';
 import { remindLabel } from '../platform/reminders';
 import type { Task } from './model';
@@ -55,6 +62,8 @@ const SCHEMA = {
 interface Proposal { cmd: Command; targets: Task[]; done?: boolean }
 
 export class Folito {
+  /** Esquema de la respuesta (también lo usan las pruebas de calidad). */
+  static readonly schema = SCHEMA;
   readonly button: HTMLButtonElement;
   private panel = h('section', { class: 'folito-panel', role: 'dialog', 'aria-label': 'Folito, asistente de la agenda', hidden: true });
   private log = h('div', { class: 'folito-log', 'aria-live': 'polite' });
@@ -62,6 +71,8 @@ export class Folito {
   private send = h('button', { type: 'button', class: 'folito-send', title: 'Enviar (Intro)', 'aria-label': 'Enviar', html: icon('arrowUp', 16) });
   private body = h('div', { class: 'folito-body' });
   private busy = false;
+  /** Precalentado: arranca el servidor y procesa las instrucciones al abrir el panel. */
+  private warm: Promise<unknown> | null = null;
   private info: FolitoInfo | null = null;
 
   constructor(private view: AgendaView) {
@@ -94,6 +105,11 @@ export class Folito {
     this.button.setAttribute('aria-expanded', 'true');
     this.info = await api.FolitoStatus().catch(() => null);
     this.render();
+    // La primera pregunta tardaría unos segundos más (cargar el modelo y leer las
+    // instrucciones): se adelanta mientras se escribe
+    if (this.info?.engineReady && this.info.modelReady && !this.warm) {
+      this.warm = this.systemPrompt().then((system) => api.FolitoAsk({ system, user: 'Hola', schema: Folito.schema, maxTokens: 1 })).catch(() => { this.warm = null; });
+    }
   }
 
   close() {
@@ -186,10 +202,8 @@ export class Folito {
     this.say(thinking);
     const tick = setInterval(() => { secs.textContent = ` ${Math.round((performance.now() - t0) / 1000)} s`; }, 1000);
     try {
-      const raw = await api.FolitoAsk({ system: await this.systemPrompt(), user: text, schema: SCHEMA });
-      const out = JSON.parse(raw) as { reply?: string; actions?: Action[] };
-      const proposals = await this.interpret(out.actions ?? []);
-      thinking.replaceWith(this.answer(out.reply || (proposals.length ? 'Esto es lo que propongo:' : 'No he entendido qué hacer. ¿Puedes decirlo de otra forma?'), proposals));
+      const { reply, proposals } = await this.understand(text);
+      thinking.replaceWith(this.answer(reply || (proposals.length ? 'Esto es lo que propongo:' : 'No he entendido qué hacer. ¿Puedes decirlo de otra forma?'), proposals));
     } catch (e) {
       thinking.replaceWith(this.bubble('folito', h('p', {}, `No he podido responder: ${String((e as Error)?.message ?? e)}`)));
     } finally {
@@ -198,6 +212,37 @@ export class Folito {
       this.log.scrollTop = this.log.scrollHeight;
       this.input.focus();
     }
+  }
+
+  /** Entiende una frase: por reglas si basta, si no con el modelo (lo usan también las pruebas de calidad). */
+  async understand(text: string): Promise<{ reply: string; proposals: Proposal[]; byRules: boolean }> {
+    const fast = await this.byRules(text);
+    if (fast) return { reply: fast.length > 1 ? 'Esto es lo que he entendido:' : '', proposals: fast, byRules: true };
+    await this.warm; // el servidor atiende de una en una
+    const raw = await api.FolitoAsk({ system: await this.systemPrompt(), user: text, schema: Folito.schema });
+    const out = JSON.parse(raw) as { reply?: string; actions?: Action[] };
+    return { reply: out.reply ?? '', proposals: await this.interpret(out.actions ?? [], text), byRules: false };
+  }
+
+  /** Respuesta inmediata cuando las reglas entienden cada parte de la frase sin dudas. */
+  private async byRules(text: string): Promise<Proposal[] | null> {
+    const st = this.view.state;
+    const out: Proposal[] = [];
+    for (const clause of splitClauses(text)) {
+      const cmd = parseCommand(clause, st.today, st.types);
+      if (!cmd) return null;
+      if (cmd.kind === 'create') {
+        // Crear solo si se pide con un verbo («apunta…») y la frase dice cuándo
+        if (!CREATE_VERB.test(fold(clause)) || cmd.drafts.length !== 1 || !timed(cmd.drafts[0])) return null;
+        out.push({ cmd, targets: [] });
+        continue;
+      }
+      if (cmd.kind === 'move' && !cmd.date && !cmd.start) return null;
+      const targets = await findTargets(st, cmd);
+      if (cmd.kind !== 'query' && !targets.length) return null;
+      out.push({ cmd, targets });
+    }
+    return out.length ? out : null;
   }
 
   /** Instrucciones: el día de hoy, las acciones posibles, ejemplos y las tareas próximas. */
@@ -211,7 +256,7 @@ export class Folito {
       'Eres Folito, el asistente de la agenda de Folio. Conviertes lo que pide el usuario en acciones sobre su agenda.',
       `Hoy es ${WEEKDAYS[weekday(today) - 1]} ${d.getDate()} de ${MONTHS[d.getMonth()]} de ${d.getFullYear()}.`,
       'Acciones (campo "type"):',
-      '- crear: tarea nueva. "title": nombre corto, sin fecha ni hora. "when": fecha y hora en español, como las diría una persona ("mañana a las 10", "el viernes de 9 a 11", "cada martes a las 17"). "duration" opcional ("45 min"). "remind" opcional ("10 minutos antes", "a la hora", "el día antes").',
+      '- crear: tarea nueva. "title": nombre corto, sin fecha ni hora. "when": las palabras exactas del usuario sobre el día, la hora y la repetición, sin cambiarlas ni convertirlas ("mañana a las 10", "de 4 a 6", "todos los días a las 7"). "duration" y "remind" solo si el usuario los dice ("45 min", "10 minutos antes", "el día antes").',
       '- mover: cambiar una tarea existente. "task": palabras de su título. "when": el nuevo momento.',
       '- borrar: "task".',
       '- hecha: marcar como hecha. "task".',
@@ -223,6 +268,10 @@ export class Folito {
       '{"reply":"Apunto la tutoría del martes a las 17:00 con aviso 15 minutos antes.","actions":[{"type":"crear","title":"Tutoría con la familia de Lucía","when":"el martes a las 17","remind":"15 minutos antes"}]}',
       'Usuario: el dentista me lo han cambiado al viernes por la tarde a las 6',
       '{"reply":"Muevo el dentista al viernes a las 18:00.","actions":[{"type":"mover","task":"dentista","when":"el viernes a las 18"}]}',
+      'Usuario: apúntame natación los martes y jueves a las 7 de la tarde',
+      '{"reply":"Apunto natación los martes y jueves a las 19:00.","actions":[{"type":"crear","title":"Natación","when":"los martes y jueves a las 7 de la tarde"}]}',
+      'Usuario: ¿tengo algo el viernes?',
+      '{"reply":"Esto es lo que tienes el viernes.","actions":[{"type":"consultar","when":"el viernes"}]}',
       'Usuario: ya he terminado el repaso del tema 3 y cancela la reunión de mañana',
       '{"reply":"Marco el repaso como hecho y quito la reunión de mañana.","actions":[{"type":"hecha","task":"repaso tema 3"},{"type":"borrar","task":"reunión","when":"mañana"}]}',
       names.length ? `Tareas de los próximos días: ${names.join('; ')}.` : 'No hay tareas en los próximos días.',
@@ -230,17 +279,38 @@ export class Folito {
   }
 
   /** Convierte las acciones del modelo en órdenes de la agenda, con las fechas leídas por reglas. */
-  private async interpret(actions: Action[]): Promise<Proposal[]> {
+  private async interpret(actions: Action[], text: string): Promise<Proposal[]> {
     const st = this.view.state;
     const out: Proposal[] = [];
+    // La frase entera leída por reglas: manda en fechas y horas cuando hay una sola acción
+    const whole = parse(text, st.today, st.types);
+    const single = actions.length === 1;
+    const fromWords = (title: string): Draft => ({ ...whole, title: title ? title[0].toUpperCase() + title.slice(1) : whole.title, understood: [...whole.understood] });
+    if (!actions.length) {
+      // Pregunta sin acción: si las reglas la entienden como consulta, se muestra
+      const q = parseCommand(text, st.today, st.types);
+      if (q?.kind === 'query') out.push({ cmd: q, targets: await findTargets(st, q) });
+    }
     for (const a of actions.slice(0, 5)) {
       if (!a || !ACTIONS.includes(a.type)) continue;
       const when = (a.when ?? '').trim();
       let cmd: Command | null = null;
+      // «Crear» algo que ya está en la agenda, con un verbo de mover en la frase: es moverlo
+      if (a.type === 'crear' && MOVE_WORDS.test(fold(text)) && a.title && when) {
+        const existing = matchTasks(await st.range(st.today, addDays(st.today, 30)), fold(a.title), st.today);
+        if (existing.length) {
+          const c = parseCommand(`mueve ${fold(a.title)} a ${when}`, st.today, st.types);
+          if (c?.kind === 'move' && (c.date || c.start)) { out.push({ cmd: c, targets: existing.slice(0, 4) }); continue; }
+        }
+      }
       if (a.type === 'crear') {
-        const d = parse(`${when}${a.duration ? ` durante ${a.duration}` : ''}`, st.today, st.types);
-        d.title = (a.title ?? '').trim() || d.title;
-        if (a.remind) d.remind = remindMinutes(a.remind);
+        let d: Draft;
+        if (single && timed(whole)) d = fromWords((a.title ?? '').trim());
+        else {
+          d = parse(`${when}${a.duration ? ` durante ${a.duration}` : ''}`, st.today, st.types);
+          d.title = (a.title ?? '').trim() || d.title;
+          if (a.remind) d.remind = remindMinutes(a.remind);
+        }
         cmd = { kind: 'create', drafts: [d] };
       } else if (a.type === 'consultar') {
         cmd = parseCommand(`qué tengo ${when || 'hoy'}`, st.today, st.types);
@@ -253,10 +323,30 @@ export class Folito {
           cmd = c && c.kind === 'move' ? { ...c, query: task } : null;
         } else if (a.type === 'borrar') cmd = { kind: 'delete', query: task, on };
         else if (a.type === 'hecha') cmd = { kind: 'done', query: task, on };
-        else cmd = { kind: 'remind', query: task, on, minutes: remindMinutes(a.remind ?? '') };
+        else cmd = { kind: 'remind', query: task, on, minutes: single && whole.remind !== undefined ? whole.remind : remindMinutes(a.remind ?? '') };
       }
       if (!cmd) continue;
-      out.push({ cmd, targets: cmd.kind === 'create' ? [] : await findTargets(st, cmd as Order) });
+      const targets = cmd.kind === 'create' ? [] : await findTargets(st, cmd as Order);
+      // Actuar sobre algo que no existe, con fecha u hora: es una tarea nueva (con
+      // una sola acción, la fecha sale de la frase entera; si hay varias, de la suya)
+      if (cmd.kind !== 'create' && cmd.kind !== 'query' && !targets.length) {
+        const name = (a.title || a.task || '').trim();
+        const own = when ? parse(when, st.today, st.types) : null;
+        if (single && timed(whole)) { out.push({ cmd: { kind: 'create', drafts: [fromWords(name)] }, targets: [] }); continue; }
+        if (own && timed(own)) {
+          if (a.remind) own.remind = remindMinutes(a.remind);
+          own.title = name ? name[0].toUpperCase() + name.slice(1) : own.title;
+          out.push({ cmd: { kind: 'create', drafts: [own] }, targets: [] });
+          continue;
+        }
+      }
+      out.push({ cmd, targets });
+    }
+    // Un solo aviso en la frase y una sola tarea nueva: el aviso es suyo (el modelo a veces lo omite)
+    const creates = out.filter((x) => x.cmd.kind === 'create');
+    if (creates.length === 1 && whole.remind !== undefined) {
+      const d = (creates[0].cmd as Extract<Command, { kind: 'create' }>).drafts[0];
+      d.remind ??= whole.remind;
     }
     return out;
   }
@@ -344,3 +434,11 @@ function remindMinutes(text: string): number {
   const d = parse(`avisame ${/antes/.test(f) ? f : `${f} antes`}`, '2000-01-01', []);
   return d.remind ?? 0;
 }
+
+/** La frase dice cuándo: día, hora o repetición. */
+function timed(d: Draft) {
+  return !!d.start || !!d.repeat || d.understood.some((u) => u === 'hoy' || u === 'mañana' || u.startsWith('el '));
+}
+
+/** Verbos de mover, también con pronombre: «pásala», «muévelo», «cámbiala». */
+const MOVE_WORDS = /\b(?:pasa|mueve|cambia|aplaza|retrasa|adelanta|lleva)(?:la|lo|las|los)?\b/;

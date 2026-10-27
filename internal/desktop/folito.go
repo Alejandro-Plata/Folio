@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -36,12 +38,13 @@ type folitoModel struct {
 	SHA256 string // vacío = sin comprobar
 }
 
-// Qwen2.5 Instruct (licencia Apache 2.0), cuantizado a 4 bits.
+// Qwen2.5 1.5B Instruct (licencia Apache 2.0), cuantizado a 4 bits. Medido con
+// 24 frases y 4 hilos (como un i5 de 12.ª gen. serie U): acierta 23, con 1,2-1,6 s
+// por pregunta. El de 0,5B es el doble de rápido pero acierta 20.
 var folitoModels = map[string]folitoModel{
-	"qwen2.5-0.5b": {File: "qwen2.5-0.5b-instruct-q4_k_m.gguf", Size: 491_400_000,
-		URL: "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"},
-	"qwen2.5-1.5b": {File: "qwen2.5-1.5b-instruct-q4_k_m.gguf", Size: 1_117_300_000,
-		URL: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"},
+	"qwen2.5-1.5b": {File: "qwen2.5-1.5b-instruct-q4_k_m.gguf", Size: 1_117_320_736,
+		SHA256: "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+		URL:    "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"},
 }
 
 const folitoDefault = "qwen2.5-1.5b"
@@ -73,6 +76,9 @@ type FolitoRequest struct {
 	System string          `json:"system"`
 	User   string          `json:"user"`
 	Schema json.RawMessage `json:"schema"`
+	// MaxTokens limita la respuesta (0 = 400). El precalentado usa 1: solo
+	// interesa que el servidor procese y guarde las instrucciones.
+	MaxTokens int `json:"maxTokens,omitempty"`
 }
 
 func folitoModelPath(name string) string {
@@ -167,7 +173,7 @@ func (a *App) FolitoAsk(req FolitoRequest) (string, error) {
 	body := map[string]any{
 		"messages":     []map[string]string{{"role": "system", "content": req.System}, {"role": "user", "content": req.User}},
 		"temperature":  0.1,
-		"max_tokens":   400,
+		"max_tokens":   cmp.Or(req.MaxTokens, 400),
 		"cache_prompt": true, // las instrucciones se repiten: no se vuelven a procesar
 	}
 	if len(req.Schema) > 0 {
@@ -223,14 +229,22 @@ func (f *folito) ensure(model string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	// Hilos: la mitad de los lógicos (los núcleos reales), entre 2 y 8
-	threads := min(max(goruntime.NumCPU()/2, 2), 8)
+	// Hilos: como mucho 4. Los hilos de llama.cpp se esperan entre sí en cada
+	// paso: con todos los núcleos ocupados, cualquier otro programa (la propia
+	// ventana al pintar) los frena y una respuesta de 2 s pasa a tardar más de
+	// un minuto. FOLIO_FOLITO_THREADS lo fija (equipos lentos o pruebas).
+	threads := min(max(goruntime.NumCPU()/2, 2), 4)
+	if n, err := strconv.Atoi(os.Getenv("FOLIO_FOLITO_THREADS")); err == nil && n > 0 {
+		threads = n
+	}
 	cmd := exec.Command(engine, "-m", mpath, "--host", "127.0.0.1", "--port", fmt.Sprint(port),
 		"-c", "4096", "-np", "1", "-t", fmt.Sprint(threads), "--no-webui", "--log-disable")
 	hideWindow(cmd)
+	guardChild(cmd)
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("no se pudo arrancar Folito: %w", err)
 	}
+	guardStarted(cmd)
 	exited := make(chan struct{})
 	go func() { _ = cmd.Wait(); close(exited) }()
 	// Espera a que el modelo esté cargado (/health responde 503 mientras carga)

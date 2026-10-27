@@ -54,7 +54,7 @@ export interface Backend extends AgendaBackend {
   FolitoDownload(): Promise<void>;
   FolitoCancelDownload(): Promise<void>;
   FolitoDelete(): Promise<void>;
-  FolitoAsk(req: { system: string; user: string; schema: unknown }): Promise<string>;
+  FolitoAsk(req: { system: string; user: string; schema: unknown; maxTokens?: number }): Promise<string>;
   SetDesktopPrefs(p: Partial<DesktopPrefs>): Promise<DesktopPrefs>;
   ChoosePdfs(): Promise<PdfFile[] | null>;
   ChooseNoteFiles(): Promise<{ path: string; name: string }[] | null>;

@@ -238,6 +238,7 @@ export function parse(text: string, today: string, types: TaskType[], fallbackDa
   let title = '';
   for (let i = 0; i < original.length; i++) title += work[i] === ' ' && original[i] !== ' ' ? ' ' : original[i];
   title = title.replace(/\s+/g, ' ')
+    .replace(/^\s*(?:ap[uú]ntame|ap[uú]nta|an[oó]tame|an[oó]ta|p[oó]nme|pon|crea|a[nñ]ade)\s+/i, '') // «apunta fisio…»
     .replace(/^(?:\s*(?:el|la|los|las|de|a|y|en|para|que|con|durante)\b)+/i, '')
     .replace(/(?:\b(?:el|la|los|las|de|a|y|en|para|que|con|durante|desde|hasta)\s*)+$/i, '')
     .replace(/\s+([,.;])/g, '$1').replace(/^[,.;\s]+|[,.;\s]+$/g, '').trim();
