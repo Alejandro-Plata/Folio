@@ -10,6 +10,7 @@
 import { downloadArtifact } from '@electron/get';
 import { createPackage } from '@electron/asar';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -81,7 +82,8 @@ if (!isWin) {
   fs.mkdirSync(bin, { recursive: true });
   const tgz = path.join(root, 'build/desktop/linux/folio.tar.gz');
   run('tar', ['-czf', tgz, '-C', out, '.']);
-  const header = fs.readFileSync(path.join(here, 'launcher.sh'), 'utf8').replaceAll('@VERSION@', version);
+  const build = `${version}-${createHash('sha256').update(fs.readFileSync(tgz)).digest('hex').slice(0, 8)}`;
+  const header = fs.readFileSync(path.join(here, 'launcher.sh'), 'utf8').replaceAll('@VERSION@', version).replaceAll('@BUILD@', build);
   const launcher = path.join(bin, 'folio');
   fs.writeFileSync(launcher, header);
   fs.appendFileSync(launcher, fs.readFileSync(tgz));

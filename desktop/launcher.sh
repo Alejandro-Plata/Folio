@@ -1,11 +1,11 @@
 #!/bin/sh
 # Folio @VERSION@ para Linux: lanzador autoextraíble. La primera vez descomprime
-# Folio en ~/.local/share/folio/@VERSION@; después lo abre directamente.
+# Folio en ~/.local/share/folio/@BUILD@; después lo abre directamente.
 # Se actualiza sustituyendo este archivo por el de la versión nueva.
 set -e
 VERSION="@VERSION@"
 BASE="${XDG_DATA_HOME:-$HOME/.local/share}/folio"
-DIR="$BASE/$VERSION"
+DIR="$BASE/@BUILD@"  # versión y huella del contenido: cada compilación tiene su carpeta
 if [ ! -x "$DIR/folio" ]; then
   mkdir -p "$BASE"
   TMP="$(mktemp -d "$BASE/.instalando-XXXXXX")"
