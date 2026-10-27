@@ -9,7 +9,7 @@ import { icon } from '../ui/icons';
 import type { Scope, Session, Task, ViewKind } from './model';
 import { AgendaState } from './state';
 import {
-  MONTHS, WEEKDAYS_SHORT, addDays, addMonths, endOfMonth, isoWeek, longDate, range, shortDate, startOfMonth, startOfWeek, todayISO, toDate, weekday,
+  MONTHS, WEEKDAYS, WEEKDAYS_SHORT, addDays, addMonths, endOfMonth, isoWeek, longDate, range, shortDate, startOfMonth, startOfWeek, todayISO, toDate, weekday,
 } from './dates';
 import { parseGoTo } from './parse';
 import type { ViewHost } from './views/common';
@@ -45,6 +45,9 @@ export class AgendaView implements ViewHost {
   private body = h('div', { class: 'ag-body' });
   private title = h('h2', { class: 'ag-title', 'aria-live': 'polite' });
   private examBadge = h('span', { class: 'ag-exam', hidden: true });
+  /** Escritorio: la fecha va en su propia cabecera, fuera de la barra de herramientas. */
+  private mast = h('div', { class: 'ag-mast' });
+  private mastEyebrow = h('div', { class: 'ag-mast-eyebrow' });
   private viewBtns = new Map<ViewKind, HTMLButtonElement>();
   private selBar = h('div', { class: 'ag-selbar', role: 'toolbar', 'aria-label': 'Días seleccionados', hidden: true });
   private banner = h('div', { class: 'ag-banner', role: 'status', hidden: true });
@@ -78,7 +81,7 @@ export class AgendaView implements ViewHost {
     this.quick = new QuickAdd(this, this.app);
     this.sidebar = new AgendaSidebar(this, this.app);
     this.buildHead();
-    this.root.append(this.banner, this.selBar, this.body, this.live);
+    this.root.append(this.banner, this.selBar, ...(this.mobile ? [] : [this.mast]), this.body, this.live);
     if (this.mobile) {
       attachSwipe(this);
       this.title.setAttribute('role', 'button');
@@ -131,13 +134,12 @@ export class AgendaView implements ViewHost {
       views.append(b);
     }
     const goto = h('button', { type: 'button', class: 'btn btn-sm btn-ghost ag-goto', title: 'Ir a una fecha (G)', 'aria-label': 'Ir a una fecha', onclick: () => void this.promptGoTo() }, h('span', { html: icon('calendar', 15) }), h('span', { class: 'ag-goto-label' }, 'Ir a…'));
-    const row1 = h('div', { class: 'ag-head-row' },
-      todayBtn,
-      nav('chevronLeft', 'Anterior (← o RePág)', () => this.step(-1)),
-      nav('chevronRight', 'Siguiente (→ o AvPág)', () => this.step(1)),
-      this.title, this.examBadge,
-      h('div', { class: 'spacer' }),
-      goto, views);
+    const prev = nav('chevronLeft', 'Anterior (← o RePág)', () => this.step(-1));
+    const next = nav('chevronRight', 'Siguiente (→ o AvPág)', () => this.step(1));
+    // En el escritorio, la fecha y su navegación forman una cabecera aparte;
+    // la barra de arriba queda solo para añadir y las herramientas
+    if (!this.mobile) this.mast.append(h('div', { class: 'ag-mast-date' }, this.mastEyebrow, this.title), h('div', { class: 'ag-mast-nav' }, this.examBadge, goto, todayBtn, prev, next, views));
+    const row1 = this.mobile ? h('div', { class: 'ag-head-row' }, todayBtn, prev, next, this.title, this.examBadge, h('div', { class: 'spacer' }), goto, views) : null;
     const tools = h('div', { class: 'ag-tools' },
       h('button', { type: 'button', class: 'btn btn-sm', title: 'Repartir estudio y repasos hasta el examen', onclick: () => void this.state.plan().then(() => this.showReport(true)) }, h('span', { html: icon('sparkles', 15) }), 'Planificar'),
       h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Temas y apuntes', onclick: () => void topicsDialog(this, this.app) }, h('span', { html: icon('layers', 15) }), 'Temario'),
@@ -155,6 +157,30 @@ export class AgendaView implements ViewHost {
     body.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('.ag-mini-day, .ag-mini-title')) setTimeout(() => s.close(), 0); });
   }
 
+  /** Cabecera del escritorio: una línea pequeña de contexto y la fecha en grande, con el año más tenue. */
+  private renderMast() {
+    const c = this.cursor;
+    const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+    const year = (y: string) => h('span', { class: 'ag-mast-year' }, y);
+    let eyebrow: (string | Node)[] = [];
+    let title: (string | Node)[];
+    if (this.view === 'week') {
+      const a = startOfWeek(c), b = addDays(a, 6);
+      const ma = toDate(a).getMonth(), mb = toDate(b).getMonth();
+      eyebrow = [h('b', {}, `Semana ${isoWeek(c)}`), `${shortDate(a)} – ${shortDate(b)}`];
+      title = ma === mb ? [cap(MONTHS[ma]), year(b.slice(0, 4))]
+        : [cap(MONTHS[ma]), h('span', { class: 'ag-mast-sep' }, '/'), cap(MONTHS[mb]), year(b.slice(0, 4))];
+    } else if (this.view === 'day') {
+      const d = toDate(c);
+      eyebrow = [h('b', {}, c === this.state.today ? 'Hoy' : cap(WEEKDAYS[weekday(c) - 1])), ...(c === this.state.today ? [cap(WEEKDAYS[weekday(c) - 1])] : []), `Semana ${isoWeek(c)}`];
+      title = [`${d.getDate()} de ${MONTHS[d.getMonth()]}`, year(c.slice(0, 4))];
+    } else if (this.view === 'month') title = [cap(MONTHS[toDate(c).getMonth()]), year(c.slice(0, 4))];
+    else title = [c.slice(0, 4)];
+    this.mastEyebrow.replaceChildren(...eyebrow.flatMap((x, i) => i ? [h('span', { class: 'ag-mast-dot', 'aria-hidden': 'true' }, '·'), x] : [x]));
+    this.mastEyebrow.hidden = !eyebrow.length;
+    this.title.replaceChildren(...title);
+  }
+
   private updateHead() {
     const c = this.cursor;
     let label = '';
@@ -163,15 +189,11 @@ export class AgendaView implements ViewHost {
     if (this.view === 'day') label = m ? `${WEEKDAYS_SHORT[weekday(c) - 1]} ${shortDate(c)}` : longDate(c);
     else if (this.view === 'list') label = m ? `${shortDate(c)} – ${shortDate(addDays(c, this.listDays - 1))}` : `Desde el ${shortDate(c)}`;
     else if (this.view === '3days') label = `${shortDate(c)} – ${shortDate(addDays(c, 2))}${m ? '' : ` ${addDays(c, 2).slice(0, 4)}`}`;
-    else if (this.view === 'week') {
-      // «Octubre 2026» (o «Oct – Nov 2026» si la semana cruza meses) y el número de semana aparte
-      const a = startOfWeek(c), b = addDays(a, 6);
-      const ma = toDate(a).getMonth(), mb = toDate(b).getMonth();
-      label = ma === mb ? `${MONTHS[ma]} ${b.slice(0, 4)}` : `${MONTHS[ma].slice(0, 3)} – ${MONTHS[mb].slice(0, 3)} ${b.slice(0, 4)}`;
-    } else if (this.view === 'month') label = `${MONTHS[toDate(c).getMonth()]} ${c.slice(0, 4)}`;
+    else if (this.view === 'week') label = `${shortDate(startOfWeek(c))} – ${shortDate(addDays(startOfWeek(c), 6))}`;
+    else if (this.view === 'month') label = `${MONTHS[toDate(c).getMonth()]} ${c.slice(0, 4)}`;
     else label = c.slice(0, 4);
-    this.title.textContent = label[0].toUpperCase() + label.slice(1);
-    if (this.view === 'week') this.title.append(h('span', { class: 'ag-week-badge', title: `${shortDate(startOfWeek(c))} – ${shortDate(addDays(startOfWeek(c), 6))}` }, `Semana ${isoWeek(c)}`));
+    if (m) this.title.textContent = label[0].toUpperCase() + label.slice(1);
+    else this.renderMast();
     this.viewBtns.forEach((b, v) => { b.classList.toggle('on', v === this.view); b.setAttribute('aria-checked', String(v === this.view)); });
     const exam = this.state.settings.examDate;
     const left = exam ? Math.round((toDate(exam).getTime() - toDate(this.state.today).getTime()) / 86400000) : -1;
