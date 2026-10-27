@@ -67,7 +67,7 @@ function content(view: AgendaView, t: Task, topic: Topic, f: Forecast | null, se
   // 1. Historial
   const past = sessions.filter((s) => s.date <= t.date).sort((a, b) => (a.date < b.date ? 1 : -1));
   const hist = h('section', { class: 'ag-mem-sec' }, h('h4', {}, 'Historial'));
-  if (!past.length) hist.append(h('p', { class: 'muted small' }, f && !f.new ? 'Sin sesiones registradas.' : 'Aún no lo has estudiado. Al marcar esta tarea como hecha empieza su curva.'));
+  if (!past.length) hist.append(h('p', { class: 'muted small' }, f && !f.new ? 'Sin sesiones registradas.' : 'Sin estudiar todavía.'));
   else {
     const first = sessions.reduce((a, s) => (s.date < a ? s.date : a), past[0].date);
     hist.append(h('p', { class: 'small' }, `Estudiado por primera vez el ${shortDate(first)} · ${past.length} ${past.length === 1 ? 'sesión' : 'sesiones'}${f?.lapses ? ` · olvidado ${f.lapses} ${f.lapses === 1 ? 'vez' : 'veces'}` : ''}`),
@@ -89,7 +89,7 @@ function content(view: AgendaView, t: Task, topic: Topic, f: Forecast | null, se
     const sec = h('section', { class: 'ag-mem-sec' }, h('h4', {}, isToday ? 'Cuánto lo recuerdas hoy' : `Cuánto lo recordarás ${relativeDate(t.date, st.today)}`),
       curveSvg(f, t.date),
       h('p', { class: 'small' }, `En torno al ${pct} %. `, h('span', { class: 'muted' },
-        `Sin repasar, el recuerdo cae con el tiempo; Folio te propone el repaso cuando baja al ${Math.round(f.target * 100)} %${f.due ? ` (${f.due <= t.date ? 'ya toca' : `el ${shortDate(f.due)}`})` : ''}.`)));
+        `Repaso propuesto cuando baja al ${Math.round(f.target * 100)} %${f.due ? ` (${f.due <= t.date ? 'ya toca' : `el ${shortDate(f.due)}`})` : ''}.`)));
     out.push(sec);
   }
 

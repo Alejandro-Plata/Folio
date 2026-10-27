@@ -36,7 +36,7 @@ export async function doneDialog(view: AgendaView, t: Task) {
       h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, 'Tiempo dedicado'), mins.el),
       h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, 'Empezaste a las'), at.el)),
     topic ? h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, `¿Qué tal recordabas el tema ${topic.number}?`), ratingBox,
-      h('p', { class: 'muted small' }, 'Con esto se calcula cuándo toca el siguiente repaso.')) : null,
+      h('p', { class: 'muted small' }, 'Determina la fecha del siguiente repaso.')) : null,
     isMock || topic ? h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, 'Nota del test (opcional)'), h('div', { class: 'ag-inline' }, score, h('span', { class: 'muted small' }, 'sobre 10'))) : null,
     h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, 'Comentario'), note),
   );
@@ -60,5 +60,5 @@ export async function doneDialog(view: AgendaView, t: Task) {
   await st.logSession({
     id: '', taskId: t.id, topicId: topic?.id, typeId: t.typeId, kind: t.kind, date: t.date,
     start: minutesOf(at.value) >= 0 ? at.value : undefined, minutes: mins.value, rating: topic ? rating : 0, score: s, note: note.value.trim() || undefined,
-  }, topic ? `Hecho. ${rating === 1 ? 'El tema se repasará pronto.' : 'El plan se ha ajustado a tu valoración.'}` : 'Hecho');
+  }, topic ? `Sesión registrada${rating === 1 ? '. El tema se repasará pronto' : ''}` : 'Hecho');
 }

@@ -134,7 +134,7 @@ export class AgendaSidebar {
     const topics = v.state.topics.filter((t) => !t.archived);
     const studied = topics.filter((t) => t.studied).length;
     return h('section', { class: 'ag-side-sec ag-side-nav' }, h('div', { class: 'sb-title' }, 'Estudio'),
-      item('layers', `Temario${topics.length ? ` · ${studied}/${topics.length}` : ''}`, 'Temas de la oposición', () => void topicsDialog(v, this.app)),
+      item('layers', `Temario${topics.length ? ` · ${studied}/${topics.length}` : ''}`, 'Temas y apuntes', () => void topicsDialog(v, this.app)),
       item('clock', 'Plan de estudio', 'Examen, tiempo de estudio y repasos', () => void planDialog(v)),
       item('barChart', 'Progreso', 'Horas, temario y repasos', () => void statsDialog(v, this.app)));
   }
@@ -173,7 +173,7 @@ export async function typesDialog(view: AgendaView) {
   draw();
   const add = h('button', { type: 'button', class: 'btn btn-sm', onclick: () => { list.push({ id: '', name: 'Nuevo tipo', priority: list.length + 1, color: '#6b6560', icon: 'star', pattern: 'solid', countsAsStudy: false, fixed: false }); draw(); } }, h('span', { html: icon('plus', 14) }), 'Añadir tipo');
   const body = h('div', { class: 'ag-form' },
-    h('p', { class: 'muted small' }, 'El orden es la prioridad (1 = máxima): decide qué va primero en un día y qué se recoloca antes si no cabe todo. Cada tipo tiene color, icono y trama para distinguirlo sin depender del color.'),
+    h('p', { class: 'muted small' }, 'El orden es la prioridad (1 = máxima): decide qué se coloca primero cuando no cabe todo.'),
     box, add);
   const res = await modal('Tipos y prioridades', body, [{ label: 'Cancelar', value: null, kind: 'ghost' }, { label: 'Guardar', value: 'ok', kind: 'primary' }], { wide: true, className: 'ag-modal' });
   if (res === 'ok') await view.state.setTypes(list);

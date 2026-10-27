@@ -140,7 +140,7 @@ export class AgendaView implements ViewHost {
       goto, views);
     const tools = h('div', { class: 'ag-tools' },
       h('button', { type: 'button', class: 'btn btn-sm', title: 'Repartir estudio y repasos hasta el examen', onclick: () => void this.state.plan().then(() => this.showReport(true)) }, h('span', { html: icon('sparkles', 15) }), 'Planificar'),
-      h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Temario de la oposición', onclick: () => void topicsDialog(this, this.app) }, h('span', { html: icon('layers', 15) }), 'Temario'),
+      h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Temas y apuntes', onclick: () => void topicsDialog(this, this.app) }, h('span', { html: icon('layers', 15) }), 'Temario'),
       h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Tiempo de estudio, examen y repasos', onclick: () => void planDialog(this) }, h('span', { html: icon('clock', 15) }), 'Plan'),
       h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Progreso del estudio', onclick: () => void statsDialog(this, this.app) }, h('span', { html: icon('barChart', 15) }), 'Progreso'),
       h('button', { type: 'button', class: 'btn btn-sm btn-ghost ag-tpl-btn', title: 'Semanas tipo', onclick: (e: MouseEvent) => templatesMenu(this, e.currentTarget as HTMLElement) }, h('span', { html: icon('template', 15) }), 'Semana tipo'));
@@ -273,7 +273,7 @@ export class AgendaView implements ViewHost {
     const v = await promptText('Ir a una fecha', 'Escribe una fecha', '', { placeholder: '15 marzo · semana 12 · +3 semanas · mañana', ok: 'Ir' });
     if (!v) return;
     const d = parseGoTo(v, this.state.today);
-    if (!d) { toast('No he entendido la fecha. Prueba con «15 marzo», «semana 12» o «+3 semanas».', { kind: 'error' }); return; }
+    if (!d) { toast('Fecha no reconocida. Ejemplos: «15 marzo», «semana 12», «+3 semanas».', { kind: 'error' }); return; }
     const view: ViewKind = /semana/i.test(v) ? 'week' : /^\D*$/.test(v) && /enero|febrero|marzo|abril|mayo|junio|julio|agosto|sep|octubre|noviembre|diciembre/i.test(v) ? 'month' : this.view === 'year' ? 'week' : this.view;
     this.goTo(view, d);
     this.announce(longDate(d));

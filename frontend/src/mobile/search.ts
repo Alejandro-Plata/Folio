@@ -19,7 +19,7 @@ export class SearchScreen {
 
   focus() { setTimeout(() => this.input.focus(), 50); }
 
-  reset() { this.input.value = ''; this.results.replaceChildren(h('p', { class: 'm-empty' }, 'Escribe para buscar en el texto de todos tus documentos o para encontrar una acción («exportar», «unir pdf», «tema»…).')); }
+  reset() { this.input.value = ''; this.results.replaceChildren(h('p', { class: 'm-empty' }, 'Busca en el texto de todos los documentos y entre las acciones.')); }
 
   private async run() {
     const q = this.input.value.trim();

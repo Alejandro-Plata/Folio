@@ -113,7 +113,7 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
     const doc = tp.docId ? app.docs.find((d) => d.id === tp.docId && !d.trashed) : undefined;
     topicNotes.replaceChildren(...[...(tp.files ?? []).map((f) => noteChip(f)),
       doc ? h('button', { type: 'button', class: 'ag-note ag-note-open', onclick: () => { app.setMode('docs'); void app.open(doc.id); close?.(null); } }, h('span', { html: icon('docs', 14) }), h('span', { class: 'ag-note-name' }, doc.title || 'Sin título')) : null,
-      !(tp.files?.length || doc) ? h('span', { class: 'muted small' }, 'Este tema no tiene apuntes. Añádelos en el Temario.') : null].filter((x): x is HTMLElement => !!x));
+      !(tp.files?.length || doc) ? h('span', { class: 'muted small' }, 'Sin apuntes. Se añaden desde Temario.') : null].filter((x): x is HTMLElement => !!x));
   };
   topicSel.addEventListener('change', syncNotes);
   syncNotes();

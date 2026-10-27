@@ -112,7 +112,7 @@ export async function planDialog(view: AgendaView) {
         field('Retención objetivo', retention, 'Probabilidad de recordar cada tema el día del repaso'),
         field('Día visible desde', dayStart.el), field('hasta', dayEnd.el)),
       h('label', { class: 'ag-check' }, suggestOn, 'Mostrar sugerencias según mis últimas acciones'),
-      ...(isAndroid ? [field('Avisarme antes de cada tarea (solo este móvil)', remindSel, 'Recibirás una notificación con la hora de la tarea.')] : [])),
+      ...(isAndroid ? [field('Avisarme antes de cada tarea (solo este móvil)', remindSel, 'Notificación antes de la hora de inicio.')] : [])),
     report?.warnings?.length ? h('div', { class: 'ag-banner is-inline' }, h('span', { class: 'ag-banner-ic', html: icon('alert', 16) }), h('div', {}, ...report.warnings.map((w) => h('p', {}, w)))) : null,
   );
   const res = await modal('Plan de estudio', body, [

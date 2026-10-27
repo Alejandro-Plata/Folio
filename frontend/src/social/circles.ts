@@ -52,7 +52,7 @@ export async function circlesDialog(app: App, start: View = { kind: 'list' }) {
     const color = colorPicker('#7d3c98', 'Color del círculo');
     const kinds = h('div', { class: 'so-kinds', role: 'radiogroup', 'aria-label': 'Tipo de círculo' });
     const drawKinds = () => kinds.replaceChildren(
-      ...([['friends', 'users', 'Amigos', 'Varias personas. Quedadas, cumpleaños, planes…'], ['couple', 'heart', 'Pareja', 'Dos personas. Además podéis proponer citas y elegir día.']] as const).map(([k, ic, t, d]) =>
+      ...([['friends', 'users', 'Amigos', 'Varias personas.'], ['couple', 'heart', 'Pareja', 'Dos personas, con propuestas de citas.']] as const).map(([k, ic, t, d]) =>
         h('button', { type: 'button', class: `so-kind ${kind === k ? 'on' : ''}`, role: 'radio', 'aria-checked': String(kind === k), onclick: () => { kind = k; drawKinds(); } },
           h('strong', {}, h('span', { html: icon(ic, 16) }), t), h('span', { class: 'muted small' }, d))));
     drawKinds();

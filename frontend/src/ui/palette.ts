@@ -1,5 +1,5 @@
 // Paleta rápida: abrir documentos (Ctrl+A / Ctrl+O), buscar comandos como el
-// cuadro «Dígame» de Word (Alt+Q) e ir a un título (Ctrl+I / Ctrl+G).
+// cuadro «Buscar» de Word (Alt+Q) e ir a un título (Ctrl+I / Ctrl+G).
 import type { App } from '../app';
 import { h, debounce, escapeHTML, relTime } from './dom';
 import { api } from '../api';
@@ -29,7 +29,7 @@ export class Palette {
     this.mode = mode;
     const placeholder = {
       docs: 'Buscar en todos los documentos… (escribe «>» para comandos)',
-      commands: 'Dígame qué quiere hacer… (p. ej. «interlineado», «tabla», «exportar»)',
+      commands: 'Buscar una acción… (p. ej. «interlineado», «tabla», «exportar»)',
       headings: 'Ir a un título del documento…',
     }[mode];
     this.input = h('input', { class: 'palette-input', placeholder, 'aria-label': placeholder, spellcheck: 'false' });
@@ -107,10 +107,10 @@ export class Palette {
       { title: 'Tutorial guiado de Folio', sub: 'Ayuda', hay: 'tutorial ayuda guia aprender primeros pasos recorrido', run: () => void this.app.startTour() },
       { title: 'Ajustes', sub: 'Aplicación', hay: 'ajustes preferencias configuracion tema oscuro atajos', run: () => import('./dialogs').then((d) => d.settingsDialog(this.app)) },
       { title: 'Sincronización en la nube', sub: 'Aplicación', hay: 'sincronizar sincronizacion nube nextcloud webdav google drive vincular dispositivos movil', run: () => import('../sync/syncsettings').then((m) => m.syncDialog(this.app)) },
-      { title: 'Abrir la agenda', sub: 'Agenda', hay: 'agenda calendario tareas horario planificar estudio oposiciones', run: () => void this.app.setMode('agenda') },
+      { title: 'Abrir la agenda', sub: 'Agenda', hay: 'agenda calendario tareas horario planificar estudio', run: () => void this.app.setMode('agenda') },
       { title: 'Nueva tarea en la agenda', sub: 'Agenda', hay: 'nueva tarea agenda evento cita recordatorio', run: async () => { await this.app.setMode('agenda'); this.app.agenda.newTask(this.app.agenda.cursor); } },
-      { title: 'Planificar estudio y repasos', sub: 'Agenda', hay: 'planificar plan repasos repeticion espaciada estudio oposiciones', run: async () => { await this.app.setMode('agenda'); await this.app.agenda.state.plan(); } },
-      { title: 'Temario', sub: 'Agenda', hay: 'temario temas oposicion importar', run: async () => { await this.app.setMode('agenda'); const m = await import('../agenda/topics'); await m.topicsDialog(this.app.agenda, this.app); } },
+      { title: 'Planificar estudio y repasos', sub: 'Agenda', hay: 'planificar plan repasos repeticion espaciada estudio', run: async () => { await this.app.setMode('agenda'); await this.app.agenda.state.plan(); } },
+      { title: 'Temario', sub: 'Agenda', hay: 'temario temas apuntes importar', run: async () => { await this.app.setMode('agenda'); const m = await import('../agenda/topics'); await m.topicsDialog(this.app.agenda, this.app); } },
       { title: 'Progreso del estudio', sub: 'Agenda', hay: 'progreso estadisticas horas racha seguimiento', run: async () => { await this.app.setMode('agenda'); const m = await import('../agenda/stats'); await m.statsDialog(this.app.agenda, this.app); } },
       { title: 'Tutorial de la agenda', sub: 'Ayuda', hay: 'tutorial agenda calendario aprender repaso', run: () => void this.app.startTour('agenda') },
       { title: 'Unir PDF', sub: 'Archivo', hay: 'unir juntar combinar fusionar pdf archivos', run: () => import('./pdfmerge').then((m) => m.pdfMergeDialog(this.app)) },

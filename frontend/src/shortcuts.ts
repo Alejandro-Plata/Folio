@@ -93,7 +93,7 @@ export const SHORTCUTS: ShortcutDef[] = [
   S('zoomOut', 'Alejar', 'Vista', 'Ctrl+Alt+-', 'Ctrl+Alt+-', 'app'),
   S('zoomReset', 'Zoom: ajustar al ancho', 'Vista', 'Ctrl+Alt+0', 'Ctrl+Alt+0', 'app'),
   S('wordCount', 'Contar palabras', 'Vista', 'Ctrl+Mayús+G', 'Ctrl+Mayús+G', 'app'),
-  S('palette', 'Buscar comandos (Dígame)', 'Vista', 'Alt+Q', 'Alt+Q', 'app'),
+  S('palette', 'Buscar acciones', 'Vista', 'Alt+Q', 'Alt+Q', 'app'),
   S('help', 'Atajos de teclado', 'Vista', 'F1', 'F1', 'app'),
 ];
 

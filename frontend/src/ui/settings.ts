@@ -67,11 +67,11 @@ export function settingsPage(app: App, main: HTMLElement, opts: {
       id: 'appearance', ic: 'paint', title: 'Apariencia', desc: 'Cómo se ve Folio y cómo se muestran los documentos.',
       body: () => [
         row('Tema', null, segmented([['system', 'Sistema', 'monitor'], ['light', 'Claro', 'sun'], ['dark', 'Oscuro', 'moon']], s.theme, (v) => set('theme', v), 'Tema')),
-        row('Vista de los documentos', 'En hojas, como se imprimirán, o a todo el ancho para leer y escribir sin cortes.',
+        row('Vista de los documentos', 'Hojas como al imprimir, o lectura continua.',
           segmented([['page', 'Hojas', 'page'], ['web', 'Lectura', 'alignJustify']], s.pageView ? 'page' : 'web', (v) => set('pageView', v === 'page'), 'Vista de los documentos')),
-        row('Ajustar la hoja a la ventana', 'Reduce la hoja si no cabe a lo ancho. Desactívalo para usar siempre tu nivel de zoom.',
+        row('Ajustar la hoja a la ventana', 'Reduce la hoja si no cabe a lo ancho.',
           toggle(s.zoomFit !== false, (v) => set('zoomFit', v), 'Ajustar la hoja a la ventana')),
-        app.mobile ? null : row('Cinta de opciones', 'Las pestañas Inicio, Insertar, Disposición… encima del documento.',
+        app.mobile ? null : row('Cinta de opciones', 'Pestañas Inicio, Insertar, Disposición…',
           toggle(s.ribbon, (v) => set('ribbon', v), 'Cinta de opciones')),
         row('Marcas de formato ¶', 'Muestra los saltos de párrafo y de línea.', toggle(s.showMarks, (v) => set('showMarks', v), 'Marcas de formato')),
       ],
@@ -108,7 +108,7 @@ export function settingsPage(app: App, main: HTMLElement, opts: {
         return [
           h('div', { class: 'st-block' }, h('div', { class: 'st-text' }, h('strong', {}, 'Formato predeterminado')), cards),
           row('Incluir el título del documento', 'Lo pone al principio de la primera página.', toggle(!s.exportNoTitle, (v) => save('exportNoTitle', !v), 'Incluir el título')),
-          row('Versión del alumnado', 'Oculta los bloques de solución. Útil si sueles repartir las fichas sin resolver.', toggle(!!s.exportStudent, (v) => save('exportStudent', v), 'Versión del alumnado')),
+          row('Versión del alumnado', 'Oculta los bloques de solución.', toggle(!!s.exportStudent, (v) => save('exportStudent', v), 'Versión del alumnado')),
           row('Autor', 'Para {autor} en encabezados y pies, los comentarios y las propiedades del .docx.', author),
           app.doc ? h('div', { class: 'st-actions' },
             btn('Exportar este documento…', () => opts.go('export'), 'share', 'btn btn-sm btn-primary'),
@@ -131,7 +131,7 @@ export function settingsPage(app: App, main: HTMLElement, opts: {
       },
     },
     {
-      id: 'storage', ic: 'history', title: 'Versiones y almacenamiento', short: 'Versiones', desc: 'Folio guarda solo mientras escribes y crea versiones para que puedas volver atrás.',
+      id: 'storage', ic: 'history', title: 'Versiones y almacenamiento', short: 'Versiones', desc: 'Guardado automático e historial de versiones.',
       body: () => {
         const interval = h('select', { class: 'input input-sm', 'aria-label': 'Versión automática' },
           ...[2, 5, 10, 15, 30, 60].map((m) => h('option', { value: String(m), selected: s.autoVersionMinutes === m }, `Cada ${m} minutos`)));

@@ -28,7 +28,7 @@ export class Reminders {
   async init() {
     if (!isAndroid) return;
     try {
-      await LocalNotifications.createChannel({ id: CHANNEL, name: 'Agenda de estudio', description: 'Avisos antes de cada tarea', importance: 3 });
+      await LocalNotifications.createChannel({ id: CHANNEL, name: 'Agenda', description: 'Avisos antes de cada tarea', importance: 3 });
       await LocalNotifications.registerActionTypes({ types: [{ id: ACTIONS, actions: [{ id: 'done', title: 'Hecha' }] }] });
       await LocalNotifications.addListener('localNotificationActionPerformed', (e) => void this.perform(e.actionId, e.notification.extra));
       this.ready = true;

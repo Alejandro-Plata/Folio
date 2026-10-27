@@ -129,7 +129,7 @@ export async function topicsDialog(view: AgendaView, app: App) {
 
   const addBtn: HTMLButtonElement = h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => addMenu(addBtn) },
     h('span', { html: icon('plus', 14) }), 'Añadir temas', h('span', { html: icon('chevronDown', 12) }));
-  const notesBtn = h('button', { type: 'button', class: 'btn btn-sm', title: 'Elige varios archivos: cada uno va a su tema según el número de su nombre («Tema 3.pdf», «T03…»)',
+  const notesBtn = h('button', { type: 'button', class: 'btn btn-sm', title: 'Cada archivo se asigna al tema con el número de su nombre («Tema 3.pdf», «T03…»)',
     onclick: async () => {
       if (!clean().length) { toast('Primero añade los temas.'); return; }
       if (list.some((t) => !t.id && t.title.trim())) await persist();
@@ -138,10 +138,10 @@ export async function topicsDialog(view: AgendaView, app: App) {
 
   const empty = h('div', { class: 'pm-empty' }, h('span', { html: icon('layers', 28) }),
     h('p', {}, h('strong', {}, 'Aún no hay temas.')),
-    h('p', { class: 'muted small' }, 'Escríbelos, pega la lista (un tema por línea) o saca el índice de un documento. Luego adjunta a cada tema sus apuntes en PDF o Word.'));
+    h('p', { class: 'muted small' }, 'Se escriben, se pega una lista o se importa el índice de un documento. Cada tema admite apuntes en PDF o Word.'));
   const intro = h('p', { class: 'ag-topics-intro' },
-    'Folio reparte estos temas en tu calendario: primero los estudias y después te los vuelve a poner para repasarlos justo antes de que se te olviden. ',
-    h('span', { class: 'muted' }, 'Adjunta a cada tema sus apuntes y los tendrás a mano en cada estudio o repaso.'));
+    'El plan reparte el estudio de cada tema y sus repasos en el calendario. ',
+    h('span', { class: 'muted' }, 'Los apuntes de cada tema se abren desde la propia tarea.'));
   const body = h('div', { class: 'ag-form' }, intro,
     h('div', { class: 'pm-tools' }, addBtn, notesBtn, h('div', { class: 'spacer' }), count),
     empty, rows);
@@ -170,7 +170,7 @@ async function pickDoc(app: App, current?: string): Promise<string | null> {
   const docs = app.docs.filter((d) => !d.trashed);
   const sel = h('select', { class: 'input', 'aria-label': 'Documento' }, h('option', { value: '' }, 'Ninguno'),
     ...docs.map((d) => h('option', { value: d.id, selected: d.id === current }, d.title || 'Sin título')));
-  const r = await modal('Documento de Folio con los apuntes', h('div', { class: 'ag-form' }, h('p', { class: 'muted small' }, 'Si escribes los apuntes de este tema en Folio, enlázalos aquí para abrirlos desde el repaso.'), sel),
+  const r = await modal('Documento de Folio con los apuntes', h('div', { class: 'ag-form' }, h('p', { class: 'muted small' }, 'Documento de Folio con los apuntes de este tema.'), sel),
     [{ label: 'Cancelar', value: null, kind: 'ghost' }, { label: 'Aceptar', value: 'ok', kind: 'primary' }], { className: 'is-small' });
   return r === 'ok' ? sel.value : null;
 }
@@ -243,7 +243,7 @@ async function pickFolioDoc(app: App): Promise<{ items: Found[]; parentId: strin
 
 /** Vista previa de lo detectado: se marca qué entra y, si se quiere, se crea un documento de apuntes por tema. */
 async function reviewImport(app: App, found: Found[], parentId: string, accept: (items: { number: number; title: string; block?: string; docId?: string }[]) => void) {
-  if (!found.length) { toast('No he encontrado temas en el documento. Prueba a pegar la lista.', { kind: 'error' }); return; }
+  if (!found.length) { toast('No se han encontrado temas en el documento.', { kind: 'error' }); return; }
   const rows = h('div', { class: 'ag-found' }, ...found.map((f) => {
     const box = h('input', { type: 'checkbox', checked: f.keep, 'aria-label': `Incluir el tema ${f.number}` });
     box.addEventListener('change', () => { f.keep = box.checked; });
@@ -254,7 +254,7 @@ async function reviewImport(app: App, found: Found[], parentId: string, accept: 
   const withContent = found.some((f) => f.content.length);
   const makeDocs = h('input', { type: 'checkbox', checked: false });
   const body = h('div', { class: 'ag-form' },
-    h('p', {}, `He encontrado ${found.length} temas. Desmarca lo que no sea un tema y corrige los títulos si hace falta.`),
+    h('p', {}, `${found.length} temas encontrados. Desmarca lo que no sea un tema.`),
     rows,
     withContent ? h('label', { class: 'ag-check' }, makeDocs, 'Crear un documento de apuntes por tema con su contenido y enlazarlo') : null);
   const r = await modal('Temas detectados', body, [{ label: 'Cancelar', value: null, kind: 'ghost' }, { label: 'Añadir al temario', value: 'ok', kind: 'primary' }], { wide: true, className: 'ag-modal' });

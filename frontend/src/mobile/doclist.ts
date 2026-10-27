@@ -66,7 +66,7 @@ export class DocList {
       }
       const kids = docs.filter((d) => d.parentId === parent).sort((a, b) => a.order - b.order);
       rows.push(...kids.map((d) => this.row(d, docs)));
-      if (!kids.length && !cur) rows.push(h('p', { class: 'm-empty' }, 'Todavía no hay documentos. Toca + para crear el primero.'));
+      if (!kids.length && !cur) rows.push(h('p', { class: 'm-empty' }, 'Sin documentos. Toca + para crear uno.'));
     }
     this.list.replaceChildren(...rows);
   }

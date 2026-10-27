@@ -738,7 +738,7 @@ export class App {
   async namedVersion() {
     if (!this.doc) return;
     await this.flush();
-    const label = await promptText('Guardar versión', 'Nombre de la versión (por ejemplo «Antes de revisar el tema 3»)', '', { ok: 'Guardar versión' });
+    const label = await promptText('Guardar versión', 'Nombre de la versión (por ejemplo «Primer borrador»)', '', { ok: 'Guardar versión' });
     if (label === null) return;
     await api.CreateVersion(this.doc.meta.id, label.trim() || 'Versión guardada');
     this.panels.refreshVersions();
@@ -747,7 +747,7 @@ export class App {
 
   async restoreVersion(vid: string) {
     if (!this.doc) return;
-    const ok = await confirmDialog('Restaurar versión', 'El documento actual se sustituirá por esta versión. Antes se guarda una copia del estado actual en el historial, así que podrás volver atrás.', 'Restaurar');
+    const ok = await confirmDialog('Restaurar versión', 'El documento se sustituirá por esta versión. El estado actual queda guardado en el historial.', 'Restaurar');
     if (!ok) return;
     await this.flush();
     const d = await api.RestoreVersion(this.doc.meta.id, vid);

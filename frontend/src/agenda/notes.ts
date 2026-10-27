@@ -49,7 +49,7 @@ async function attach(view: AgendaView, topic: Topic, paths: string[]): Promise<
 }
 
 export async function removeNote(view: AgendaView, topic: Topic, f: TopicFile): Promise<Topic | null> {
-  const ok = await modal('Quitar los apuntes', h('p', {}, `¿Quitar «${f.name}» del tema ${topic.number}? Se borra la copia guardada en Folio (también en tus otros dispositivos); el archivo original no se toca.`),
+  const ok = await modal('Quitar los apuntes', h('p', {}, `¿Quitar «${f.name}» del tema ${topic.number}? Se borra la copia de Folio en todos los dispositivos; el archivo original no cambia.`),
     [{ label: 'Cancelar', value: null, kind: 'ghost' }, { label: 'Quitar', value: 'ok', kind: 'danger' }], { className: 'is-small' });
   if (ok !== 'ok') return null;
   try {
@@ -78,8 +78,8 @@ export async function bulkAttach(view: AgendaView, topics: Topic[]): Promise<boo
   });
   const matched = picks.filter((p) => p.sel.value).length;
   const body = h('div', { class: 'ag-form' },
-    h('p', {}, matched === files.length ? `He emparejado los ${files.length} archivos por el número de su nombre. Revisa que estén bien.`
-      : `He emparejado ${matched} de ${files.length} archivos por el número de su nombre. Elige el tema de los demás.`),
+    h('p', {}, matched === files.length ? `${files.length} archivos asignados por el número de su nombre.`
+      : `${matched} de ${files.length} archivos asignados por el número de su nombre. Elige el tema del resto.`),
     h('div', { class: 'ag-found' }, ...picks.map(({ f, sel }) => h('div', { class: 'ag-found-row ag-note-match' },
       h('span', { class: 'ag-note-name', title: f.name }, f.name), h('span', { html: icon('arrowRight', 14), 'aria-hidden': 'true' }), sel))));
   const r = await modal('Añadir apuntes', body, [{ label: 'Cancelar', value: null, kind: 'ghost' }, { label: 'Añadir', value: 'ok', kind: 'primary' }], { wide: true, className: 'ag-modal' });

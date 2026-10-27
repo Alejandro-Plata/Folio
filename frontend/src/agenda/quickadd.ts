@@ -14,7 +14,7 @@ import type { AgendaView } from './view';
 export class QuickAdd {
   input = h('input', {
     class: 'ag-quick-input', type: 'text', autocomplete: 'off', spellcheck: 'false',
-    placeholder: 'Añadir: «mañana de 9 a 11 estudio tema 4» · «repaso cada martes a las 17»',
+    placeholder: 'Añadir: «mañana de 9 a 11 estudio» · «reunión cada martes a las 17»',
     'aria-label': 'Añadir tareas escribiendo una frase', 'aria-describedby': 'ag-quick-help',
   });
   private preview = h('div', { class: 'ag-preview', role: 'region', 'aria-label': 'Lo que se va a crear', 'aria-live': 'polite', hidden: true });

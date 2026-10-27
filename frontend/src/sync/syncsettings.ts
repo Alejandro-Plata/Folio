@@ -67,7 +67,7 @@ export async function syncDialog(app: App) {
       card('cloud', 'Nextcloud u otro servidor WebDAV', 'Tu propia nube o la de tu centro.',
         h('button', { type: 'button', class: 'btn btn-sm', onclick: () => { webdavOpen = !webdavOpen; render(); } }, webdavOpen ? 'Ocultar' : 'Elegir')),
       webdavForm,
-      card('globe', 'Google Drive', 'Folio solo ve los archivos que crea él mismo, en una carpeta «Folio».',
+      card('globe', 'Google Drive', 'Folio solo accede a su propia carpeta «Folio».',
         h('button', { type: 'button', class: 'btn btn-sm', disabled: busy, onclick: () => void run(async () => { await api.SyncLinkGoogle(); await mgr.refresh(); await mgr.run('vinculación', { manual: true }); }) }, 'Vincular')),
       card('qr', 'Ya tengo otro dispositivo vinculado', isAndroid ? 'Escanea el código que muestra el otro dispositivo.' : 'Pega los datos que muestra el otro dispositivo.',
         h('button', { type: 'button', class: 'btn btn-sm', onclick: () => void pair() }, isAndroid ? 'Escanear' : 'Pegar datos')),

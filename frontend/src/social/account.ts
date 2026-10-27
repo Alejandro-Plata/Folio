@@ -38,7 +38,7 @@ export async function accountDialog(app: App) {
       } else {
         const r = await api.SocialSignUp(email.value, pass.value, name.value);
         if (r.needsConfirm) {
-          toast('Te hemos enviado un correo: abre el enlace para confirmar la cuenta y luego entra aquí.', { kind: 'ok', ms: 10000 });
+          toast('Correo enviado. Confirma la cuenta desde el enlace y vuelve a entrar.', { kind: 'ok', ms: 10000 });
           mode = 'in';
           return;
         }

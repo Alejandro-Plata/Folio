@@ -81,7 +81,7 @@ export class Panels {
     const hs = collectHeadings(this.app.editor.state.doc);
     this.body.innerHTML = '';
     if (!hs.length) {
-      this.body.append(h('p', { class: 'panel-empty' }, 'Los títulos del documento aparecerán aquí. Usa Ctrl+Alt+1, 2 o 3, o escribe «# » al principio de una línea.'));
+      this.body.append(h('p', { class: 'panel-empty' }, 'Sin títulos. Ctrl+Alt+1, 2 o 3, o «# » al principio de una línea.'));
       return;
     }
     for (const hd of hs) {
@@ -116,7 +116,7 @@ export class Panels {
     this.body.innerHTML = '';
     this.body.append(h('button', { class: 'btn btn-sm btn-block', onclick: () => this.app.run('comment') }, h('span', { html: icon('plus') }), 'Nuevo comentario sobre la selección'));
     if (!list.length) {
-      this.body.append(h('p', { class: 'panel-empty' }, 'No hay comentarios. Selecciona texto y pulsa Ctrl+Alt+M para comentar, como en Word.'));
+      this.body.append(h('p', { class: 'panel-empty' }, 'Sin comentarios. Selecciona texto y pulsa Ctrl+Alt+M.'));
       return;
     }
     for (const c of list) {

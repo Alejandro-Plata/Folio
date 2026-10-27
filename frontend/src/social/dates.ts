@@ -66,7 +66,7 @@ export async function datesDialog(app: App, circleId?: string) {
         h('span', { html: icon(chosen ? 'checkCircle' : 'calendar', 16), 'aria-hidden': 'true' }),
         h('div', { class: 'so-opt-main' }, h('span', {}, when(o)), h('span', { class: 'muted small' }, `${theirs ? mgr.personName(o.proposed_by) : 'Tú'} · ${relativeDate(o.date, todayISO())}`)),
         open && theirs ? h('button', { type: 'button', class: 'btn btn-sm btn-primary', disabled: busy, onclick: () => void busyRun(async () => {
-          await mgr.run(() => api.SocialAccept(o.id!), `¡Hecho! «${p.title}» queda en vuestra agenda`);
+          await mgr.run(() => api.SocialAccept(o.id!), `«${p.title}» añadida a la agenda de los dos`);
         }) }, 'Elegir') : null);
     });
     const counter = countering === p.id ? optionsEditor(1) : null;
@@ -132,7 +132,7 @@ export async function datesDialog(app: App, circleId?: string) {
       ...(incoming.length ? [h('div', { class: 'so-section' }, 'Por responder'), ...incoming.map(card)] : []),
       ...(waiting.length ? [h('div', { class: 'so-section' }, `Esperando a ${partner}`), ...waiting.map(card)] : []),
       ...(closed.length ? [h('div', { class: 'so-section' }, 'Últimas'), ...closed.map(card)] : []),
-      ...(!all.length && !composing ? [h('p', { class: 'muted small' }, 'Aún no habéis propuesto ninguna cita. Propón varios días y quien la reciba elige el que mejor le venga.')] : []));
+      ...(!all.length && !composing ? [h('p', { class: 'muted small' }, 'No hay citas. Se proponen varios días y la otra persona elige uno.')] : []));
   };
   let closeFn: ((v: null) => void) | undefined;
   const off = mgr.onChange(() => { if (!busy) render(); });

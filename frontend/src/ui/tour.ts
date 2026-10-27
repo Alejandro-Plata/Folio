@@ -136,13 +136,12 @@ export class Tour {
     return [
       {
         title: 'Bienvenida a Folio',
-        body: `<p>Este recorrido te enseña lo esencial en unos cinco minutos. En cada paso se <b>resalta el elemento real</b> de la pantalla.</p>
-          <p>En los pasos marcados con <span class="tour-badge">Pruébalo</span> haces tú la acción y Folio comprueba que ha salido bien.</p>
-          <p>Para practicar se abre un documento aparte, «${PRACTICE_TITLE}». Se borra solo al terminar y tus documentos no se tocan.</p>`,
+        body: `<p>Recorrido por lo esencial. Cada paso resalta el elemento del que habla.</p>
+          <p>Los pasos <span class="tour-badge">Pruébalo</span> se comprueban solos. Se practica en «${PRACTICE_TITLE}», que se borra al terminar.</p>`,
       },
       {
         title: 'Tus documentos',
-        body: '<p>Aquí están todos tus documentos. Un toque abre uno; si tiene páginas dentro, entras en ellas. Mantén pulsado (o toca ⋯) para marcar favoritos, mover, duplicar o borrar.</p><p>El botón <b>+</b> crea uno nuevo, en blanco o con una plantilla.</p>',
+        body: '<p>Un toque abre un documento; la pulsación larga (o ⋯) da favoritos, mover, duplicar y borrar. <b>+</b> crea uno nuevo.</p>',
         target: () => document.querySelector('.m-docs .m-list'),
         before: async () => { await this.openPractice(); await shell().go('docs'); },
       },
@@ -151,11 +150,11 @@ export class Tour {
         body: '<p>Abre el documento de práctica para escribir en él.</p>',
         target: () => document.querySelector('.m-docs .m-row-btn'),
         before: async () => { await shell().go('docs'); reset(); },
-        task: { text: `Toca «${PRACTICE_TITLE}».`, check: () => shell().screen === 'editor', done: 'Ya estás dentro. Con la flecha de arriba vuelves a la lista.' },
+        task: { text: `Toca «${PRACTICE_TITLE}».`, check: () => shell().screen === 'editor', done: 'La flecha de arriba vuelve a la lista.' },
       },
       {
         title: 'Formato del texto',
-        body: '<p>Al escribir aparece la <b>barra de formato</b> sobre el teclado: negrita, cursiva, subrayado, listas, sangrías, ecuaciones, imágenes y deshacer. Se desplaza hacia los lados.</p>',
+        body: '<p>Al escribir aparece la <b>barra de formato</b> sobre el teclado. Se desplaza hacia los lados.</p>',
         target: fb('Negrita'),
         before: async () => { await toEditor(); closeSheets(); this.selectText(BOLD_SENTENCE); },
         task: {
@@ -166,45 +165,45 @@ export class Tour {
       },
       {
         title: 'Estilos, fuente y color',
-        body: '<p>El botón <b>Aa</b> abre todo lo demás: estilos (títulos, cita, código), fuente, tamaño, color, resaltado, alineación e interlineado.</p>',
+        body: '<p><b>Aa</b>: estilos, fuente, tamaño, color, resaltado, alineación e interlineado.</p>',
         target: fb('Estilos'),
         before: async () => { await toEditor(); closeSheets(); reset(); this.selectText(BOLD_SENTENCE); },
-        task: { text: 'Toca <b>Aa</b> para abrir la hoja de formato.', check: latch(() => !!document.querySelector('.m-sheet')), done: 'Elige un estilo o una fuente si quieres. Cierra la hoja para seguir.' },
+        task: { text: 'Toca <b>Aa</b> para abrir la hoja de formato.', check: latch(() => !!document.querySelector('.m-sheet')), done: 'Al cerrar la hoja se sigue con el tutorial.' },
       },
       {
         title: 'Insertar con «+»',
-        body: '<p>El botón <b>+</b> inserta tablas, cuadros destacados (definición, ejemplo, aviso…), ecuaciones, soluciones plegables, líneas de respuesta y más. Tiene buscador.</p>',
+        body: '<p><b>+</b> inserta tablas, cuadros, ecuaciones, soluciones, líneas de respuesta y más, con buscador.</p>',
         target: fb('Insertar'),
         before: async () => { closeSheets(); await toEditor(); reset(); this.focusAfter(H_ELEMENTS); },
-        task: { text: 'Toca <b>+</b> y elige un bloque, por ejemplo <b>Definición</b>.', check: () => docJSON().includes('"type":"callout"'), done: 'Bloque insertado. Puedes escribir dentro.' },
+        task: { text: 'Toca <b>+</b> y elige un bloque, por ejemplo <b>Definición</b>.', check: () => docJSON().includes('"type":"callout"'), done: 'Bloque insertado.' },
       },
       {
         title: 'El menú «/»',
-        body: '<p>Otra forma de insertar: en una línea vacía escribe <kbd>/</kbd> y aparece el menú de bloques. Sigue escribiendo para filtrar, por ejemplo <kbd>/tabla</kbd>.</p><p>Con una <b>pulsación larga sobre un bloque</b> se abre su menú: convertir, duplicar, mover o eliminar.</p>',
+        body: '<p><kbd>/</kbd> en una línea vacía abre el menú de bloques; lo que se escribe después filtra (<kbd>/tabla</kbd>).</p><p>La pulsación larga sobre un bloque abre su menú: convertir, duplicar, mover o eliminar.</p>',
         target: () => this.paragraphAfter(H_ELEMENTS),
         before: async () => { closeSheets(); await toEditor(); reset(); this.focusAfter(H_ELEMENTS); },
         task: { text: `Escribe <kbd>/</kbd> en la línea vacía bajo «${H_ELEMENTS}». Puedes elegir un bloque o cerrar el menú.`, check: latch(() => !!document.querySelector('.slash-menu')), done: 'Ese es el menú de bloques.' },
       },
       {
         title: 'Más acciones',
-        body: '<p>En <b>⋯</b> están: exportar (Word, PDF, web, Markdown), imprimir, buscar y reemplazar, esquema, comentarios, historial de versiones, configurar página, ver como hojas y la vista del alumnado.</p><p>Folio guarda solo mientras escribes y crea versiones; en el historial puedes compararlas y restaurarlas.</p>',
+        body: '<p><b>⋯</b>: exportar, imprimir, buscar y reemplazar, esquema, comentarios, versiones, configurar página, ver como hojas y vista del alumnado.</p>',
         target: () => document.querySelector('.m-appbar button[aria-label="Más acciones"]'),
         before: async () => { closeSheets(); await toEditor(); (document.activeElement as HTMLElement | null)?.blur(); },
       },
       {
         title: 'Agenda, buscar y más',
-        body: '<p>Abajo cambias de sección: <b>Documentos</b>, <b>Agenda</b> de estudio, <b>Buscar</b> (en el texto de todos tus documentos y entre las acciones) y <b>Más</b> (plantillas, importar, unir PDF, papelera, ajustes y tutoriales).</p>',
+        body: '<p>Abajo: <b>Documentos</b>, <b>Agenda</b>, <b>Buscar</b> (texto y acciones) y <b>Más</b> (plantillas, importar, unir PDF, papelera y ajustes).</p>',
         target: () => document.querySelector('.m-nav'),
         before: async () => { closeSheets(); await shell().go('docs'); },
       },
       {
         title: 'Tus datos en todos tus dispositivos',
-        body: '<p>En <b>Más &gt; Sincronización</b> puedes vincular tu nube (Nextcloud u otro WebDAV, o Google Drive) para tener los mismos documentos y la misma agenda en el móvil y en el ordenador. Los datos van directos a tu nube.</p>',
+        body: '<p><b>Más &gt; Sincronización</b> vincula Nextcloud (u otro WebDAV) o Google Drive para tener lo mismo en todos los dispositivos.</p>',
         target: () => document.querySelector('.m-nav-btn:nth-child(4)'),
       },
       {
         title: 'Ya sabes lo esencial',
-        body: `<p>Has practicado formato, bloques y la navegación.</p><p>Al terminar se borra «${PRACTICE_TITLE}». Puedes repetir este tutorial desde <b>Más &gt; Tutorial de documentos</b>.</p>`,
+        body: `<p>Se borra «${PRACTICE_TITLE}». El «Manual de Folio» explica cada función en detalle, y el tutorial se repite desde <b>Más &gt; Tutorial de documentos</b>.</p>`,
       },
     ];
   }
@@ -221,14 +220,12 @@ export class Tour {
     return [
       {
         title: 'Bienvenida a Folio',
-        body: `<p>Este recorrido te enseña lo esencial en unos cinco minutos. En cada paso se <b>resalta el elemento real</b> de la pantalla del que se habla.</p>
-          <p>En los pasos marcados con <span class="tour-badge">Pruébalo</span> haces tú la acción y Folio comprueba que ha salido bien.</p>
-          <p>Para practicar se abre un documento aparte, «${PRACTICE_TITLE}», con unos apuntes breves. Se borra solo al terminar, y tus documentos no se tocan.</p>`,
+        body: `<p>Recorrido por lo esencial. Cada paso resalta el elemento del que habla.</p>
+          <p>Los pasos <span class="tour-badge">Pruébalo</span> se comprueban solos. Se practica en «${PRACTICE_TITLE}», que se borra al terminar.</p>`,
       },
       {
         title: 'Tus documentos',
-        body: `<p>El panel lateral reúne todos tus documentos. Puedes anidarlos (páginas dentro de páginas), arrastrarlos para reordenarlos y marcarlos como favoritos.</p>
-          <p>El botón <b>+</b> junto a «Documentos» crea uno nuevo. Ahora tienes abierto «${PRACTICE_TITLE}».</p>`,
+        body: `<p>Todos los documentos, anidables y ordenables arrastrando. <b>Nuevo documento</b> está arriba.</p>`,
         target: () => document.getElementById('sidebar'),
         before: async () => {
           app.showSidebar(true);
@@ -237,26 +234,24 @@ export class Tour {
       },
       {
         title: 'Título del documento',
-        body: '<p>El título se escribe aquí, encima del texto. Es el nombre que aparece en el panel lateral y en los archivos que exportes.</p><p>Pulsa <kbd>Intro</kbd> para bajar al texto.</p>',
+        body: '<p>El título es el nombre del documento en el panel y en lo que se exporta. <kbd>Intro</kbd> baja al texto.</p>',
         target: () => document.querySelector('.doc-title'),
       },
       {
         title: 'Hojas reales',
-        body: `<p>En la vista <b>Diseño de impresión</b> el documento se divide en hojas con su encabezado, su pie y «Página X de Y».</p>
-          <p>Cada hoja contiene exactamente lo mismo que la página del PDF o de la impresión. Folio guarda solo mientras escribes.</p>`,
+        body: `<p>En <b>Diseño de impresión</b> cada hoja coincide con la página del PDF y de la impresión.</p>`,
         target: () => document.getElementById('page'),
         before: () => { if (!app.settings.pageView) app.setSetting('pageView', true); },
       },
       {
         title: 'La cinta de opciones',
-        body: `<p>Las herramientas se agrupan en pestañas: <b>Inicio</b> (formato), <b>Insertar</b>, <b>Disposición</b> (página), <b>Referencias</b>, <b>Revisar</b> y <b>Vista</b>.</p>
-          <p><b>Archivo</b> abre Nuevo, Abrir, Exportar e Imprimir. Las pestañas <b>Tabla</b> e <b>Imagen</b> solo aparecen cuando trabajas con una tabla o una imagen.</p>`,
+        body: `<p>Pestañas como en Word: <b>Inicio</b>, <b>Insertar</b>, <b>Disposición</b>, <b>Referencias</b>, <b>Revisar</b> y <b>Vista</b>. <b>Tabla</b> e <b>Imagen</b> aparecen al trabajar con ellas.</p>`,
         target: () => document.querySelector('.ribbon .rb-tabs'),
         before: () => app.ribbon.select('home'),
       },
       {
         title: 'Formato del texto',
-        body: `<p>El grupo <b>Fuente</b> tiene negrita, cursiva, subrayado, tamaño, color y resaltado. Los atajos más usados: ${k('bold')} negrita, ${k('italic')} cursiva, ${k('underline')} subrayado.</p>`,
+        body: `<p>Negrita ${k('bold')}, cursiva ${k('italic')}, subrayado ${k('underline')}, tamaño, color y resaltado.</p>`,
         target: () => ribbonGroup('Fuente'),
         before: () => { app.ribbon.select('home'); this.selectText(BOLD_SENTENCE); },
         task: {
@@ -267,7 +262,7 @@ export class Tour {
       },
       {
         title: 'Fuentes',
-        body: '<p>El selector muestra cada fuente con su propia letra, agrupadas en sin serifa, con serifa, lectura fácil, manuscrita y monoespaciada.</p><p>Las fuentes de Folio se incrustan en el PDF, así que se ven igual en cualquier equipo.</p>',
+        body: '<p>Cada fuente se muestra con su letra. Las incluidas en Folio se incrustan en el PDF.</p>',
         target: () => document.querySelector('.ribbon .fp-button'),
         before: () => { app.ribbon.select('home'); this.selectText(BOLD_SENTENCE); },
         task: {
@@ -279,13 +274,13 @@ export class Tour {
       {
         title: 'Estilos',
         body: `<p>Los estilos dan estructura: <b>Título 1</b> ${k('h1')}, <b>Título 2</b> ${k('h2')}, <b>Título 3</b> ${k('h3')} y <b>Normal</b> ${k('normal')}.</p>
-          <p>Con títulos, el <b>Índice</b> (Referencias) y el panel <b>Esquema</b> se rellenan solos, y al exportar a .docx se conservan como títulos.</p>`,
+          <p>Los títulos alimentan el <b>Índice</b> y el panel <b>Esquema</b>.</p>`,
         target: () => ribbonGroup('Estilos'),
         before: () => app.ribbon.select('home'),
       },
       {
         title: 'El menú «/»',
-        body: '<p>En una línea vacía, escribe <kbd>/</kbd> y aparece un menú con todos los bloques (títulos, listas, tablas, cuadros, ecuaciones…). Sigue escribiendo para filtrar, por ejemplo <kbd>/tabla</kbd>.</p>',
+        body: '<p><kbd>/</kbd> en una línea vacía abre el menú de bloques; lo que se escribe después filtra (<kbd>/tabla</kbd>).</p>',
         target: () => this.paragraphAfter(H_ELEMENTS),
         before: () => { resetLatch(); this.focusAfter(H_ELEMENTS); },
         task: {
@@ -296,61 +291,57 @@ export class Tour {
       },
       {
         title: 'Cuadros destacados',
-        body: '<p>En <b>Insertar</b> está todo lo que se puede añadir. Los <b>cuadros</b> resaltan definiciones, ejemplos, avisos importantes, consejos o ejercicios, con su color y su icono.</p>',
+        body: '<p>Los <b>cuadros</b> destacan definiciones, ejemplos, avisos, consejos o ejercicios.</p>',
         target: () => ribbonButton('Cuadro'),
         before: () => { app.ribbon.select('insert'); this.focusAfter(H_ELEMENTS); },
         task: {
           text: 'Pulsa <b>Cuadro</b> y elige <b>Definición</b>, por ejemplo para definir qué es el centro.',
           check: () => docJSON().includes('"type":"callout"'),
-          done: 'Cuadro insertado. Puedes escribir dentro.',
+          done: 'Cuadro insertado.',
         },
       },
       {
         title: 'Ecuaciones',
-        body: `<p>Las ecuaciones se escriben en LaTeX y se ven con calidad de imprenta. ${k('equation')} inserta una en el texto. También puedes escribir <kbd>$x^2$</kbd> directamente, o elegir <b>Ecuación</b> para un bloque centrado.</p>`,
+        body: `<p>Ecuaciones en LaTeX: ${k('equation')} o <kbd>$x^2$</kbd> en el texto, y <b>Ecuación</b> para un bloque centrado.</p>`,
         target: () => ribbonGroup('Símbolos'),
         before: () => { app.ribbon.select('insert'); this.focusEndOf(AREA_TEXT); },
         task: {
           text: `El cursor está al final de «${AREA_TEXT.trim()}». Pulsa ${k('equation')}, escribe <code>\\pi r^2</code> y pulsa <kbd>Intro</kbd>.`,
           check: () => /"type":"math(Inline|Block)"/.test(docJSON()),
-          done: 'Ecuación insertada. Haz clic en ella para editarla.',
+          done: 'Ecuación insertada. Un clic la edita.',
         },
       },
       {
         title: 'Herramientas para clase',
-        body: `<p>El grupo <b>Docente</b> añade lo típico de fichas y exámenes:</p>
-          <ul><li><b>Solución</b>: un bloque plegable con la respuesta.</li><li><b>Líneas</b>: renglones para responder a mano.</li><li><b>Pregunta</b>: enunciado numerado con su puntuación.</li></ul>
-          <p>Al final de los apuntes hay un ejercicio con su solución.</p>`,
+        body: `<p><b>Solución</b> (bloque plegable), <b>Líneas</b> (renglones para responder) y <b>Pregunta</b> (enunciado numerado con puntuación).</p>`,
         target: () => ribbonGroup('Docente'),
         before: () => { app.ribbon.select('insert'); this.scrollTo(H_EXERCISES); },
       },
       {
         title: 'Versión del alumnado',
-        body: '<p>Con un clic ves el documento como lo recibirá el alumnado: sin soluciones y con la paginación que tendrá el PDF.</p><p>Al exportar o imprimir, marca «Versión del alumnado» para obtener esa misma versión.</p>',
+        body: '<p>Muestra el documento sin soluciones, con la paginación del PDF. La misma opción está al exportar e imprimir.</p>',
         target: () => ribbonButton('Vista del alumnado'),
         before: () => { app.ribbon.select('view'); this.scrollTo(H_EXERCISES); },
         task: {
-          text: 'Pulsa <b>Vista del alumnado</b> y fíjate en que la solución desaparece.',
+          text: 'Pulsa <b>Vista del alumnado</b>.',
           check: () => app.studentView,
-          done: 'La solución está oculta. Al pasar al siguiente paso vuelve a la vista normal.',
+          done: 'Solución oculta. El siguiente paso vuelve a la vista normal.',
         },
       },
       {
         title: 'Configurar la página',
-        body: '<p><b>Disposición</b> controla márgenes, orientación, tamaño de papel, encabezado y pie de página, y la fuente y el interlineado de todo el documento.</p><p>En encabezado y pie puedes usar <code>{titulo}</code>, <code>{fecha}</code> y <code>{autor}</code>.</p>',
+        body: '<p>Márgenes, orientación, papel, encabezado y pie, fuente e interlineado. Encabezado y pie admiten <code>{titulo}</code>, <code>{fecha}</code> y <code>{autor}</code>.</p>',
         target: () => document.querySelector('.ribbon .rb-body'),
         before: () => { if (app.studentView) app.toggleStudentView(); app.ribbon.select('layout'); },
       },
       {
         title: 'La barra de estado',
-        body: `<p>Abajo ves la página actual y el total, las palabras, si está guardado y el zoom.</p>
-          <p>El botón <b>Atajos</b> cambia entre los atajos en español (${app.keymap === 'es' ? 'los que usas ahora' : 'Ctrl+N negrita'}) y en inglés (${app.keymap === 'en' ? 'los que usas ahora' : 'Ctrl+B negrita'}). Los botones de la derecha cambian entre hojas y vista de lectura, y el zoom se ajusta solo al ancho de la ventana.</p>`,
+        body: `<p>Página, palabras, estado del guardado y zoom. <b>Atajos</b> cambia entre los de Word en español y en inglés.</p>`,
         target: () => document.getElementById('statusbar'),
       },
       {
         title: 'Guardar y versiones',
-        body: `<p>Folio guarda solo mientras escribes y crea una versión cada pocos minutos de trabajo.</p>
-          <p>${k('save')} guarda un <b>punto de restauración</b>, y ${k('saveVersion')} una versión con nombre (por ejemplo «Antes de corregir»).</p>`,
+        body: `<p>El guardado es automático. ${k('save')} crea un punto de restauración y ${k('saveVersion')}, una versión con nombre.</p>`,
         target: () => document.querySelector('.topbar [title^="Guardar"]'),
         before: async () => {
           app.ribbon.select('home');
@@ -364,42 +355,39 @@ export class Tour {
       },
       {
         title: 'Historial de versiones',
-        body: '<p>El historial muestra todas las versiones. Puedes verlas, <b>compararlas palabra a palabra</b> con la actual y restaurarlas.</p><p>Restaurar nunca borra nada: antes se guarda una copia del estado actual.</p>',
+        body: '<p>Ver, comparar palabra a palabra y restaurar versiones. Restaurar guarda antes el estado actual.</p>',
         target: () => document.querySelector('.topbar [title^="Historial de versiones"]'),
         task: {
           text: 'Abre el historial con el botón resaltado.',
           check: () => app.panels.active === 'versions',
-          done: 'Ahí está tu punto de restauración. Puedes cerrar el panel con la ×.',
+          done: 'El punto de restauración está en la lista.',
         },
       },
       {
         title: 'Buscar cualquier cosa',
-        body: `<p>¿No encuentras una opción? Pulsa ${k('palette')} y escribe lo que quieres hacer: «interlineado», «tabla», «exportar», «tutorial»… También busca dentro de todos tus documentos, sin distinguir tildes.</p>`,
+        body: `<p>${k('palette')} busca cualquier acción («interlineado», «tabla», «exportar») y el texto de todos los documentos.</p>`,
         target: () => document.querySelector('.top-search'),
         before: () => { resetLatch(); app.panels.close(); },
         task: {
           text: `Pulsa ${k('palette')} o el cuadro «Buscar» y escribe <kbd>tabla</kbd>. Cierra con <kbd>Esc</kbd>.`,
           check: latch(() => !!document.querySelector('.palette')),
-          done: 'Desde ahí se llega a cualquier comando.',
+          done: 'Búsqueda abierta.',
         },
       },
       {
         title: 'Exportar e imprimir',
-        body: `<p><b>Exportar</b> genera <b>PDF</b> (idéntico a las hojas que ves), <b>Word (.docx)</b>, página web y Markdown. ${k('print')} imprime con vista previa.</p>
-          <p>En ambos puedes elegir la versión del alumnado y si incluir el título.</p>`,
+        body: `<p>PDF, Word (.docx), página web y Markdown. ${k('print')} imprime con vista previa.</p>`,
         target: () => document.querySelector('.topbar .btn-accent'),
       },
       {
         title: 'Ayuda siempre a mano',
-        body: `<p>El botón <b>?</b> abre la ayuda: la lista de atajos (${k('help')}) y este tutorial, que puedes repetir cuando quieras.</p>
-          <p>También está en <b>Archivo &gt; Tutorial</b> y buscando «tutorial» con ${k('palette')}.</p>`,
+        body: `<p><b>?</b>: atajos (${k('help')}), este tutorial y el «Manual de Folio».</p>`,
         target: () => document.querySelector('.topbar .help-btn'),
       },
       {
         title: 'Ya sabes lo esencial',
-        body: `<p>Has practicado formato, fuentes, bloques, cuadros, ecuaciones, la versión del alumnado, las versiones y la búsqueda.</p>
-          ${app.os === 'windows' ? '<p><b>Consejo:</b> haz clic derecho en el icono de Folio de la barra de tareas y elige «Anclar a la barra de tareas» para tenerlo siempre a mano.</p>' : ''}
-          <p>Al terminar se borra «${PRACTICE_TITLE}» y vuelves a tus documentos.</p>`,
+        body: `<p>Se borra «${PRACTICE_TITLE}». El «Manual de Folio» explica cada función en detalle.</p>
+          ${app.os === 'windows' ? '<p>Para anclar Folio: clic derecho en su icono de la barra de tareas › «Anclar a la barra de tareas».</p>' : ''}`,
       },
     ];
   }
@@ -512,7 +500,7 @@ export class Tour {
     const taskBox = task
       ? h('div', { class: `tour-task ${this.taskDone ? 'is-done' : ''}` },
         h('span', { class: 'tour-task-ic', html: icon(this.taskDone ? 'checkCircle' : 'target', 18) }),
-        h('div', { class: 'tour-task-text', html: this.taskDone ? `<b>¡Hecho!</b> ${task.done}` : task.text }))
+        h('div', { class: 'tour-task-text', html: this.taskDone ? `<b>Hecho.</b> ${task.done}` : task.text }))
       : null;
     const btn = (label: string, cls: string, run: () => void) => h('button', { class: `btn btn-sm ${cls}`, onclick: run }, label);
     const foot = h('div', { class: 'tour-foot' });

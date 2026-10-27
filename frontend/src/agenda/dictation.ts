@@ -67,8 +67,8 @@ export class Dictation {
     const bar = h('div', { class: 'ag-progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0' }, h('span'));
     const label = h('p', { class: 'muted small', 'aria-live': 'polite' }, '');
     const body = h('div', { class: 'ag-form' },
-      h('p', {}, `Para dictar sin conexión hace falta descargar una vez el modelo de reconocimiento de voz en español (whisper «small», ${mb} MB) desde el repositorio oficial de whisper.cpp.`),
-      h('p', { class: 'muted small' }, 'Se guarda en tu equipo, fuera del espacio de trabajo, y se puede borrar desde Ajustes. Tu voz nunca sale del ordenador.'),
+      h('p', {}, `El dictado sin conexión necesita el modelo de voz en español (${mb} MB). Se descarga una sola vez.`),
+      h('p', { class: 'muted small' }, 'Se guarda en este equipo y se puede borrar desde Ajustes. El audio no sale del equipo.'),
       bar, label);
     let started = false;
     let resultOk = false;
@@ -94,7 +94,7 @@ export class Dictation {
           cancel.textContent = 'Cancelar';
           cancel.onclick = () => { void api.DictationCancelDownload(); };
           api.DictationDownloadModel(MODEL)
-            .then(() => { resultOk = true; label.textContent = 'Listo. Ya puedes dictar.'; setTimeout(() => close('go'), 600); })
+            .then(() => { resultOk = true; label.textContent = 'Modelo descargado.'; setTimeout(() => close('go'), 600); })
             .catch((err) => { label.textContent = String(err).replace(/^Error:\s*/, ''); go.disabled = false; go.textContent = 'Reintentar'; started = false; });
         }, true);
       },
@@ -139,7 +139,7 @@ export class Dictation {
       const text = this.native ? await api.DictationStop(MODEL) : await api.DictationTranscribeWav(await this.stopWeb(), MODEL);
       this.hideOverlay();
       this.onText(text.trim());
-      if (!text.trim()) toast('No se ha entendido nada. Habla cerca del micrófono e inténtalo de nuevo.');
+      if (!text.trim()) toast('No se ha reconocido ninguna frase.');
     } catch (e) {
       this.hideOverlay();
       toast(String(e).replace(/^Error:\s*/, ''), { kind: 'error', ms: 7000 });
@@ -231,7 +231,7 @@ export class Dictation {
         h('strong', { class: 'ag-rec-title' }, 'Escuchando'),
         time),
       meter,
-      h('p', { class: 'ag-rec-text' }, this.pushToTalk ? 'Suelta las teclas para terminar.' : 'Por ejemplo: «mañana a las 9, repaso del tema 3».'),
+      h('p', { class: 'ag-rec-text' }, this.pushToTalk ? 'Suelta las teclas para terminar.' : 'Por ejemplo: «mañana a las 9, reunión de equipo».'),
       this.pushToTalk ? null : h('div', { class: 'ag-rec-actions' },
         h('button', { type: 'button', class: 'btn btn-sm btn-ghost', onclick: () => void this.cancel() }, 'Cancelar'),
         h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => void this.stop() }, h('span', { html: icon('stop', 13) }), 'Terminar')));
@@ -263,8 +263,8 @@ export class Dictation {
 
 function micError(e: unknown): string {
   const msg = String(e);
-  if (/NotAllowed|Permission/i.test(msg)) return 'Folio no tiene permiso para usar el micrófono. Revisa la privacidad del micrófono en la configuración del sistema.';
-  if (/NotFound|no.*micr/i.test(msg)) return 'No se encuentra ningún micrófono. Conecta uno y vuelve a intentarlo.';
+  if (/NotAllowed|Permission/i.test(msg)) return 'Sin permiso para usar el micrófono. Se activa en la configuración del sistema.';
+  if (/NotFound|no.*micr/i.test(msg)) return 'No hay ningún micrófono conectado.';
   return msg.replace(/^Error:\s*/, '');
 }
 

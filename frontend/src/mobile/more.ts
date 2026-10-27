@@ -32,7 +32,7 @@ export class MoreScreen {
       row('pdfMerge', 'Unir PDF', 'Juntar varios PDF en uno', () => void pdfMergeDialog(app)),
       row('trash', 'Papelera', 'Recuperar documentos borrados', () => void app.sidebar.trashDialog()),
       h('div', { class: 'm-section' }, 'Estudio'),
-      row('layers', 'Temario', 'Temas de la oposición', study(async () => (await import('../agenda/topics')).topicsDialog(app.agenda, app))),
+      row('layers', 'Temario', 'Temas y apuntes', study(async () => (await import('../agenda/topics')).topicsDialog(app.agenda, app))),
       row('clock', 'Plan de estudio', 'Examen, tiempo de estudio y repasos', study(async () => (await import('../agenda/plansettings')).planDialog(app.agenda))),
       row('barChart', 'Progreso', 'Horas, racha y temas flojos', study(async () => (await import('../agenda/stats')).statsDialog(app.agenda, app))),
       row('template', 'Semanas tipo', 'Guardar y aplicar semanas', study(async () => { const m = await import('../agenda/templates'); m.templatesMenu(app.agenda, document.body); })),
