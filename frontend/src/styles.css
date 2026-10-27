@@ -873,11 +873,16 @@ body.focus-mode .statusbar:hover { opacity: 1; }
 .upd-status { display: flex; gap: 12px; align-items: flex-start; }
 .upd-status p { margin: 2px 0 0; }
 .upd-ic { color: var(--accent); display: grid; padding-top: 2px; }
-.upd-notes { white-space: pre-wrap; max-height: 40vh; overflow-y: auto; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elev); font-size: 13px; line-height: 1.5; }
+.upd-notes { max-height: 45vh; overflow-y: auto; padding: 4px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: 13px; line-height: 1.5; user-select: text; }
+.upd-notes h1, .upd-notes h2, .upd-notes h3 { font-size: 13px; font-weight: 600; color: var(--text-strong); margin: 12px 0 4px; }
+.upd-notes ul { margin: 0 0 6px; padding-left: 1.2em; }
+.upd-notes li { margin: 2px 0; }
+.upd-notes p { margin: 6px 0; }
 .upd-notes[hidden], .upd-bar[hidden] { display: none; }
 .upd-bar { height: 6px; border-radius: 3px; background: var(--bg-hover); overflow: hidden; }
 .upd-bar > span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.15s; }
-.upd-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.upd-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.upd-actions .spacer { flex: 1; }
 .upd-actions:empty { display: none; }
 .bs-version { cursor: pointer; }
 .bs-version:hover { color: var(--text); }

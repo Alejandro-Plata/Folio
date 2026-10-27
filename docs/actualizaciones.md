@@ -1,8 +1,10 @@
 # Actualizaciones desde la app
 
-Folio busca una vez al día si hay versión nueva en GitHub Releases (y a mano desde
-**Archivo › Buscar actualizaciones**, **Ajustes** o **Más › Actualizaciones**).
-Al pulsar **Descargar e instalar**:
+Al abrir Folio se comprueba si hay versión nueva en GitHub Releases. Si la hay,
+aparece un diálogo con tres opciones: **Instalar**, **Ver los cambios** (las notas
+de la versión) y **Más tarde** (vuelve a preguntar la próxima vez que se abra).
+También se busca a mano desde **Archivo › Buscar actualizaciones**, **Ajustes** o
+**Más › Actualizaciones**. Al pulsar **Instalar**:
 
 - comprueba la suma SHA-256 del archivo con `SHA256SUMS`;
 - si la app lleva clave pública, comprueba además la firma de `SHA256SUMS`;
@@ -57,7 +59,17 @@ gh release create v1.2.0 build/release/* --title "Folio 1.2.0" --notes-file NOTA
 
 `build/release/` contiene `folio-linux-amd64`, `Folio-Setup-1.2.0.exe`,
 `Folio-1.2.0.apk` (si hay firma de Android), `SHA256SUMS` y `SHA256SUMS.sig`.
-El texto de `NOTAS.md` es lo que se ve en Folio como «novedades».
+El texto de `NOTAS.md` es lo que se ve en Folio al pulsar «Ver los cambios». Cada
+versión agrupa varias mejoras, no un único cambio; usa secciones de Markdown:
+
+```markdown
+## Novedades
+- …
+## Rendimiento
+- …
+## Correcciones
+- …
+```
 
 Los nombres de los archivos importan: la app busca `folio-linux-amd64`,
 `Folio-Setup-*.exe` y `*.apk` (sin «debug»).

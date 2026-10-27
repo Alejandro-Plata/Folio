@@ -1,28 +1,35 @@
-// Actualizaciones: Folio mira una vez al día si hay versión nueva y lo avisa;
-// desde Ajustes, Archivo o «Más» se puede buscar a mano, leer las novedades y
-// descargarla e instalarla con un botón.
+// Actualizaciones: al abrir Folio, si hay una versión nueva, un diálogo permite
+// instalarla, leer sus cambios o dejarlo para más tarde (se vuelve a preguntar
+// la próxima vez). Desde Ajustes, Archivo o «Más» se busca a mano.
 import type { App } from '../app';
 import { api, onEvent } from '../api';
 import type { UpdateInfo } from '../types';
-import { h, modal, toast } from './dom';
+import { h, hasOpenModal, modal } from './dom';
 import { icon } from './icons';
 
 const LAST_CHECK = 'folio-update-check';
-const SKIPPED = 'folio-update-skip';
-const DAY = 24 * 3600 * 1000;
 
-const get = (k: string) => { try { return localStorage.getItem(k) ?? ''; } catch { return ''; } };
 const set = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
 
-/** Comprobación discreta al arrancar (como mucho una vez al día). */
+/**
+ * Al arrancar: si hay una versión nueva, abre el diálogo de actualización en
+ * cuanto la app está libre (sin tutorial ni otro diálogo abierto).
+ */
 export function scheduleUpdateCheck(app: App) {
-  if (Date.now() - Number(get(LAST_CHECK) || 0) < DAY) return;
   setTimeout(async () => {
     const info = await api.UpdateCheck().catch(() => null);
     set(LAST_CHECK, String(Date.now()));
-    if (!info?.available || get(SKIPPED) === info.latest) return;
-    toast(`Folio ${info.latest} está disponible`, { ms: 12000, action: { label: 'Ver novedades', run: () => void updateDialog(app, info) } });
-  }, 8000);
+    if (!info?.available) return;
+    const busy = () => hasOpenModal() || document.body.classList.contains('touring') || !!document.querySelector('.backstage');
+    for (let i = 0; busy() && i < 120; i++) await new Promise((r) => setTimeout(r, 1000));
+    if (!busy()) void updateDialog(app, info);
+  }, 2500);
+}
+
+/** Notas de la versión (Markdown de GitHub) como HTML; el HTML del texto se escapa. */
+async function renderNotes(md: string): Promise<string> {
+  const { marked } = await import('marked');
+  return marked.parse(md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), { async: false }) as string;
 }
 
 const mb = (n: number) => `${(n / 1048576).toFixed(n > 10485760 ? 0 : 1).replace('.', ',')} MB`;
@@ -49,12 +56,21 @@ export async function updateDialog(app: App, known?: UpdateInfo) {
       actions.append(h('button', { type: 'button', class: 'btn btn-sm', onclick: () => void check() }, h('span', { html: icon('refresh', 14) }), 'Volver a comprobar'));
       return;
     }
-    line('download', `Folio ${info.latest} está disponible`, `Tienes la ${app.version}. Descarga de ${mb(info.size)}; tus documentos y tu agenda no se tocan.`);
-    if (info.notes.trim()) { notes.hidden = false; notes.textContent = info.notes.trim(); }
+    line('download', `Folio ${info.latest} está disponible`, `Versión actual: ${app.version}. Descarga de ${mb(info.size)}; los documentos y la agenda no cambian.`);
+    const hasNotes = !!info.notes.trim();
+    const toggle = h('button', { type: 'button', class: 'btn btn-ghost', 'aria-expanded': 'false' }, 'Ver los cambios');
+    toggle.addEventListener('click', async () => {
+      const open = notes.hidden;
+      if (open && !notes.childElementCount) notes.innerHTML = await renderNotes(info!.notes.trim());
+      notes.hidden = !open;
+      toggle.textContent = open ? 'Ocultar los cambios' : 'Ver los cambios';
+      toggle.setAttribute('aria-expanded', String(open));
+    });
     actions.append(
-      h('button', { type: 'button', class: 'btn btn-primary', onclick: () => void install() }, h('span', { html: icon('download', 15) }), 'Descargar e instalar'),
-      h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => { set(SKIPPED, info!.latest); closeFn?.(null); } }, 'Ahora no'),
-      info.page ? h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => void api.OpenURL(info!.page) }, 'Ver en GitHub') : null as any);
+      h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => closeFn?.(null) }, 'Más tarde'),
+      h('div', { class: 'spacer' }),
+      hasNotes ? toggle : null as any,
+      h('button', { type: 'button', class: 'btn btn-primary', onclick: () => void install() }, h('span', { html: icon('download', 15) }), 'Instalar'));
   };
 
   const check = async () => {
@@ -86,5 +102,7 @@ export async function updateDialog(app: App, known?: UpdateInfo) {
 
   let closeFn: ((v: null) => void) | undefined;
   if (info) draw(); else void check();
-  await modal('Actualizaciones', body, [{ label: 'Cerrar', value: null, kind: 'ghost' }], { className: 'is-small upd-modal', onOpen: (c) => { closeFn = c; } });
+  // Con una versión pendiente, los botones propios (Más tarde · Ver los cambios · Instalar) sustituyen a «Cerrar»
+  await modal(info?.available ? 'Actualización disponible' : 'Actualizaciones', body, info?.available ? [] : [{ label: 'Cerrar', value: null, kind: 'ghost' }],
+    { className: 'is-small upd-modal', onOpen: (c) => { closeFn = c; } });
 }
