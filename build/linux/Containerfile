@@ -1,0 +1,5 @@
+# Compilación de los motores de Linux (whisper-cli, llama-server) en Ubuntu 22.04:
+# con su glibc 2.35, los binarios funcionan en las distribuciones de los últimos
+# años (compilados en una distribución reciente exigirían su glibc).
+FROM docker.io/library/ubuntu:22.04
+RUN apt-get update && apt-get install -y --no-install-recommends cmake g++ make && rm -rf /var/lib/apt/lists/*

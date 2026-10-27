@@ -30,14 +30,28 @@ windows() {
   [ "${FRONTEND_DONE:-}" = 1 ] || frontend
   (cd desktop && node package.mjs win32 "$VERSION" "$PWD/../build/bin/whisper-cli.exe" "$PWD/../build/bin/llama-server.exe")
 }
+# Motores de Linux (whisper, llama): dentro de Ubuntu 22.04 con podman (ver
+# build/linux/Containerfile), sin OpenMP y con libstdc++ dentro, para que no
+# dependan de la versión de las bibliotecas de quien compila. Sin podman, se
+# compilan aquí (solo valen para esta distribución o más nuevas).
+engine_linux() {  # engine_linux <fuentes> <objetivo> <opciones de cmake…>
+  local src=$1 target=$2; shift 2
+  local opts=("$@" -DGGML_OPENMP=OFF "-DCMAKE_EXE_LINKER_FLAGS=-static-libgcc -static-libstdc++")
+  local cmd="cmake -S $src -B $src/build-linux $(printf '%q ' "${opts[@]}") && cmake --build $src/build-linux -j$(nproc) --target $target"
+  if command -v podman >/dev/null; then
+    podman image exists folio-build:22.04 || podman build -t folio-build:22.04 build/linux
+    podman run --rm --security-opt label=disable -v "$PWD:/src" -w /src folio-build:22.04 sh -c "$cmd"
+  else
+    sh -c "$cmd"
+  fi
+  install -m755 "$src/build-linux/bin/$target" "build/bin/$target"
+}
 whisper() {
   local tag=v1.9.5 src=build/whisper.cpp
   [ -d "$src" ] || git clone --depth 1 --branch "$tag" https://github.com/ggml-org/whisper.cpp "$src"
   # Estático y sin optimizaciones de este procesador concreto: funciona en cualquier PC x86-64
   local opts=(-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DGGML_NATIVE=OFF)
-  cmake -S "$src" -B "$src/build" "${opts[@]}"
-  cmake --build "$src/build" -j"$(nproc)" --target whisper-cli
-  install -m755 "$src/build/bin/whisper-cli" build/bin/whisper-cli
+  engine_linux "$src" whisper-cli "${opts[@]}"
   # Windows con MinGW (dnf install mingw64-gcc-c++), enlazado estático: sin DLL extra
   if command -v x86_64-w64-mingw32-g++ >/dev/null; then
     cmake -S "$src" -B "$src/build-win" "${opts[@]}" -DGGML_OPENMP=OFF \
@@ -51,9 +65,7 @@ llama() {
   local tag=b11900 src=build/llama.cpp
   [ -d "$src" ] || git clone --depth 1 --branch "$tag" https://github.com/ggml-org/llama.cpp "$src"
   local opts=(-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_CURL=OFF -DLLAMA_OPENSSL=OFF)
-  cmake -S "$src" -B "$src/build" "${opts[@]}"
-  cmake --build "$src/build" -j"$(nproc)" --target llama-server
-  install -m755 "$src/build/bin/llama-server" build/bin/llama-server
+  engine_linux "$src" llama-server "${opts[@]}"
   if command -v x86_64-w64-mingw32-g++ >/dev/null; then
     cmake -S "$src" -B "$src/build-win" "${opts[@]}" -DGGML_OPENMP=OFF \
       -DCMAKE_TOOLCHAIN_FILE="$PWD/build/windows/mingw64.cmake" -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
