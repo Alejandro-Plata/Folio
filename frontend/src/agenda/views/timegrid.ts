@@ -54,7 +54,7 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
 
   // Cabecera con los días y la fila «todo el día»
   const head = h('div', { class: 'ag-tg-head' }, h('div', { class: 'ag-tg-gutter' }));
-  const allDay = h('div', { class: 'ag-tg-allday' }, h('div', { class: 'ag-tg-gutter ag-tg-allday-label' }, 'Todo el día'));
+  const allDay = h('div', { class: 'ag-tg-allday' }, h('div', { class: 'ag-tg-gutter ag-tg-allday-label', title: 'Todo el día' }, 'Todo el día'));
   for (const d of days) {
     const dt = toDate(d);
     const isToday = d === host.today;
@@ -140,7 +140,7 @@ function block(host: ViewHost, p: Placed, date: string, days: string[]): HTMLEle
     title: `${t.title}\n${timeLabel(t.start)}–${timeLabel(taskEnd(t))}${t.notes ? '\n' + t.notes : ''}`,
   },
   h('span', { class: 'ag-block-title' }, h('span', { class: 'ag-block-ic', html: icon(type.icon, 12) }), shortTitle(t)),
-  h('span', { class: 'ag-block-time' }, `${timeLabel(t.start)}–${timeLabel(taskEnd(t))}`, t.repeat || t.occurrenceOf ? h('span', { html: icon('repeat', 10) }) : null, t.pinned ? h('span', { html: icon('pin', 10), title: 'Fijada' }) : null));
+  h('span', { class: 'ag-block-time' }, timeLabel(t.start), h('span', { class: 'ag-block-end' }, `–${timeLabel(taskEnd(t))}`), t.repeat || t.occurrenceOf ? h('span', { html: icon('repeat', 10) }) : null, t.pinned ? h('span', { html: icon('pin', 10), title: 'Fijada' }) : null));
   main.addEventListener('click', () => { if (!moved) host.openTask(t); });
   main.addEventListener('keydown', (e) => {
     if (e.key === ' ') { e.preventDefault(); host.toggleDone(t); return; }

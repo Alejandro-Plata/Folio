@@ -9,7 +9,7 @@ import { icon } from '../ui/icons';
 import type { Scope, Session, Task, ViewKind } from './model';
 import { AgendaState } from './state';
 import {
-  MONTHS, addDays, addMonths, endOfMonth, isoWeek, longDate, range, shortDate, startOfMonth, startOfWeek, todayISO, toDate,
+  MONTHS, WEEKDAYS_SHORT, addDays, addMonths, endOfMonth, isoWeek, longDate, range, shortDate, startOfMonth, startOfWeek, todayISO, toDate, weekday,
 } from './dates';
 import { parseGoTo } from './parse';
 import type { ViewHost } from './views/common';
@@ -130,7 +130,7 @@ export class AgendaView implements ViewHost {
       this.viewBtns.set(v, b);
       views.append(b);
     }
-    const goto = h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Ir a una fecha (G)', onclick: () => void this.promptGoTo() }, h('span', { html: icon('calendar', 15) }), 'Ir a…');
+    const goto = h('button', { type: 'button', class: 'btn btn-sm btn-ghost ag-goto', title: 'Ir a una fecha (G)', 'aria-label': 'Ir a una fecha', onclick: () => void this.promptGoTo() }, h('span', { html: icon('calendar', 15) }), h('span', { class: 'ag-goto-label' }, 'Ir a…'));
     const row1 = h('div', { class: 'ag-head-row' },
       todayBtn,
       nav('chevronLeft', 'Anterior (← o RePág)', () => this.step(-1)),
@@ -158,9 +158,11 @@ export class AgendaView implements ViewHost {
   private updateHead() {
     const c = this.cursor;
     let label = '';
-    if (this.view === 'day') label = this.mobile ? longDate(c, false) : longDate(c);
-    else if (this.view === 'list') label = `Desde el ${shortDate(c)}`;
-    else if (this.view === '3days') label = `${shortDate(c)} – ${shortDate(addDays(c, 2))} ${addDays(c, 2).slice(0, 4)}`;
+    // En el móvil, títulos cortos que caben junto a los botones
+    const m = this.mobile;
+    if (this.view === 'day') label = m ? `${WEEKDAYS_SHORT[weekday(c) - 1]} ${shortDate(c)}` : longDate(c);
+    else if (this.view === 'list') label = m ? `${shortDate(c)} – ${shortDate(addDays(c, this.listDays - 1))}` : `Desde el ${shortDate(c)}`;
+    else if (this.view === '3days') label = `${shortDate(c)} – ${shortDate(addDays(c, 2))}${m ? '' : ` ${addDays(c, 2).slice(0, 4)}`}`;
     else if (this.view === 'week') {
       const a = startOfWeek(c), b = addDays(a, 6);
       label = `Semana ${isoWeek(c)} · ${shortDate(a)} – ${shortDate(b)} ${b.slice(0, 4)}`;

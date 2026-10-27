@@ -95,7 +95,7 @@ export class QuickAdd {
     if (!this.drafts.length) return;
     this.preview.replaceChildren(...this.drafts.map((d, i) => this.row(d, i)),
       h('div', { class: 'ag-preview-foot' },
-        h('span', { class: 'muted small' }, h('kbd', {}, 'Intro'), ` crear${this.drafts.length > 1 ? ` las ${this.drafts.length}` : ''} · `, h('kbd', {}, 'Mayús+Intro'), ' editar · ', h('kbd', {}, 'Esc'), ' cancelar'),
+        h('span', { class: 'muted small ag-preview-keys' }, h('kbd', {}, 'Intro'), ` crear${this.drafts.length > 1 ? ` las ${this.drafts.length}` : ''} · `, h('kbd', {}, 'Mayús+Intro'), ' editar · ', h('kbd', {}, 'Esc'), ' cancelar'),
         h('div', { class: 'spacer' }),
         h('button', { type: 'button', class: 'btn btn-sm btn-primary', onmousedown: (e: MouseEvent) => e.preventDefault(), onclick: () => void this.create() }, this.drafts.length > 1 ? `Crear ${this.drafts.length}` : 'Crear')));
   }

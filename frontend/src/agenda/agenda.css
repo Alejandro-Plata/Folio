@@ -177,7 +177,8 @@ body.mode-agenda .quick > :not(:first-child), body.mode-agenda .top-actions > :n
 .ag-year { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 18px 22px; }
 .ag-ymonth-title { font-weight: 600; color: var(--text-strong); text-transform: capitalize; padding: 2px 4px; border-radius: 4px; margin-bottom: 4px; }
 .ag-ymonth-title:hover { background: var(--bg-hover); }
-.ag-ymonth-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.ag-ymonth { min-width: 0; }
+.ag-ymonth-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
 .ag-ywd { font-size: 10px; color: var(--text-faint); text-align: center; }
 .ag-yday { aspect-ratio: 1; display: grid; place-items: center; font-size: 10.5px; border-radius: 4px; color: var(--text-muted); cursor: pointer; user-select: none; background: var(--bg-hover); }
 .ag-yday.is-empty { background: none; cursor: default; }
