@@ -72,7 +72,9 @@ type builder struct {
 	usedCmt    map[string]bool
 	drawingID  int
 	headings   []heading
-	contentW   int // ancho útil en twips
+	contentW   int            // ancho útil en twips
+	anchors    map[string]int // anclas de títulos ya usadas (enlaces internos)
+	bookmarkID int
 }
 
 type numInst struct {
@@ -264,7 +266,16 @@ func (b *builder) block(out *strings.Builder, n Node, c ctx) {
 			p.border = "left"
 		}
 		rp := runProps{bold: c.bold}
-		out.WriteString("<w:p>" + p.xml() + b.inlines(n.Content, rp) + "</w:p>")
+		body := b.inlines(n.Content, rp)
+		// Cada título lleva un marcador: destino de los enlaces «#ancla» del documento
+		if n.Type == "heading" {
+			if t := strings.TrimSpace(plainText(n)); t != "" {
+				b.bookmarkID++
+				id := strconv.Itoa(b.bookmarkID)
+				body = `<w:bookmarkStart w:id="` + id + `" w:name="` + esc(b.anchorFor(t)) + `"/>` + body + `<w:bookmarkEnd w:id="` + id + `"/>`
+			}
+		}
+		out.WriteString("<w:p>" + p.xml() + body + "</w:p>")
 
 	case "bulletList", "orderedList", "taskList":
 		b.list(out, n, c)
@@ -766,6 +777,10 @@ func (b *builder) inline(n Node, base runProps) string {
 	rp, href := applyMarks(base, n.Marks)
 	switch n.Type {
 	case "text":
+		if strings.HasPrefix(href, "#") && len(href) > 1 {
+			rp.style = "Hyperlink"
+			return `<w:hyperlink w:anchor="` + esc(bookmarkName(strings.TrimPrefix(href, "#"))) + `" w:history="1">` + run(n.Text, rp) + `</w:hyperlink>`
+		}
 		if href != "" && (strings.HasPrefix(href, "http://") || strings.HasPrefix(href, "https://") || strings.HasPrefix(href, "mailto:")) {
 			id := b.addRel(relHyperlink, href, "External")
 			rp.style = "Hyperlink"

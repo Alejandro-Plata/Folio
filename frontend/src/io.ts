@@ -4,6 +4,7 @@ import type { JSONContent } from '@tiptap/core';
 import { Fragment, type Node as PMNode } from '@tiptap/pm/model';
 import { schemaExtensions, blobToBase64 } from './editor/editor';
 import { CALLOUT_KINDS } from './editor/extensions';
+import { headingSlug } from './editor/anchors';
 import { renderMathHTML } from './editor/math';
 import { tableColumns, type PageBreak } from './editor/pagination';
 import { contentCSS, PAGE_EXTRAS_CSS, PRINT_TOKENS } from './content-css';
@@ -130,9 +131,16 @@ export async function buildExportHTML(content: JSONContent, meta: Meta, setup: P
   const maths = Array.from(root.querySelectorAll<HTMLElement>('[data-math-inline],[data-math-block]'));
   for (const n of maths) n.innerHTML = await renderMathHTML(n.getAttribute('data-latex') || '', n.hasAttribute('data-math-block'));
 
+  // Mismas anclas que los enlaces internos del editor («#titulo»); repetidas, con sufijo
+  const seen = new Map<string, number>();
+  root.querySelectorAll<HTMLElement>('h1,h2,h3,h4').forEach((hd) => {
+    const base = headingSlug(hd.textContent || '');
+    const n = (seen.get(base) ?? 0) + 1;
+    seen.set(base, n);
+    hd.id = n > 1 ? `${base}-${n}` : base;
+  });
   // Índice (títulos de nivel 1 a 3, como en el editor)
   const headings = Array.from(root.querySelectorAll<HTMLElement>('h1,h2,h3'));
-  headings.forEach((hd, i) => (hd.id = `h-${i + 1}`));
   root.querySelectorAll<HTMLElement>('div[data-toc]').forEach((n) => {
     n.innerHTML = '<div class="toc-title">Índice</div>' + (headings.length
       ? headings.map((hd) => `<a class="toc-item toc-l${hd.tagName[1]}" href="#${hd.id}">${escapeHTML(hd.textContent || '')}</a>`).join('')

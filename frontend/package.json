@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "esbuild tests/agenda-parse.test.ts --bundle --platform=node --outfile=.test-out/agenda-parse.cjs --log-level=warning && node .test-out/agenda-parse.cjs && esbuild tests/notification-id.test.ts --bundle --platform=node --outfile=.test-out/notification-id.cjs --log-level=warning && node .test-out/notification-id.cjs && esbuild tests/notematch.test.ts --bundle --platform=node --outfile=.test-out/notematch.cjs --log-level=warning && node .test-out/notematch.cjs",
+    "test": "esbuild tests/agenda-parse.test.ts --bundle --platform=node --outfile=.test-out/agenda-parse.cjs --log-level=warning && node .test-out/agenda-parse.cjs && esbuild tests/notification-id.test.ts --bundle --platform=node --outfile=.test-out/notification-id.cjs --log-level=warning && node .test-out/notification-id.cjs && esbuild tests/notematch.test.ts --bundle --platform=node --outfile=.test-out/notematch.cjs --log-level=warning && node .test-out/notematch.cjs && esbuild tests/anchors.test.ts --bundle --platform=node --outfile=.test-out/anchors.cjs --log-level=warning && node .test-out/anchors.cjs",
     "test:mobile": "node tests/mobile-shots.mjs http://localhost:5173"
   },
   "dependencies": {

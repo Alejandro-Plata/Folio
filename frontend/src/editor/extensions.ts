@@ -8,6 +8,7 @@ import TableHeader from '@tiptap/extension-table-header';
 import { emit } from '../bus';
 import { renderMath } from './math';
 import { icon as svgIcon } from '../ui/icons';
+import { headingSlug } from './anchors';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -557,6 +558,12 @@ export const Footnote = Node.create({
 
 // ---------- Índice automático ----------
 export interface HeadingInfo { level: number; text: string; pos: number }
+
+/** Posición del título al que apunta un enlace «#ancla» (o null). */
+export function findAnchor(doc: PMNode, href: string): number | null {
+  const want = decodeURIComponent(href.replace(/^#/, ''));
+  return collectHeadings(doc).find((h) => headingSlug(h.text) === want)?.pos ?? null;
+}
 
 export function collectHeadings(doc: PMNode): HeadingInfo[] {
   const out: HeadingInfo[] = [];

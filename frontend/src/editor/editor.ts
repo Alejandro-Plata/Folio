@@ -24,8 +24,9 @@ import CharacterCount from '@tiptap/extension-character-count';
 import Typography from '@tiptap/extension-typography';
 import {
   AnswerLines, BlockFormat, Callout, Comment, FolioImage, FolioTableCell, FolioTableHeader, FontSize,
-  Footnote, MathBlock, MathInline, PageBreak, PrintBreak, PrintBreakInline, PrintBreakRow, TableOfContents, Toggle,
+  Footnote, MathBlock, MathInline, PageBreak, PrintBreak, PrintBreakInline, PrintBreakRow, TableOfContents, Toggle, findAnchor,
 } from './extensions';
+import { emit } from '../bus';
 import { Pagination } from './pagination';
 import { Find } from './find';
 import { Slash } from './slash';
@@ -160,8 +161,14 @@ export function createEditor(o: EditorOptions): Editor {
         void upload(files, pos);
         return true;
       },
-      handleClick: (_view, _pos, event) => {
+      handleClick: (view, _pos, event) => {
         const a = (event.target as HTMLElement).closest('a');
+        const href = a?.getAttribute('href') || '';
+        // Enlace a un título del propio documento: basta un clic (también en el móvil)
+        if (a && href.startsWith('#')) {
+          const pos = findAnchor(view.state.doc, href);
+          if (pos !== null) { emit('editor:scroll-to', pos); return true; }
+        }
         if (a && (event.ctrlKey || event.metaKey)) {
           void api.OpenURL(a.getAttribute('href') || '');
           return true;
