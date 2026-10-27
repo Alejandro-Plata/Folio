@@ -48,10 +48,14 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
   let typeId = base.typeId;
   const drawTypes = () => {
     typeBox.replaceChildren(...st.types.map((t) => h('button', {
-      type: 'button', role: 'radio', 'aria-checked': String(t.id === typeId), class: `ag-type pat-${t.pattern} ${t.id === typeId ? 'on' : ''}`,
+      type: 'button', role: 'radio', 'aria-checked': String(t.id === typeId), class: `ag-type ${t.id === typeId ? 'on' : ''}`,
       style: { '--c': t.color }, title: `Prioridad ${t.priority}${t.countsAsStudy ? ' · cuenta como estudio' : ''}`,
       onclick: () => { typeId = t.id; drawTypes(); refreshSuggestions(); },
-    }, h('span', { html: icon(t.icon, 14) }), t.name, h('span', { class: 'ag-type-p' }, String(t.priority)))));
+    },
+    // La muestra lleva el color y la trama del tipo (se distingue también sin color)
+    h('span', { class: `ag-type-dot pat-${t.pattern}`, 'aria-hidden': 'true' }),
+    h('span', { class: 'ag-type-name' }, t.name),
+    h('span', { class: 'ag-type-p', 'aria-label': `prioridad ${t.priority}` }, String(t.priority)))));
   };
   drawTypes();
 
@@ -131,10 +135,10 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
   const drawWho = () => {
     whoBox.replaceChildren(
       h('button', { type: 'button', role: 'radio', 'aria-checked': String(!circleId), class: `ag-type ${!circleId ? 'on' : ''}`, style: { '--c': 'var(--text-muted)' }, onclick: () => { circleId = ''; drawWho(); } },
-        h('span', { html: icon('user', 14) }), 'Solo yo'),
+        h('span', { html: icon('user', 14) }), h('span', { class: 'ag-type-name' }, 'Solo yo')),
       ...circles.map((c) => h('button', { type: 'button', role: 'radio', 'aria-checked': String(circleId === c.id), class: `ag-type ${circleId === c.id ? 'on' : ''}`, style: { '--c': c.color },
         title: `Lo verán ${c.circle_members.map((m) => m.profiles.name || m.profiles.email).join(', ')}`, onclick: () => { circleId = c.id; drawWho(); } },
-      h('span', { html: icon(c.kind === 'couple' ? 'heart' : 'users', 14) }), c.name)));
+      h('span', { html: icon(c.kind === 'couple' ? 'heart' : 'users', 14) }), h('span', { class: 'ag-type-name' }, c.name))));
     for (const el of privateOnly) el.hidden = !!circleId;
   };
   const sharedInfo = base.circle && !base.circle.mine && base.circle.by

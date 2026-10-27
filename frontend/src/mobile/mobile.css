@@ -167,7 +167,7 @@ body.is-mobile .pm-row { flex-wrap: wrap; }
 body.is-mobile .pm-range { width: 100%; }
 body.is-mobile .ag-rating { grid-template-columns: repeat(2, 1fr); }
 body.is-mobile .tf-input { width: 100%; }
-body.is-mobile .ag-types { gap: 6px; }
+body.is-mobile .ag-types { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 body.is-mobile .ag-type { min-height: 44px; }
 body.is-mobile .ag-view { min-height: 44px; }
 body.is-mobile .tf-chip { min-height: 44px; padding: 0 14px; }
