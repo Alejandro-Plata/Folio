@@ -187,14 +187,21 @@ export function createEditor(o: EditorOptions): Editor {
   return editor;
 }
 
+function withoutEmptyText(n: JSONContent): JSONContent {
+  if (!n.content) return n;
+  return { ...n, content: n.content.filter((c) => !(c.type === 'text' && !c.text)).map(withoutEmptyText) };
+}
+
 /** Sustituye el documento y reinicia el historial de deshacer. */
 export function loadContent(editor: Editor, content: JSONContent) {
+  const parse = (c: JSONContent) => { const d = editor.schema.nodeFromJSON(c); d.check(); return d; };
   let doc;
   try {
-    doc = editor.schema.nodeFromJSON(content);
-    doc.check();
+    doc = parse(content);
   } catch {
-    doc = editor.schema.nodeFromJSON({ type: 'doc', content: [{ type: 'paragraph' }] });
+    // Un texto vacío (de un archivo editado fuera o importado) invalida el
+    // documento entero: se quitan antes de dar el documento por vacío
+    try { doc = parse(withoutEmptyText(content)); } catch { doc = parse({ type: 'doc', content: [{ type: 'paragraph' }] }); }
   }
   const state = EditorState.create({ doc, plugins: editor.state.plugins });
   editor.view.updateState(state);
