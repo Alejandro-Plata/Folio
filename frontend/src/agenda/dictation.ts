@@ -224,12 +224,17 @@ export class Dictation {
     const started = Date.now();
     const meter = h('span', { class: 'ag-rec-meter' }, h('span'));
     const time = h('span', { class: 'ag-rec-time' }, '0:00');
+    // Tarjeta (no píldora): cabecera, nivel, indicación y botones, cada cosa en su fila
     this.overlay = h('div', { class: 'ag-rec', role: 'status', 'aria-live': 'assertive' },
-      h('span', { class: 'ag-rec-dot', 'aria-hidden': 'true' }),
-      h('span', { class: 'ag-rec-text' }, this.pushToTalk ? 'Escuchando… suelta las teclas para terminar' : 'Escuchando… di por ejemplo «mañana a las 9 repaso del tema 3»'),
-      meter, time,
-      h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => void this.stop() }, h('span', { html: icon('stop', 13) }), 'Terminar'),
-      h('button', { type: 'button', class: 'btn btn-sm btn-ghost', onclick: () => void this.cancel() }, 'Cancelar'));
+      h('div', { class: 'ag-rec-head' },
+        h('span', { class: 'ag-rec-dot', 'aria-hidden': 'true' }),
+        h('strong', { class: 'ag-rec-title' }, 'Escuchando'),
+        time),
+      meter,
+      h('p', { class: 'ag-rec-text' }, this.pushToTalk ? 'Suelta las teclas para terminar.' : 'Por ejemplo: «mañana a las 9, repaso del tema 3».'),
+      this.pushToTalk ? null : h('div', { class: 'ag-rec-actions' },
+        h('button', { type: 'button', class: 'btn btn-sm btn-ghost', onclick: () => void this.cancel() }, 'Cancelar'),
+        h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => void this.stop() }, h('span', { html: icon('stop', 13) }), 'Terminar')));
     document.body.append(this.overlay);
     this.timer = window.setInterval(() => {
       const s = Math.floor((Date.now() - started) / 1000);
@@ -244,7 +249,7 @@ export class Dictation {
     clearInterval(this.timer);
     if (!this.overlay) return;
     this.overlay.classList.toggle('is-busy', busy);
-    this.overlay.replaceChildren(h('span', { class: 'ag-spinner', 'aria-hidden': 'true' }), h('span', { class: 'ag-rec-text' }, text));
+    this.overlay.replaceChildren(h('div', { class: 'ag-rec-head' }, h('span', { class: 'ag-spinner', 'aria-hidden': 'true' }), h('span', { class: 'ag-rec-title' }, text)));
   }
 
   private hideOverlay() {

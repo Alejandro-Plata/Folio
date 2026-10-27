@@ -99,6 +99,11 @@ body.is-mobile.page-view .page-inner { padding: var(--m-top) var(--m-right) 0 va
 body.is-mobile .doc-title { font-size: 28px; }
 body.is-mobile .doc-body { font-size: max(16px, var(--doc-size)); }
 body.is-mobile .doc-body .tableWrapper, body.is-mobile .doc-body table { max-width: 100%; }
+/* Las tablas guardan anchos de columna pensados para la hoja: en el móvil se
+   reparten el ancho de la pantalla (los anchos guardados no cambian). */
+body.is-mobile .doc-body table { width: 100% !important; min-width: 0 !important; table-layout: auto; }
+body.is-mobile .doc-body table col { width: auto !important; }
+body.is-mobile .doc-body td, body.is-mobile .doc-body th { overflow-wrap: anywhere; }
 body.is-mobile .doc-body .tableWrapper { overflow-x: auto; }
 body.is-mobile .header-preview { display: none; }
 
@@ -201,7 +206,9 @@ body.is-mobile.m-quick-open .ag-quick { height: 48px; min-width: 0; }
 body.is-mobile.m-quick-open .ag-quick-input { font-size: 16px; }
 body.is-mobile.m-quick-open .ag-preview { top: auto; bottom: calc(100% + 8px); max-height: 50dvh; overflow-y: auto; }
 body.is-mobile .ag-mic { width: 44px; height: 44px; }
-body.is-mobile .ag-rec { bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom)); flex-wrap: wrap; justify-content: center; }
+body.is-mobile .ag-rec { bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom)); width: calc(100vw - 24px); border-radius: 16px; padding: 16px; }
+body.is-mobile .ag-rec-actions .btn { flex: 1; height: 44px; justify-content: center; }
+body.is-mobile:has(.ag-rec) .m-fab { visibility: hidden; } /* el botón flotante asomaba tras la tarjeta */
 
 /* Lista */
 .ag-list { display: flex; flex-direction: column; gap: 4px; }
