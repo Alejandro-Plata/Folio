@@ -26,10 +26,13 @@ export function scheduleUpdateCheck(app: App) {
   }, 2500);
 }
 
-/** Notas de la versión (Markdown de GitHub) como HTML; el HTML del texto se escapa. */
+/**
+ * Notas de la versión (Markdown de GitHub) como HTML. Se escapa «<» para que el
+ * texto no pueda colar etiquetas; «>» se deja, porque en Markdown abre las citas.
+ */
 async function renderNotes(md: string): Promise<string> {
   const { marked } = await import('marked');
-  return marked.parse(md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), { async: false }) as string;
+  return marked.parse(md.replace(/&/g, '&amp;').replace(/</g, '&lt;'), { async: false }) as string;
 }
 
 const mb = (n: number) => `${(n / 1048576).toFixed(n > 10485760 ? 0 : 1).replace('.', ',')} MB`;
@@ -38,6 +41,13 @@ const mb = (n: number) => `${(n / 1048576).toFixed(n > 10485760 ? 0 : 1).replace
 export async function updateDialog(app: App, known?: UpdateInfo) {
   const status = h('div', { class: 'upd-status' });
   const notes = h('div', { class: 'upd-notes', hidden: true });
+  // Los vínculos de las notas se abren en el navegador, no dentro de la ventana de Folio
+  notes.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement).closest('a');
+    if (!a) return;
+    e.preventDefault();
+    if (/^https?:/i.test(a.href)) void api.OpenURL(a.href);
+  });
   const bar = h('div', { class: 'upd-bar', hidden: true, role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100' }, h('span'));
   const actions = h('div', { class: 'upd-actions' });
   const body = h('div', { class: 'ag-form upd' }, status, notes, bar, actions);
