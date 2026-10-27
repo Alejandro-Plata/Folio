@@ -235,8 +235,17 @@ button.crumb:hover { background: var(--bg-hover); color: var(--text); }
 .crumb-sep { color: var(--text-faint); }
 
 /* Barra de título propia (ventana sin marco): se arrastra por los huecos */
+/* Ventana sin marco: la barra superior y la cabecera del panel arrastran la ventana.
+   El sistema calcula estas zonas aunque haya algo encima, así que todo lo que se
+   abre sobre ellas (menú Archivo y Ajustes, diálogos, menús, avisos, tutorial)
+   las anula; si no, sus botones no reciben el clic en esa franja. */
 .topbar, .sb-head { -webkit-app-region: drag; }
-.topbar :is(button, input, a, [role=button]), .sb-head :is(button, input, a, [role=button]) { -webkit-app-region: no-drag; }
+.topbar :is(button, input, select, textarea, label, a, [role=button], [tabindex]),
+.sb-head :is(button, input, select, textarea, label, a, [role=button], [tabindex]) { -webkit-app-region: no-drag; }
+.backstage, .modal-backdrop, .popover, .toasts, .tour-card, .m-sheet-backdrop, .sidebar-scrim { -webkit-app-region: no-drag; }
+/* Panel flotante (ventanas estrechas): solo su cabecera arrastra; el resto queda encima de la barra */
+.sidebar { -webkit-app-region: no-drag; }
+.sidebar .sb-head { -webkit-app-region: drag; }
 .win-controls { display: flex; align-self: stretch; margin: 0 -8px 0 4px; }
 .win-btn { width: 44px; display: grid; place-items: center; color: var(--text-muted); }
 .win-btn:hover { background: var(--bg-active); color: var(--text-strong); }
