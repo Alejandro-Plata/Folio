@@ -58,9 +58,15 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
   for (const d of days) {
     const dt = toDate(d);
     const isToday = d === host.today;
-    const capacity = studyLoad(host, byDay.get(d)!);
+    const load = studyLoad(host, byDay.get(d)!);
+    const goal = dailyGoal(host, d);
+    const weekend = dt.getDay() === 0 || dt.getDay() === 6;
+    // Estudio del día frente al objetivo del plan: una barra fina bajo la fecha
+    const loadEl = load || goal ? h('span', { class: `ag-tg-load ${goal && load >= goal ? 'is-full' : ''}`, title: goal ? `${duration(load)} de estudio de ${duration(goal)}` : `${duration(load)} de estudio` },
+      h('span', { class: 'ag-tg-load-text' }, load ? duration(load) : 'Libre'),
+      goal ? h('span', { class: 'ag-tg-load-bar' }, h('span', { style: { width: `${Math.min(100, Math.round((load / goal) * 100))}%` } })) : null) : null;
     head.append(h('button', {
-      type: 'button', class: `ag-tg-day ${isToday ? 'is-today' : ''} ${host.selection.has(d) ? 'is-selected' : ''}`,
+      type: 'button', class: `ag-tg-day ${isToday ? 'is-today' : ''} ${weekend ? 'is-weekend' : ''} ${host.selection.has(d) ? 'is-selected' : ''}`,
       'aria-label': `${longDate(d)}${isToday ? ', hoy' : ''}. Abrir el día`, title: 'Ver el día',
       onclick: (e: MouseEvent) => {
         if (e.shiftKey || e.ctrlKey) host.select([d], e.shiftKey ? 'extend' : 'toggle');
@@ -70,7 +76,7 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
     },
     h('span', { class: 'ag-tg-dname' }, single ? WEEKDAYS[(dt.getDay() + 6) % 7] : WEEKDAYS_SHORT[(dt.getDay() + 6) % 7]),
     h('span', { class: 'ag-tg-dnum' }, String(dt.getDate())),
-    capacity ? h('span', { class: 'ag-tg-load', title: 'Estudio planificado' }, duration(capacity)) : null));
+    loadEl));
     const cell = h('div', { class: 'ag-tg-allday-cell', 'data-date': d });
     for (const t of byDay.get(d)!.filter((x) => !x.start)) {
       const row = h('div', { class: 'ag-allday-item' }, doneBox(host, t), taskChip(host, t, { draggable: true }));
@@ -88,9 +94,14 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
   }
   body.append(gutter);
   const height = (dayEnd - dayStart) * PX_PER_MIN;
+  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const showNow = days.includes(host.today) && nowMin >= dayStart && nowMin <= dayEnd;
+  // Hora actual en el margen, como píldora sobre la línea
+  if (showNow) gutter.append(h('div', { class: 'ag-tg-nowlabel', style: { top: `${(nowMin - dayStart) * PX_PER_MIN}px` } }, hhmm(nowMin)));
   for (const d of days) {
+    const wd = toDate(d).getDay();
     const col = h('div', {
-      class: `ag-tg-col ${d === host.today ? 'is-today' : ''} ${host.selection.has(d) ? 'is-selected' : ''}`,
+      class: `ag-tg-col ${d === host.today ? 'is-today' : ''} ${wd === 0 || wd === 6 ? 'is-weekend' : ''} ${host.selection.has(d) ? 'is-selected' : ''}`,
       style: { height: `${height}px` }, 'data-date': d, role: 'group', 'aria-label': longDate(d),
     });
     // Franja de estudio del día
@@ -98,12 +109,9 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
     if (w && minutesOf(w.start) >= 0 && minutesOf(w.end) > minutesOf(w.start) && !set.restDays.includes(((toDate(d).getDay() + 6) % 7) + 1)) {
       col.append(h('div', { class: 'ag-tg-window', title: `Franja de estudio ${timeLabel(w.start)}–${timeLabel(w.end)}`, style: { top: `${(minutesOf(w.start) - dayStart) * PX_PER_MIN}px`, height: `${(minutesOf(w.end) - minutesOf(w.start)) * PX_PER_MIN}px` } }));
     }
-    for (let m = Math.ceil(dayStart / 60) * 60; m < dayEnd; m += 60) col.append(h('div', { class: 'ag-tg-line', style: { top: `${(m - dayStart) * PX_PER_MIN}px` } }));
-    if (d === host.today) {
-      const now = new Date();
-      const nm = now.getHours() * 60 + now.getMinutes();
-      if (nm >= dayStart && nm <= dayEnd) col.append(h('div', { class: 'ag-tg-now', style: { top: `${(nm - dayStart) * PX_PER_MIN}px` }, 'aria-hidden': 'true' }));
-    }
+    for (let m = Math.ceil(dayStart / 30) * 30; m < dayEnd; m += 30) col.append(h('div', { class: `ag-tg-line ${m % 60 ? 'is-half' : ''}`, style: { top: `${(m - dayStart) * PX_PER_MIN}px` } }));
+    // La hora actual cruza toda la semana; en el día de hoy, más marcada y con su punto
+    if (showNow) col.append(h('div', { class: `ag-tg-now ${d === host.today ? '' : 'is-other'}`, style: { top: `${(nowMin - dayStart) * PX_PER_MIN}px` }, 'aria-hidden': 'true' }));
     for (const p of layout(byDay.get(d)!, dayStart)) col.append(block(host, p, d, days));
     createByDrag(host, col, d, dayStart, dayEnd);
     dropTarget(host, col, d, dayStart);
@@ -123,6 +131,17 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
 function earliest(tasks: Task[]) { return Math.min(24 * 60, ...tasks.filter((t) => t.start).map((t) => Math.floor(minutesOf(t.start) / 60) * 60)); }
 function latest(tasks: Task[]) { return Math.max(0, ...tasks.filter((t) => t.start).map((t) => Math.ceil((minutesOf(t.start) + (t.minutes || 30)) / 60) * 60)); }
 
+/** Minutos de estudio que el plan prevé para ese día (0 si es de descanso o no hay plan). */
+function dailyGoal(host: ViewHost, date: string): number {
+  const s = host.state.settings;
+  const wd = ((toDate(date).getDay() + 6) % 7) + 1;
+  if (!s || s.restDays.includes(wd)) return 0;
+  const w = s.windows?.[String(wd)];
+  const win = w && minutesOf(w.end) > minutesOf(w.start) ? minutesOf(w.end) - minutesOf(w.start) : 0;
+  const cap = s.capacity?.[String(wd)] ?? 0;
+  return s.capacityMode === 'hours' ? cap : s.capacityMode === 'window' ? win : Math.min(cap || win, win || cap);
+}
+
 function studyLoad(host: ViewHost, tasks: Task[]) {
   return tasks.filter((t) => host.state.type(t.typeId).countsAsStudy).reduce((n, t) => n + (t.minutes || 0), 0);
 }
@@ -131,8 +150,8 @@ function block(host: ViewHost, p: Placed, date: string, days: string[]): HTMLEle
   const t = p.t;
   const type = host.state.type(t.typeId);
   const el = h('div', {
-    class: `ag-block pat-${type.pattern} ${t.done ? 'is-done' : ''} ${t.auto ? 'is-auto' : ''} ${p.height < 34 ? 'is-short' : ''}`,
-    style: { ...typeStyle(type), top: `${p.top}px`, height: `${p.height}px`, left: `calc(${(p.col / p.cols) * 100}% + 2px)`, width: `calc(${100 / p.cols}% - 4px)` },
+    class: `ag-block ${t.done ? 'is-done' : ''} ${t.auto ? 'is-auto' : ''} ${p.height < 40 ? 'is-short' : ''}`,
+    style: { ...typeStyle(type), top: `${p.top + 1}px`, height: `${p.height - 1}px`, left: `calc(${(p.col / p.cols) * 100}% + 3px)`, width: `calc(${100 / p.cols}% - 6px)` },
     'data-id': t.id,
   });
   const main = h('button', {

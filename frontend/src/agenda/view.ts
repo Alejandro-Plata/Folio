@@ -164,11 +164,14 @@ export class AgendaView implements ViewHost {
     else if (this.view === 'list') label = m ? `${shortDate(c)} – ${shortDate(addDays(c, this.listDays - 1))}` : `Desde el ${shortDate(c)}`;
     else if (this.view === '3days') label = `${shortDate(c)} – ${shortDate(addDays(c, 2))}${m ? '' : ` ${addDays(c, 2).slice(0, 4)}`}`;
     else if (this.view === 'week') {
+      // «Octubre 2026» (o «Oct – Nov 2026» si la semana cruza meses) y el número de semana aparte
       const a = startOfWeek(c), b = addDays(a, 6);
-      label = `Semana ${isoWeek(c)} · ${shortDate(a)} – ${shortDate(b)} ${b.slice(0, 4)}`;
+      const ma = toDate(a).getMonth(), mb = toDate(b).getMonth();
+      label = ma === mb ? `${MONTHS[ma]} ${b.slice(0, 4)}` : `${MONTHS[ma].slice(0, 3)} – ${MONTHS[mb].slice(0, 3)} ${b.slice(0, 4)}`;
     } else if (this.view === 'month') label = `${MONTHS[toDate(c).getMonth()]} ${c.slice(0, 4)}`;
     else label = c.slice(0, 4);
     this.title.textContent = label[0].toUpperCase() + label.slice(1);
+    if (this.view === 'week') this.title.append(h('span', { class: 'ag-week-badge', title: `${shortDate(startOfWeek(c))} – ${shortDate(addDays(startOfWeek(c), 6))}` }, `Semana ${isoWeek(c)}`));
     this.viewBtns.forEach((b, v) => { b.classList.toggle('on', v === this.view); b.setAttribute('aria-checked', String(v === this.view)); });
     const exam = this.state.settings.examDate;
     const left = exam ? Math.round((toDate(exam).getTime() - toDate(this.state.today).getTime()) / 86400000) : -1;

@@ -256,11 +256,12 @@ body.is-mobile .ag-mcell-tasks { flex-direction: row; flex-wrap: wrap; justify-c
 .ag-mday-open { margin: 10px 8px 0; }
 
 /* Día y 3 días */
-body.is-mobile .ag-tg-head, body.is-mobile .ag-tg-allday, body.is-mobile .ag-tg-body { grid-template-columns: 40px repeat(var(--days), minmax(0, 1fr)); }
+body.is-mobile .ag-tg { --gut: 42px; }
 body.is-mobile .ag-tg-dname { font-size: 11.5px; }
-body.is-mobile .ag-tg-dnum { font-size: 16px; }
+body.is-mobile .ag-tg-dnum { font-size: 18px; min-width: 30px; height: 30px; }
 body.is-mobile .ag-tg-allday-label { font-size: 0; padding: 0; } /* sin rótulo: no cabe en 40 px */
-body.is-mobile .ag-tg-hour { right: 4px; font-size: 10.5px; }
+body.is-mobile .ag-tg-hour { right: 6px; font-size: 10.5px; }
+body.is-mobile .ag-tg-nowlabel { right: 2px; font-size: 9.5px; padding: 1px 3px; }
 body.is-mobile .ag-block-resize { height: 16px; }
 body.is-mobile .ag-block .ag-done { width: 18px; height: 18px; }
 body.is-mobile .ag-tg.is-week .ag-block-end { display: none; } /* columnas estrechas: solo la hora de inicio */
