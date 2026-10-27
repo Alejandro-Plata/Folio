@@ -2,7 +2,7 @@
 // ni Wine: descarga el Electron de cada sistema, mete la interfaz y el núcleo
 // Go, y deja la carpeta lista en build/desktop/<sistema>/Folio.
 //
-//   node package.mjs <linux|win32> <versión> [whisper-cli]
+//   node package.mjs <linux|win32> <versión> [whisper-cli] [llama-server]
 //
 // Linux: además crea build/bin/folio, un lanzador autoextraíble (un solo
 // archivo) que se instala en ~/.local/bin y se actualiza sustituyéndolo.
@@ -15,9 +15,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const [platform, version, whisper] = process.argv.slice(2);
+const [platform, version, whisper, llama] = process.argv.slice(2);
 if (!['linux', 'win32'].includes(platform) || !/^\d+\.\d+\.\d+/.test(version ?? '')) {
-  console.error('Uso: node package.mjs <linux|win32> <versión> [whisper-cli]');
+  console.error('Uso: node package.mjs <linux|win32> <versión> [whisper-cli] [llama-server]');
   process.exit(1);
 }
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -52,6 +52,8 @@ run('go', ['build', '-trimpath', '-ldflags', `-s -w -X main.Version=${version}`,
   { cwd: root, env: { ...process.env, CGO_ENABLED: '0', GOOS: isWin ? 'windows' : 'linux', GOARCH: 'amd64' } });
 // Motor de dictado: junto al núcleo, que es quien lo busca
 if (whisper && fs.existsSync(whisper)) fs.copyFileSync(whisper, path.join(res, isWin ? 'whisper-cli.exe' : 'whisper-cli'));
+// Motor de Folito (llama.cpp); si no está, Folito explica que falta
+if (llama && fs.existsSync(llama)) fs.copyFileSync(llama, path.join(res, isWin ? 'llama-server.exe' : 'llama-server'));
 fs.copyFileSync(path.join(root, 'build/appicon.png'), path.join(res, 'icon.png')); // ventana, bandeja y avisos
 
 // 4. Windows: icono y datos del ejecutable (resedit, sin rcedit ni Wine)

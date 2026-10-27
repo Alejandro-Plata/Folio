@@ -5,6 +5,7 @@ frontend/wailsjs/
 *.exe
 frontend/.test-out/
 build/whisper.cpp/
+build/llama.cpp/
 frontend/android/app/build/
 frontend/android/.gradle/
 frontend/android/app/libs/*.aar

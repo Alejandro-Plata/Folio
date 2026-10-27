@@ -23,6 +23,7 @@ type App struct {
 	ctx       context.Context
 	emit      func(name string, data ...any)
 	dictation dictation
+	folito    folito
 }
 
 // New abre el núcleo con las carpetas del usuario. emit envía eventos a la interfaz.
@@ -41,7 +42,10 @@ func New(ctx context.Context, version string, emit func(name string, data ...any
 }
 
 // Close guarda lo pendiente (versión «al cerrar»).
-func (a *App) Close() { a.Shutdown() }
+func (a *App) Close() {
+	a.folito.stop()
+	a.Shutdown()
+}
 
 // OpenURL abre una dirección web en el navegador del sistema.
 func (a *App) OpenURL(url string) {

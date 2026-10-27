@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Compila Folio. Uso: ./build.sh [linux|windows|installer|whisper|android|android-debug|release|all] [versión]
+# Compila Folio. Uso: ./build.sh [linux|windows|installer|whisper|llama|android|android-debug|release|all] [versión]
 # linux/windows: ventana de escritorio con Electron (Chromium) y el núcleo Go (cmd/folio-core).
 #   Necesita Node ≥ 20; la primera vez descarga Electron para cada sistema.
 # android: necesita JDK 21, Android SDK + NDK y gomobile (ver docs/guia-android.md, § 3)
 # whisper: motor de dictado whisper-cli para Linux (necesita g++ y cmake: dnf install gcc-c++ cmake)
+# llama: motor de Folito (llama-server de llama.cpp), con las mismas herramientas
 # installer: folio.exe + instalador de un clic (necesita makensis: dnf install mingw32-nsis)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -22,12 +23,12 @@ frontend() {
 # build/desktop/linux/Folio y build/bin/folio (lanzador autoextraíble de un solo archivo)
 linux() {
   frontend
-  (cd desktop && node package.mjs linux "$VERSION" "$PWD/../build/bin/whisper-cli")
+  (cd desktop && node package.mjs linux "$VERSION" "$PWD/../build/bin/whisper-cli" "$PWD/../build/bin/llama-server")
 }
 # build/desktop/win32/Folio (Folio.exe y sus archivos)
 windows() {
   [ "${FRONTEND_DONE:-}" = 1 ] || frontend
-  (cd desktop && node package.mjs win32 "$VERSION" "$PWD/../build/bin/whisper-cli.exe")
+  (cd desktop && node package.mjs win32 "$VERSION" "$PWD/../build/bin/whisper-cli.exe" "$PWD/../build/bin/llama-server.exe")
 }
 whisper() {
   local tag=v1.9.5 src=build/whisper.cpp
@@ -43,6 +44,21 @@ whisper() {
       -DCMAKE_TOOLCHAIN_FILE="$PWD/build/windows/mingw64.cmake" -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
     cmake --build "$src/build-win" -j"$(nproc)" --target whisper-cli
     x86_64-w64-mingw32-strip -o build/bin/whisper-cli.exe "$src/build-win/bin/whisper-cli.exe"
+  fi
+}
+# Motor de Folito: llama-server de llama.cpp, estático y para cualquier x86-64 (como whisper)
+llama() {
+  local tag=b11900 src=build/llama.cpp
+  [ -d "$src" ] || git clone --depth 1 --branch "$tag" https://github.com/ggml-org/llama.cpp "$src"
+  local opts=(-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_CURL=OFF -DLLAMA_OPENSSL=OFF)
+  cmake -S "$src" -B "$src/build" "${opts[@]}"
+  cmake --build "$src/build" -j"$(nproc)" --target llama-server
+  install -m755 "$src/build/bin/llama-server" build/bin/llama-server
+  if command -v x86_64-w64-mingw32-g++ >/dev/null; then
+    cmake -S "$src" -B "$src/build-win" "${opts[@]}" -DGGML_OPENMP=OFF \
+      -DCMAKE_TOOLCHAIN_FILE="$PWD/build/windows/mingw64.cmake" -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
+    cmake --build "$src/build-win" -j"$(nproc)" --target llama-server
+    x86_64-w64-mingw32-strip -o build/bin/llama-server.exe "$src/build-win/bin/llama-server.exe"
   fi
 }
 # Herramientas de Android: las del entorno o, si no, las instaladas en ~/.local y ~/Android
@@ -114,10 +130,11 @@ case "$TARGET" in
   windows) windows ;;
   installer) installer ;;
   whisper) whisper ;;
+  llama) llama ;;
   android) android ;;
   android-debug) android_debug ;;
   release) release ;;
   all) linux; FRONTEND_DONE=1 installer ;;
-  *) echo "Uso: $0 [linux|windows|installer|whisper|android|android-debug|release|all] [versión]" >&2; exit 1 ;;
+  *) echo "Uso: $0 [linux|windows|installer|whisper|llama|android|android-debug|release|all] [versión]" >&2; exit 1 ;;
 esac
 ls -lh build/bin

@@ -12,6 +12,7 @@ import { createAndroidBackend, onAndroidEvent } from './platform/android';
 
 export interface DesktopReminder { id: string; date: string; at: number; title: string; body: string }
 export interface DesktopPrefs { background: boolean; openAtLogin: boolean }
+export interface FolitoInfo { model: string; modelReady: boolean; modelSize: number; engineReady: boolean; downloading: boolean; running: boolean }
 
 export interface Backend extends AgendaBackend {
   Init(): Promise<InitData>;
@@ -48,6 +49,12 @@ export interface Backend extends AgendaBackend {
   SetReminders(list: DesktopReminder[]): Promise<void>;
   /** Escritorio: segundo plano y abrir al iniciar sesión (preferencias de este equipo). */
   GetDesktopPrefs(): Promise<DesktopPrefs>;
+  /** Escritorio: Folito, el asistente con un modelo local (llama.cpp). */
+  FolitoStatus(): Promise<FolitoInfo>;
+  FolitoDownload(): Promise<void>;
+  FolitoCancelDownload(): Promise<void>;
+  FolitoDelete(): Promise<void>;
+  FolitoAsk(req: { system: string; user: string; schema: unknown }): Promise<string>;
   SetDesktopPrefs(p: Partial<DesktopPrefs>): Promise<DesktopPrefs>;
   ChoosePdfs(): Promise<PdfFile[] | null>;
   ChooseNoteFiles(): Promise<{ path: string; name: string }[] | null>;
@@ -290,6 +297,16 @@ function createMockBackend(): Backend {
     async SetReminders() { /* */ },
     async GetDesktopPrefs() { return { background: false, openAtLogin: false }; },
     async SetDesktopPrefs(p) { return { background: !!p.background, openAtLogin: !!p.openAtLogin }; },
+    // Folito simulado (solo desarrollo): respuestas fijas para probar la interfaz
+    async FolitoStatus() { return { model: 'qwen2.5-1.5b', modelReady: true, modelSize: 1117300000, engineReady: true, downloading: false, running: false }; },
+    async FolitoDownload() { /* */ },
+    async FolitoCancelDownload() { /* */ },
+    async FolitoDelete() { /* */ },
+    async FolitoAsk({ user }) {
+      await new Promise((r) => setTimeout(r, 600));
+      if (/qu[eé] tengo/i.test(user)) return JSON.stringify({ reply: 'Esto es lo que tienes mañana.', actions: [{ type: 'consultar', when: 'mañana' }] });
+      return JSON.stringify({ reply: 'Te lo apunto y te aviso antes.', actions: [{ type: 'crear', title: 'Dentista', when: 'el jueves a las 12', duration: '45 min', remind: '30 minutos antes' }, { type: 'mover', task: 'inglés', when: 'el viernes a las 18' }] });
+    },
     async ChoosePdfs() { return []; },
     async ChooseNoteFiles() {
       return new Promise((resolve) => {

@@ -155,17 +155,22 @@ func (a *App) DictationDownloadModel(model string) error {
 		cancel()
 	}()
 
-	if err := os.MkdirAll(modelsDir(), 0o755); err != nil {
+	return downloadFile(ctx, whisperModelURL+m.File, modelPath(model), m.Size, m.SHA256, func(done, total int64) { a.emit("dictation:download", done, total) })
+}
+
+// downloadFile descarga url a dst con progreso, reanudando si quedó un .part a
+// medias y comprobando la huella si se conoce. La usan el dictado y Folito.
+func downloadFile(ctx context.Context, url, dst string, size int64, sha string, progress func(done, total int64)) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
-	dst := modelPath(model)
 	part := dst + ".part"
 	// Reanuda si quedó una descarga a medias
 	var offset int64
 	if st, err := os.Stat(part); err == nil {
 		offset = st.Size()
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, whisperModelURL+m.File, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
@@ -192,7 +197,7 @@ func (a *App) DictationDownloadModel(model string) error {
 	if err != nil {
 		return err
 	}
-	total := m.Size
+	total := size
 	if resp.ContentLength > 0 {
 		total = offset + resp.ContentLength
 	}
@@ -209,7 +214,7 @@ func (a *App) DictationDownloadModel(model string) error {
 			done += int64(n)
 			if time.Since(last) > 200*time.Millisecond {
 				last = time.Now()
-				a.emit("dictation:download", done, total)
+				progress(done, total)
 			}
 		}
 		if rerr == io.EOF {
@@ -226,17 +231,17 @@ func (a *App) DictationDownloadModel(model string) error {
 	if err := f.Close(); err != nil {
 		return err
 	}
-	if m.SHA256 != "" {
+	if sha != "" {
 		sum, err := fileSHA256(part)
 		if err != nil {
 			return err
 		}
-		if sum != m.SHA256 {
+		if sum != sha {
 			os.Remove(part)
 			return errors.New("el modelo descargado está dañado; vuelve a intentarlo")
 		}
 	}
-	a.emit("dictation:download", total, total)
+	progress(total, total)
 	return os.Rename(part, dst)
 }
 

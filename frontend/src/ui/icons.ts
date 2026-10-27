@@ -36,6 +36,7 @@ const P: Record<string, string> = {
   help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
   keyboard: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M10 13h4M7 16h10"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  arrowUp: '<path d="M12 19V5M5 12l7-7 7 7"/>',
   mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/>',
   stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
   play: '<path d="m7 4 13 8-13 8z"/>',

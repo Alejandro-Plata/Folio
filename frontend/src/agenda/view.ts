@@ -1,6 +1,7 @@
 // Controlador de la agenda: cabecera (navegación, vistas, barra rápida con
 // dictado), cuerpo con la vista activa, barra de selección de varios días,
 // atajos de teclado y anuncios para lectores de pantalla.
+import { isDesktop } from '../platform/platform';
 import type { App } from '../app';
 import { api } from '../api';
 import { on } from '../bus';
@@ -47,6 +48,7 @@ export class AgendaView implements ViewHost {
   private examBadge = h('span', { class: 'ag-exam', hidden: true });
   /** Escritorio: la fecha va en su propia cabecera, fuera de la barra de herramientas. */
   private mast = h('div', { class: 'ag-mast' });
+  folito: import('./folito').Folito | null = null;
   private mastEyebrow = h('div', { class: 'ag-mast-eyebrow' });
   private viewBtns = new Map<ViewKind, HTMLButtonElement>();
   private selBar = h('div', { class: 'ag-selbar', role: 'toolbar', 'aria-label': 'Días seleccionados', hidden: true });
@@ -82,6 +84,12 @@ export class AgendaView implements ViewHost {
     this.sidebar = new AgendaSidebar(this, this.app);
     this.buildHead();
     this.root.append(this.banner, this.selBar, ...(this.mobile ? [] : [this.mast]), this.body, this.live);
+    // Folito: en el escritorio (y en desarrollo, con respuestas simuladas)
+    if (!this.mobile && (isDesktop || import.meta.env.DEV)) {
+      const { Folito } = await import('./folito');
+      this.folito = new Folito(this);
+      this.folito.mount(this.root);
+    }
     if (this.mobile) {
       attachSwipe(this);
       this.title.setAttribute('role', 'button');

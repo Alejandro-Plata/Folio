@@ -7,10 +7,11 @@ import { h } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { pushBack } from '../platform/back';
 import type { Task } from './model';
-import { WEEKDAYS_SHORT, addDays, duration, longDate, relativeDate, timeLabel } from './dates';
+import { WEEKDAYS_SHORT, duration, longDate, relativeDate, timeLabel } from './dates';
 import type { Draft } from './parse';
-import { matchTasks, parseCommand, type Command } from './commands';
-import { getDefaultRemind, remindLabel } from '../platform/reminders';
+import { parseCommand, type Command } from './commands';
+import { applyOrder, draftToTask, findTargets } from './orders';
+import { remindLabel } from '../platform/reminders';
 import { taskDialog } from './editor';
 import { Dictation } from './dictation';
 import type { AgendaView } from './view';
@@ -125,7 +126,7 @@ export class QuickAdd {
 
   private row(d: Draft, i: number): HTMLElement {
     const st = this.view.state;
-    const type = st.type(d.typeId ?? this.defaultType());
+    const type = st.type(this.toTask(d).typeId);
     const topic = st.topicByNumber(d.topicNumber);
     const rep = d.repeat
       ? d.repeat.freq === 'daily' ? (d.repeat.interval > 1 ? `cada ${d.repeat.interval} días` : 'todos los días')
@@ -147,32 +148,15 @@ export class QuickAdd {
       h('button', { type: 'button', class: 'icon-btn', title: 'Editar antes de crear', 'aria-label': `Editar «${d.title}» antes de crear`, html: icon('pencil', 14), onmousedown: (e: MouseEvent) => e.preventDefault(), onclick: () => void this.edit(i) }));
   }
 
-  private defaultType() {
-    const st = this.view.state;
-    return st.types.find((t) => t.id === 'personal')?.id ?? st.types[st.types.length - 1]?.id ?? '';
-  }
-
-  private toTask(d: Draft): Task {
-    const st = this.view.state;
-    const topic = st.topicByNumber(d.topicNumber);
-    const typeId = d.typeId ?? (topic ? 'study' : this.defaultType());
-    return {
-      id: '', title: d.title || st.type(typeId).name, typeId, date: d.date, start: d.start, minutes: d.minutes, repeat: d.repeat ?? null,
-      topicId: topic?.id, docId: topic?.docId, kind: topic ? (typeId === 'review' ? 'review' : typeId === 'mock' ? 'mock' : 'study') : '', done: false,
-      remind: d.remind ?? (d.start ? getDefaultRemind() : null),
-    };
-  }
+  private toTask(d: Draft): Task { return draftToTask(this.view.state, d); }
 
   // ---------- Órdenes ----------
 
   /** Busca las tareas a las que se refiere la orden y la muestra para confirmarla. */
   private async resolve(cmd: Exclude<Command, { kind: 'create' }>, seq: number) {
-    const st = this.view.state;
-    const tasks = cmd.kind === 'query'
-      ? await st.range(cmd.from, cmd.to)
-      : matchTasks(await st.range(addDays(st.today, -7), addDays(st.today, 90)), cmd.query, st.today, cmd.on).slice(0, 4);
+    const tasks = await findTargets(this.view.state, cmd);
     if (seq !== this.seq) return; // ha cambiado la frase mientras se buscaba
-    this.found = cmd.kind === 'query' ? tasks.sort((a, b) => a.date.localeCompare(b.date) || (a.start ?? '').localeCompare(b.start ?? '')) : tasks;
+    this.found = tasks;
     this.pick = 0;
     this.renderCommand();
   }
@@ -225,19 +209,11 @@ export class QuickAdd {
   private async run() {
     const cmd = this.cmd;
     if (!cmd) return;
-    if (cmd.kind === 'query') {
-      this.clear();
-      this.view.goTo(cmd.from === cmd.to ? 'day' : 'week', cmd.from);
-      return;
-    }
     const t = this.found[this.pick];
-    if (!t) return;
+    if (cmd.kind !== 'query' && !t) return;
     this.clear();
     this.closeMobile?.();
-    if (cmd.kind === 'move') { if (cmd.date || cmd.start) await this.view.moveTask(t, cmd.date ?? t.date, cmd.start ?? t.start); }
-    else if (cmd.kind === 'delete') await this.view.deleteTask(t);
-    else if (cmd.kind === 'done') { if (!t.done) this.view.toggleDone(t); }
-    else await this.view.state.saveTask({ ...t, remind: cmd.minutes }, t.occurrenceOf ? 'all' : 'one', `Aviso puesto: ${t.title} · ${remindLabel(cmd.minutes, !t.start)}`);
+    await applyOrder(this.view, cmd, t);
   }
 
   private async create() {
