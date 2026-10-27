@@ -4,7 +4,8 @@ import { h, modal, toast } from '../ui/dom';
 import { REMIND_CHOICES, getDefaultRemind, remindLabel, remindersSupported } from '../platform/reminders';
 import { icon } from '../ui/icons';
 import type { Repeat, Scope, Task } from './model';
-import { WEEKDAYS, WEEKDAYS_LETTER, longDate, shortDate, weekday } from './dates';
+import { WEEKDAYS, WEEKDAYS_LETTER, duration, hhmm, longDate, minutesOf, shortDate, weekday } from './dates';
+import { parseTime } from './time';
 import { durationField, timeField } from './timepicker';
 import { suggestDurations, suggestStarts } from './suggest';
 import { memoryPanel } from './memory';
@@ -44,7 +45,7 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
   const multi = opts.dates && opts.dates.length > 1 ? opts.dates : null;
 
   // ---------- Campos ----------
-  const title = h('input', { class: 'input', value: base.title, placeholder: 'Qué vas a hacer', 'aria-label': 'Título' });
+  const title = h('input', { class: 'ag-title-input', value: base.title, placeholder: 'Añade un título', 'aria-label': 'Título' });
   const typeBox = h('div', { class: 'ag-types', role: 'radiogroup', 'aria-label': 'Tipo y prioridad' });
   let typeId = base.typeId;
   const drawTypes = () => {
@@ -55,15 +56,55 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
     },
     // La muestra lleva el color y la trama del tipo (se distingue también sin color)
     h('span', { class: `ag-type-dot pat-${t.pattern}`, 'aria-hidden': 'true' }),
-    h('span', { class: 'ag-type-name' }, t.name),
-    h('span', { class: 'ag-type-p', 'aria-label': `prioridad ${t.priority}` }, String(t.priority)))));
+    h('span', { class: 'ag-type-name' }, t.name))));
   };
   drawTypes();
 
   const date = h('input', { class: 'input input-sm', type: 'date', value: base.date, 'aria-label': 'Fecha' });
   let onStartChange = () => { /* lo pone el campo «Avisar» */ };
-  const startF = timeField({ label: 'hora de inicio', value: base.start ?? '', allowEmpty: true, onChange: () => onStartChange() });
-  const durF = durationField({ label: 'duración', value: base.minutes ?? 0, allowEmpty: true });
+  // Cuándo: inicio y fin (la duración se calcula); sin hora es «todo el día»
+  let dur = base.minutes || 60;
+  let syncing = false;
+  const startF = timeField({ label: 'hora de inicio', value: base.start ?? '', allowEmpty: true, compact: true, onChange: (v) => {
+    if (syncing) return;
+    syncing = true;
+    if (v) endF.value = hhmm(Math.min(24 * 60 - 1, minutesOf(v) + dur)); // mover el inicio mueve el fin
+    syncing = false;
+    showDur();
+    onStartChange();
+  } });
+  const endF = timeField({ label: 'hora de fin', value: base.start ? hhmm(Math.min(24 * 60 - 1, minutesOf(base.start) + dur)) : '', allowEmpty: true, compact: true, onChange: (v) => {
+    if (syncing || !v || !startF.input.value) return;
+    const d = minutesOf(v) - shown(startF);
+    if (d > 0) dur = d;
+    showDur();
+  } });
+  const durHint = h('span', { class: 'ag-dur-hint' });
+  const shown = (f: { input: HTMLInputElement }) => minutesOf(parseTime(f.input.value) ?? '');
+  const showDur = () => {
+    // Se lee el texto del campo: leer .value lo valida y vuelve a avisar (bucle)
+    const d = startF.input.value && endF.input.value ? shown(endF) - shown(startF) : 0;
+    durHint.textContent = d > 0 ? duration(d) : startF.input.value && endF.input.value ? 'El fin va antes del inicio' : '';
+    durHint.classList.toggle('is-bad', d <= 0 && !!durHint.textContent);
+  };
+  // Sin hora: «todo el día», con un tiempo opcional (para el plan de estudio)
+  const durF = durationField({ label: 'tiempo que le dedicas', value: base.start ? 0 : base.minutes ?? 0, allowEmpty: true });
+  const allDay = h('input', { type: 'checkbox', checked: !base.start });
+  const timesBox = h('div', { class: 'ag-when-times' }, startF.el, h('span', { class: 'ag-when-sep', 'aria-hidden': 'true' }, '–'), endF.el, durHint);
+  const allDayDur = h('label', { class: 'ag-inline ag-when-dur' }, 'Dedicar', durF.el);
+  const syncAllDay = () => {
+    timesBox.hidden = allDay.checked;
+    allDayDur.hidden = !allDay.checked;
+  };
+  allDay.addEventListener('change', () => {
+    syncing = true;
+    if (allDay.checked) { startF.value = ''; endF.value = ''; }
+    else { const s0 = base.start || '09:00'; startF.value = s0; endF.value = hhmm(Math.min(24 * 60 - 1, minutesOf(s0) + dur)); }
+    syncing = false;
+    syncAllDay(); showDur(); onStartChange();
+  });
+  syncAllDay();
+  showDur();
   const refreshSuggestions = () => {
     if (!st.settings.suggestions) { startF.setSuggestions([]); durF.setSuggestions([]); return; }
     const wd = weekday(date.value || base.date);
@@ -131,7 +172,7 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
   const remindSel = h('select', { class: 'input input-sm', 'aria-label': 'Avisar' });
   const drawRemind = () => {
     const cur = remindSel.options.length ? (remindSel.value === '' ? null : Number(remindSel.value)) : remind0;
-    const allDay = !startF.value;
+    const allDay = !startF.input.value; // el texto: leer .value volvería a avisar del cambio
     const choices = allDay ? [null, 0, 1440] : REMIND_CHOICES;
     const sel = allDay && cur !== null ? (cur >= 1440 ? 1440 : 0) : cur;
     remindSel.replaceChildren(...choices.map((m) => h('option', { value: m === null ? '' : String(m), selected: m === sel }, remindLabel(m, allDay))));
@@ -145,7 +186,6 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
     }
   });
 
-  const field = (label: string, ...c: (HTMLElement | null)[]) => h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, label), ...c);
   // Quién lo ve: solo tú (se queda en tus dispositivos) o un círculo (lo ven todos sus miembros)
   const circles = app.social.snap.signedIn ? app.social.circles : [];
   let circleId = base.circle?.id ?? opts.circleId ?? '';
@@ -165,21 +205,24 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
     ? h('p', { class: 'muted small' }, h('span', { html: icon(base.circle.kind === 'couple' ? 'heart' : 'users', 12) }), ` Lo creó ${base.circle.by} en «${base.circle.name}». Los cambios los verá todo el círculo.`)
     : null;
 
-  const body = h('div', { class: 'ag-form' },
-    field('Título', title),
-    circles.length || base.circle ? field('Quién lo ve', whoBox) : null,
+  // Una fila por concepto, con su icono a la izquierda (como los calendarios habituales)
+  const line = (ic: string, label: string, ...c: (HTMLElement | null)[]) =>
+    h('div', { class: 'ag-line' }, h('span', { class: 'ag-line-ic', html: icon(ic, 16), title: label, 'aria-hidden': 'true' }), h('div', { class: 'ag-line-main', role: 'group', 'aria-label': label }, ...c));
+  const body = h('div', { class: 'ag-form ag-form-task' },
+    title,
+    circles.length || base.circle ? line('users', 'Quién lo ve', whoBox) : null,
     sharedInfo,
-    priv(field('Tipo', typeBox)),
+    priv(typeBox),
     multi
-      ? field('Días', h('p', { class: 'ag-multi' }, `${multi.length} días: ${multi.slice(0, 6).map(shortDate).join(', ')}${multi.length > 6 ? '…' : ''}`))
-      : h('div', { class: 'ag-row' }, field('Fecha', date), field('Inicio', startF.el), field('Duración', durF.el)),
-    multi ? h('div', { class: 'ag-row' }, field('Inicio', startF.el), field('Duración', durF.el)) : null,
-    multi ? null : priv(h('div', { class: 'ag-row' }, field('Repetir', repSel), repDetail)),
-    remindersSupported ? priv(field('Avisar', remindSel)) : null,
-    priv(st.topics.length ? h('div', { class: 'ag-row' }, field('Tema', topicSel), field('Apuntes', docPicker, topicNotes)) : field('Apuntes', docPicker)),
+      ? line('calendar', 'Días', h('p', { class: 'ag-multi' }, `${multi.length} días: ${multi.slice(0, 6).map(shortDate).join(', ')}${multi.length > 6 ? '…' : ''}`))
+      : line('calendar', 'Fecha', date),
+    line('clock', 'Hora', h('div', { class: 'ag-when' }, timesBox, allDayDur, h('label', { class: 'ag-check ag-allday' }, allDay, 'Todo el día'))),
+    multi ? null : priv(line('repeat', 'Repetir', repSel, repDetail)),
+    remindersSupported ? priv(line('bell', 'Avisar', remindSel)) : null,
+    priv(st.topics.length ? line('layers', 'Tema y apuntes', topicSel, topicNotes, docPicker) : line('file', 'Apuntes', docPicker)),
     priv(memory),
-    field('Notas', notes),
-    priv(base.auto ? h('label', { class: 'ag-check', title: 'El planificador no moverá ni borrará esta tarea' }, pinned, 'Fijar: que el plan no la cambie') : null),
+    line('pencil', 'Notas', notes),
+    priv(base.auto ? h('label', { class: 'ag-check ag-pin', title: 'El planificador no moverá ni borrará esta tarea' }, pinned, 'Fijar: que el plan no la cambie') : null),
     editing?.occurrenceOf || editing?.repeat ? h('p', { class: 'muted small' }, h('span', { html: icon('repeat', 12) }), ' Esta tarea se repite. Al guardar podrás elegir si el cambio afecta solo a este día.') : null,
   );
 
@@ -190,7 +233,7 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
     { label: 'Cancelar', value: null, kind: 'ghost' as const },
     { label: editing ? 'Guardar' : multi ? `Crear en ${multi.length} días` : 'Crear', value: 'save', kind: 'primary' as const },
   ];
-  const res = await modal<'save' | 'delete'>(editing ? (editing.circle ? 'Editar evento compartido' : 'Editar tarea') : multi ? 'Nueva tarea en varios días' : `Nueva tarea · ${longDate(base.date, false)}`, body, buttons, {
+  const res = await modal<'save' | 'delete'>(editing ? (editing.circle ? 'Editar evento compartido' : 'Editar tarea') : multi ? 'Nueva tarea en varios días' : 'Nueva tarea', body, buttons, {
     className: 'ag-modal',
     onOpen: (c) => {
       close = c;
@@ -201,8 +244,9 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
   if (res === 'delete' && editing) { await view.deleteTask(editing); return; }
   if (res !== 'save') return;
 
-  const startV = startF.value;
-  const minutesV = durF.value;
+  const startV = allDay.checked ? '' : startF.value;
+  const endD = startV && endF.value ? minutesOf(endF.value) - minutesOf(startV) : 0;
+  const minutesV = startV ? (endD > 0 ? endD : dur) : durF.value;
   let repeat: Repeat | null = null;
   const rv = repSel.value;
   if (!multi && rv !== 'none') {
