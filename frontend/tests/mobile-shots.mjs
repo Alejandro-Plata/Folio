@@ -39,6 +39,8 @@ for (const scheme of ['light', 'dark']) {
         .map((e) => ({ r: e.getBoundingClientRect(), e }))
         .filter(({ r }) => r.width > 0 && r.height > 0 && (r.width < 44 || r.height < 44))
         // Exentos: casillas de «hecha» y chips (la fila entera es tocable), puntos del año y bloques de la rejilla horaria (su altura es su duración; la vista Lista es la alternativa)
+        // Contenido del documento: los vínculos del texto se tocan como texto y el icono de los cuadros amplía su zona táctil con ::after
+        .filter(({ e }) => !(e.matches('a[href]') && e.closest('.doc-body')) && !e.closest('.doc-body .callout-icon'))
         .filter(({ e }) => !e.closest('.ag-yday, .ag-ymonth-grid') && !e.classList.contains('ag-done') && !e.classList.contains('ag-chip') && !e.closest('.ag-block') && !(e.type === 'checkbox' && e.closest('label')))
         .map(({ e, r }) => `${e.getAttribute('aria-label') || e.title || e.textContent.trim().slice(0, 18) || e.className} (${Math.round(r.width)}×${Math.round(r.height)})`));
       report(`${name}: controles menores de 44 px`, small);

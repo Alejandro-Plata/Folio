@@ -211,6 +211,9 @@ body.is-mobile .ag-rec-actions .btn { flex: 1; height: 44px; justify-content: ce
 body.is-mobile:has(.ag-rec) .m-fab { visibility: hidden; }
 /* Actualización: «Instalar» a todo el ancho, «Más tarde» y «Ver los cambios» debajo */
 body.is-mobile .upd-actions .spacer { display: none; }
+/* Icono de los cuadros (cambiar tipo): zona táctil de 44 px sin mover el texto */
+body.is-mobile .doc-body .callout-icon { position: relative; }
+body.is-mobile .doc-body .callout-icon::after { content: ''; position: absolute; inset: -9px; }
 body.is-mobile .upd-actions .btn { flex: 1; height: 44px; justify-content: center; }
 body.is-mobile .upd-actions .btn-primary { flex-basis: 100%; order: -1; } /* el botón flotante asomaba tras la tarjeta */
 
