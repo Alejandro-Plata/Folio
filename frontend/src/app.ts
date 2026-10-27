@@ -7,7 +7,7 @@ import { changeCase, moveBlock } from './editor/extensions';
 import { clearFind } from './editor/find';
 import { findShortcut, isNativeEditingCombo, type KeymapId } from './shortcuts';
 import { TEMPLATES, jsonToText, type Template } from './templates';
-import { MANUAL, MANUAL_TITLE, MANUAL_VERSION } from './manual';
+import { MANUAL, MANUAL_SETUP, MANUAL_TITLE, MANUAL_VERSION } from './manual';
 import { debounce, hasOpenModal, closeMenu, toast, confirmDialog, promptText } from './ui/dom';
 import { Sidebar } from './ui/sidebar';
 import { Ribbon } from './ui/ribbon';
@@ -206,8 +206,11 @@ export class App {
         await this.flush();
         await api.CreateVersion(m.id, 'Antes de actualizar el manual').catch(() => null);
         await api.SaveDoc(m.id, JSON.stringify(content), text, text.split(/\s+/).filter(Boolean).length);
+        const d = await api.GetDoc(m.id);
+        await api.SetSetup(m.id, { ...d.setup, ...MANUAL_SETUP });
+        if (this.doc?.meta.id === m.id) await this.open(m.id); // abierto: se recarga con el contenido nuevo
       } else {
-        m = await this.createFromJSON(MANUAL_TITLE, 'bookOpen', content, '');
+        m = await this.createFromJSON(MANUAL_TITLE, 'bookOpen', content, '', MANUAL_SETUP);
       }
       // Primero de la lista, en la raíz
       const roots = this.docs.filter((d) => !d.parentId && !d.trashed && d.id !== m!.id).map((d) => d.order);

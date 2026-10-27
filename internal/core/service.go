@@ -271,6 +271,13 @@ func (s *Service) ExportDocxTo(id string, opt ExportOptions, path string) error 
 		Title: doc.Meta.Title, Author: author, Setup: doc.Setup,
 		StudentVersion: opt.StudentVersion, IncludeTitle: opt.IncludeTitle,
 		ResolveImage: func(src string) ([]byte, error) {
+			// Imágenes incrustadas en el propio contenido (data:image/png;base64,…)
+			if rest, ok := strings.CutPrefix(src, "data:image/"); ok {
+				if i := strings.Index(rest, ";base64,"); i >= 0 {
+					return base64.StdEncoding.DecodeString(rest[i+len(";base64,"):])
+				}
+				return nil, errors.New("imagen incrustada sin base64")
+			}
 			p, err := s.st().AssetPath(src)
 			if err != nil {
 				return nil, err

@@ -1,13 +1,22 @@
 // «Manual de Folio»: la primera nota del espacio de trabajo. Explica todas las
-// funciones; empieza con un cuadro resumen cuyos enlaces llevan a cada sección.
+// funciones, agrupadas en partes. Empieza con una portada y un mapa cuyos
+// enlaces llevan a cada parte y sección. Es un documento normal (tablas con
+// color de celda, texto con color y fuente), así que se edita y se exporta
+// como cualquier otro. Los colores solo van sobre fondos propios (azul marino
+// y verde azulado) o son el acento verde, para leerse en el tema claro y en
+// el oscuro.
 // Los enlaces se generan con headingSlug a partir del propio título, así que no
 // pueden desincronizarse. Al cambiar el contenido, sube MANUAL_VERSION: las
 // instalaciones existentes lo actualizan al arrancar (guardando antes una versión).
 import type { JSONContent } from '@tiptap/core';
 import { headingSlug } from './editor/anchors';
+import cover from './assets/manual-portada.png?inline';
+import { fontStack } from './fonts';
 
 export const MANUAL_TITLE = 'Manual de Folio';
-export const MANUAL_VERSION = 1;
+export const MANUAL_VERSION = 2;
+/** Página del manual: letra con serifa para el texto, como un libro. */
+export const MANUAL_SETUP = { fontFamily: 'Literata', fontSize: 11, lineHeight: 1.5, pageNumbers: true, header: 'Manual de Folio' };
 
 type Inline = JSONContent | string;
 const t = (text: string, marks?: string[]): JSONContent => ({ type: 'text', text, ...(marks ? { marks: marks.map((m) => ({ type: m })) } : {}) });
@@ -20,12 +29,60 @@ const ul = (...items: Inline[][]): JSONContent => ({ type: 'bulletList', content
 const note = (kind: string, ...c: Inline[]): JSONContent => ({ type: 'callout', attrs: { kind }, content: [p(...c)] });
 const cell = (c: Inline[], header = false, width?: number): JSONContent =>
   ({ type: header ? 'tableHeader' : 'tableCell', attrs: { colspan: 1, rowspan: 1, ...(width ? { colwidth: [width] } : {}) }, content: [p(...c)] });
+/** Tabla con la fila de encabezado en color (la primera celda, azul marino; las demás, verde azulado). */
 const table = (rows: Inline[][][], widths: number[]): JSONContent => ({
   type: 'table',
-  content: rows.map((r, i) => ({ type: 'tableRow', content: r.map((c, j) => cell(c, i === 0, widths[j])) })),
+  content: rows.map((r, i) => ({
+    type: 'tableRow',
+    content: r.map((c, j) => i === 0
+      ? { ...cell(c.map((x) => (typeof x === 'string' ? st(x, { color: WHITE, font: SANS, bold: true }) : x)), true, widths[j]), attrs: { colspan: 1, rowspan: 1, colwidth: [widths[j]], background: j === 0 ? NAVY : TEAL } }
+      : cell(c, false, widths[j])),
+  })),
 });
+// Colores de la referencia: azul marino y verde azulado
+const NAVY = '#15233f';
+const TEAL = '#0f7c6e';
+const MINT = '#7fe0cd';
+const WHITE = '#ffffff';
+const ON_NAVY = '#c9d3e4';
+const SANS = fontStack('Inter');
+/** Texto con estilo: color, fuente, tamaño (pt), negrita, cursiva. */
+function st(text: string, o: { color?: string; font?: string; size?: number; bold?: boolean; italic?: boolean } = {}): JSONContent {
+  const marks: { type: string; attrs?: Record<string, unknown> }[] = [];
+  if (o.color || o.font || o.size) marks.push({ type: 'textStyle', attrs: { color: o.color ?? null, fontFamily: o.font ?? null, fontSize: o.size ? `${o.size}pt` : null } });
+  if (o.bold) marks.push({ type: 'bold' });
+  if (o.italic) marks.push({ type: 'italic' });
+  return { type: 'text', text, ...(marks.length ? { marks } : {}) };
+}
+const pc = (attrs: Record<string, unknown>, ...c: JSONContent[]): JSONContent => ({ type: 'paragraph', attrs, content: c });
+/** Celda con varios bloques y color de fondo. */
+const box = (blocks: JSONContent[], o: { bg?: string; width?: number; colspan?: number; header?: boolean } = {}): JSONContent => ({
+  type: o.header ? 'tableHeader' : 'tableCell',
+  attrs: { colspan: o.colspan ?? 1, rowspan: 1, ...(o.width ? { colwidth: [o.width] } : {}), ...(o.bg ? { background: o.bg } : {}) },
+  content: blocks,
+});
+const row = (...cells: JSONContent[]): JSONContent => ({ type: 'tableRow', content: cells });
+
+interface Part { title: string; intro: string; sections: string[] }
+
+const PARTS: Part[] = [
+  { title: 'Primeros pasos', intro: 'La ventana de Folio, cómo se organizan los documentos y las plantillas para empezar.', sections: ['La interfaz', 'Documentos y carpetas', 'Plantillas'] },
+  { title: 'Escribir', intro: 'Todo lo que cabe en una página: formato, bloques, tablas, imágenes, ecuaciones y referencias.', sections: ['Escribir y dar formato', 'Bloques y menú «/»', 'Tablas', 'Imágenes', 'Ecuaciones', 'Notas al pie, comentarios, vínculos e índice'] },
+  { title: 'Preparar y compartir', intro: 'Del documento a la clase o a otra persona: hojas, impresión, versiones y formatos.', sections: ['Herramientas para clase', 'Página, hojas e impresión', 'Buscar y reemplazar', 'Guardado y versiones', 'Exportar e importar'] },
+  { title: 'La agenda', intro: 'Un calendario para organizar el tiempo y el estudio: tareas, avisos, Folito, plan, repasos y progreso.', sections: ['La agenda', 'Crear tareas', 'Órdenes en la barra rápida', 'Avisos', 'Folito', 'Varios días y semanas tipo', 'Temario, plan y repasos', 'Progreso'] },
+  { title: 'Varios dispositivos', intro: 'Compartir con otras personas y tener lo mismo en el ordenador y en el móvil.', sections: ['Cuenta, círculos y citas', 'Sincronización', 'Folio en el móvil'] },
+  { title: 'Ajustes y atajos', intro: 'Preferencias, actualizaciones y la referencia del teclado.', sections: ['Ajustes', 'Actualizaciones', 'Atajos de teclado'] },
+];
+
+const partTitle = (i: number) => `${i + 1}. ${PARTS[i].title}`;
+const sectionTitle = (pi: number, si: number) => `${pi + 1}.${si + 1} ${PARTS[pi].sections[si]}`;
+
 /** Enlace a una sección del manual por su título. */
-const to = (title: string, text = title) => link(text, `#${headingSlug(title)}`);
+const to = (title: string, text = title) => {
+  // Los títulos del documento van numerados («4.3 Avisos»): el enlace apunta a ese
+  const pi = PARTS.findIndex((pt) => pt.sections.includes(title));
+  return link(text, `#${headingSlug(pi >= 0 ? sectionTitle(pi, PARTS[pi].sections.indexOf(title)) : title)}`);
+};
 
 interface Section { title: string; summary: string; body: JSONContent[] }
 
@@ -228,13 +285,55 @@ const SECTIONS: Section[] = [
       hd(3, 'Barra rápida'),
       p('La tarea se escribe como se diría y, antes de crearla, se muestra lo que se ha entendido. Intro la crea; Mayús+Intro abre el editor completo. Ejemplos:'),
       ul([k('mañana de 9 a 11 estudio')], [k('reunión cada 2 semanas los jueves a las 17')], [k('de lunes a viernes de 9 a 11 estudio tema 4 hasta el 20 de diciembre')], [k('dentista el 3 de noviembre a las 10')]),
-      p('Se pueden escribir varias tareas en una frase («a las 9 tema 3 y luego a las 12 repaso del tema 1») y la prioridad con «prioridad alta» o ', k('!1'), '.'),
+      p('Se pueden escribir varias tareas en una frase («a las 9 tema 3 y luego a las 12 repaso del tema 1»), la prioridad con «prioridad alta» o ', k('!1'), ' y el aviso con «avísame 15 minutos antes» o «recuérdame…». La barra también entiende órdenes sobre lo que ya está en la agenda: véase ', to('Órdenes en la barra rápida'), '.'),
       hd(3, 'Dictado'),
       p('El micrófono de la barra (o mantener Ctrl+Mayús+Espacio) dicta la tarea; la frase se interpreta igual que si se escribiera. En el ordenador funciona sin conexión con un modelo de voz que se descarga una vez; en Android usa el reconocimiento de voz del sistema, manteniendo pulsado el botón +.'),
       hd(3, 'Editor de tarea'),
-      p('Un clic en una tarea, un clic o un arrastre sobre un hueco de la rejilla (que marca la hora y la duración) o un doble clic en un día del mes abren el editor: título, tipo, fecha, hora, duración, repetición (diaria, semanal con días concretos, mensual, con fin), tema, notas, documento enlazado y, con círculos, quién la ve.'),
+      p('Un clic en una tarea, un clic o un arrastre sobre un hueco de la rejilla (que marca la hora y la duración) o un doble clic en un día del mes abren el editor: título, tipo, fecha, hora, duración, repetición (diaria, semanal con días concretos, mensual, con fin), aviso, tema, notas, documento enlazado y, con círculos, quién la ve.'),
       hd(3, 'Tipos y prioridades'),
       p('Cada tipo tiene color, icono, trama y prioridad (1 = máxima): decide qué se coloca primero cuando no cabe todo. En el panel lateral, un clic oculta o muestra un tipo y el lápiz abre su editor.'),
+    ],
+  },
+  {
+    title: 'Órdenes en la barra rápida',
+    summary: 'Consultar, mover, borrar o marcar tareas escribiendo una frase.',
+    body: [
+      p('Además de crear, la barra «Añadir» entiende órdenes sobre las tareas que ya existen. Funciona por reglas, sin conexión, y siempre muestra lo que va a hacer antes de hacerlo: Intro o el botón lo aplican; Esc lo descarta.'),
+      table([
+        [['Orden'], ['Ejemplos']],
+        [['Consultar'], [k('¿qué tengo mañana?'), ' · ', k('qué hay el jueves'), ' · ', k('esta semana')]],
+        [['Mover'], [k('mueve el dentista al viernes a las 12'), ' · ', k('pasa inglés a las 18')]],
+        [['Borrar'], [k('cancela la reunión del jueves')]],
+        [['Marcar como hecha'], [k('marca el repaso como hecho'), ' · ', k('ya he hecho inglés')]],
+        [['Poner aviso'], [k('avísame del dentista 30 minutos antes')]],
+      ], [150, 450]),
+      p('La tarea se busca por las palabras de su título, sin importar tildes ni mayúsculas: primero en el día que se diga y, si no, entre las próximas. Si encajan varias, se elige con ↑ y ↓.'),
+    ],
+  },
+  {
+    title: 'Avisos',
+    summary: 'Notificaciones del sistema antes de las tareas que lo pidan.',
+    body: [
+      p('Cada tarea puede avisar: en su editor, el campo Avisar ofrece a la hora, 5, 10, 15 o 30 minutos, 1 o 2 horas, o 1 día antes. Las tareas sin hora avisan a las 9:00 del mismo día o del día anterior. Una campana marca las tareas con aviso.'),
+      ul(
+        [b('Aviso por defecto: '), 'Plan > «Aviso de las tareas nuevas» fija el que llevan de entrada las tareas nuevas con hora. Es una preferencia de cada dispositivo.'],
+        [b('En el ordenador: '), 'el aviso aparece en el centro de notificaciones del sistema; al pulsarlo se abre la tarea. Para recibirlos con la ventana cerrada, Ajustes > Avisos y segundo plano.'],
+        [b('En el móvil: '), 'notificación de Android con el botón «Hecha».'],
+      ),
+      note('info', 'El aviso viaja con la tarea: si se sincroniza, avisa en todos los dispositivos donde Folio pueda hacerlo.'),
+    ],
+  },
+  {
+    title: 'Folito',
+    summary: 'Asistente que entiende frases normales y propone cambios en la agenda.',
+    body: [
+      p('Folito es el asistente de la agenda. Se abre con su botón, en la esquina inferior derecha de la agenda, y se le escribe como a una persona: «el dentista me lo han pasado al viernes por la tarde», «apúntame tutoría con la familia de Lucía el martes a las 5 y avísame antes».'),
+      p('Responde con una frase y con tarjetas de acción (crear, mover, borrar, marcar como hecha, poner aviso o consultar). Nada cambia hasta pulsar Crear, Aplicar o Aplicar todo.'),
+      ul(
+        [b('En tu equipo: '), 'usa un modelo de lenguaje pequeño que funciona sin conexión ni cuentas; lo que se escribe no sale del ordenador. La primera vez se descarga (alrededor de 1 GB).'],
+        [b('Memoria: '), 'se pone en marcha con la primera pregunta y se detiene tras 10 minutos sin uso.'],
+        [b('Disponible '), 'en Linux y Windows. En el móvil, la barra rápida entiende las mismas órdenes por reglas.'],
+      ),
     ],
   },
   {
@@ -290,15 +389,16 @@ const SECTIONS: Section[] = [
         [b('Secciones: '), 'Documentos, Agenda, Buscar y Más (plantillas, importar, unir PDF, temario, plan, progreso, tipos, papelera, ajustes y tutoriales).'],
         [b('Escribir: '), 'al editar aparece una barra de formato sobre el teclado; Aa abre estilos, fuente, color y párrafo, y + inserta bloques.'],
         [b('Agenda: '), 'deslizar a los lados cambia de periodo y tocar el título salta a cualquier día. El botón + abre la barra rápida; mantenerlo pulsado dicta.'],
-        [b('Avisos: '), 'Plan de estudio > «Avisarme antes de cada tarea».'],
+        [b('Avisos: '), 'los de cada tarea (campo Avisar), con el botón «Hecha» en la notificación. Véase ', to('Avisos'), '.'],
       ),
     ],
   },
   {
     title: 'Ajustes',
-    summary: 'Apariencia, escritura, exportación, página, versiones, cuenta y ayuda.',
+    summary: 'Apariencia, escritura, exportación, página, versiones, segundo plano, cuenta y ayuda.',
     body: [
       p('Ajustes (al pie del panel lateral o en Archivo) reúne en una página: tema claro u oscuro, vista de los documentos, cinta, marcas de formato, mapa de atajos (Word en español o en inglés), revisión ortográfica, comillas tipográficas, formato y opciones de exportación por defecto, página de los documentos nuevos, intervalo de las versiones automáticas, carpeta del espacio de trabajo, cuenta, nube y ayuda. Los cambios se aplican al momento.'),
+      p(b('Avisos y segundo plano '), '(solo en el ordenador): «Seguir en segundo plano al cerrar» oculta la ventana en lugar de salir y deja Folio en la bandeja del sistema, para que lleguen los avisos; «Salir de Folio», en la bandeja, lo cierra del todo. «Abrir al iniciar sesión» lo arranca oculto al encender el equipo. En GNOME, la bandeja necesita la extensión AppIndicator; sin ella, abrir Folio desde el menú muestra la ventana oculta.'),
     ],
   },
   {
@@ -333,19 +433,96 @@ const SECTIONS: Section[] = [
   },
 ];
 
-/** Contenido del manual: cuadro resumen enlazado y una sección por función. */
+/** Portada: fondo azul marino, la red de nodos, el título y unas líneas de contexto. */
+function coverPage(): JSONContent[] {
+  const label = (text: string) => box([pc({}, st(text.toUpperCase(), { color: MINT, font: SANS, size: 8, bold: true }))], { bg: NAVY, width: 150 });
+  const value = (text: string) => box([pc({}, st(text, { color: ON_NAVY, font: SANS, size: 10 }))], { bg: NAVY, width: 450 });
+  return [{
+    type: 'table',
+    content: [
+      row(box([
+        { type: 'image', attrs: { src: cover, alt: '', width: 600, align: 'center' } },
+        pc({}, st('MANUAL DE FOLIO · VERSIÓN 1.3', { color: MINT, font: SANS, size: 9, bold: true })),
+        pc({}, st('Escribir, organizar y estudiar', { color: WHITE, font: SANS, size: 30, bold: true })),
+        pc({}, st('Todo lo que hace Folio, explicado en orden: escribir y dar formato, preparar documentos para clase, organizar la agenda y el estudio, trabajar con Folito y tenerlo todo en varios dispositivos.', { color: ON_NAVY, font: fontStack('Literata'), size: 12.5, italic: true })),
+        pc({}),
+      ], { bg: NAVY, colspan: 2, width: 600 })),
+      row(label('Qué es'), value('Un procesador de textos con agenda de estudio, para Linux, Windows y Android.')),
+      row(label('Cómo leerlo'), value('El mapa de la página siguiente lleva a cada parte. Los títulos también están en el panel Esquema.')),
+      row(label('Ayuda rápida'), value('F1 muestra los atajos de teclado. El botón ? de la barra superior abre el tutorial guiado.')),
+    ],
+  }, { type: 'pageBreak' }];
+}
+
+/** Mapa: las partes con su número en color, su descripción y los enlaces a sus secciones. */
+function mapPage(): JSONContent[] {
+  const head = (text: string, bg: string, width: number) => box([pc({}, st(text, { color: WHITE, font: SANS, size: 9, bold: true }))], { bg, width, header: true });
+  const rows = PARTS.map((part, pi) => row(
+    box([pc({ textAlign: 'center' }, st(String(pi + 1), { color: WHITE, font: SANS, size: 16, bold: true }))], { bg: pi % 2 ? NAVY : TEAL, width: 56 }),
+    box([
+      pc({}, { ...link(partTitle(pi), `#${headingSlug(partTitle(pi))}`), marks: [{ type: 'link', attrs: { href: `#${headingSlug(partTitle(pi))}` } }, { type: 'bold' }, { type: 'textStyle', attrs: { fontFamily: SANS } }] }),
+      pc({}, st(part.intro, { size: 10 })),
+    ], { width: 330 }),
+    box([pc({}, ...part.sections.flatMap((sec, si) => [
+      ...(si ? [st(' · ', { size: 9 })] : []),
+      { ...link(sec, `#${headingSlug(sectionTitle(pi, si))}`), marks: [{ type: 'link', attrs: { href: `#${headingSlug(sectionTitle(pi, si))}` } }, { type: 'textStyle', attrs: { fontSize: '9pt' } }] },
+    ]))], { width: 214 }),
+  ));
+  return [
+    pc({}, st('ANTES DE EMPEZAR', { color: TEAL, font: SANS, size: 9, bold: true })),
+    { type: 'heading', attrs: { level: 1 }, content: [st('Mapa del manual', { font: SANS })] },
+    p('Folio reúne dos cosas: un procesador de textos que trabaja como Word, y una agenda pensada para organizar el tiempo y el estudio. El manual sigue ese orden, en seis partes. Cada fila lleva a su parte; los nombres de la derecha, a cada sección.'),
+    { type: 'table', content: [row(head('Nº', NAVY, 56), head('Parte', TEAL, 330), head('Secciones', TEAL, 214)), ...rows] },
+    p(),
+    pc({}, st('CÓMO SE ORGANIZA EL ESTUDIO', { color: TEAL, font: SANS, size: 9, bold: true })),
+    flow(),
+    pc({ textAlign: 'center' }, st('Figura 1. ', { size: 9, bold: true, italic: true }), st('Del temario al progreso: lo que hace la agenda con cada tema. Véase la parte 4.', { size: 9, italic: true })),
+    note('tip', 'El tutorial guiado (botón ? de la barra superior, o Más > Tutorial de documentos en el móvil) recorre lo esencial con prácticas.'),
+    { type: 'pageBreak' },
+  ];
+}
+
+/** Diagrama de pasos con cajas de color suave (el texto lleva su color: se lee igual en tema oscuro). */
+function flow(): JSONContent {
+  const steps: [string, string, string][] = [
+    ['Temario', '#dce8fb', '#1d4ed8'], ['Plan', '#ebe3fb', '#6d28d9'], ['Planificar', '#fde8cc', '#b45309'],
+    ['Estudiar', '#fbdcdc', '#b91c1c'], ['Repasar', '#d9f1df', '#15803d'], ['Progreso', '#d3eeea', '#0f766e'],
+  ];
+  const cells: JSONContent[] = [];
+  steps.forEach(([name, bg, fg], i) => {
+    if (i) cells.push(box([pc({ textAlign: 'center' }, st('→', { font: SANS, size: 11 }))], { width: 18 }));
+    cells.push(box([pc({ textAlign: 'center' }, st(name, { color: fg, font: SANS, size: 9, bold: true }))], { bg, width: 84 }));
+  });
+  return { type: 'table', content: [row(...cells)] };
+}
+
+/** Comienzo de una parte: rótulo en versalitas, título y presentación. */
+function partHead(pi: number): JSONContent[] {
+  const part = PARTS[pi];
+  return [
+    { type: 'pageBreak' },
+    pc({}, st(`PARTE ${pi + 1} DE ${PARTS.length} · ${part.sections.length} SECCIONES`, { color: TEAL, font: SANS, size: 9, bold: true })),
+    { type: 'heading', attrs: { level: 1 }, content: [st(partTitle(pi), { font: SANS })] },
+    pc({}, st(part.intro, { italic: true })),
+  ];
+}
+
+/** Título de sección numerado, en verde azulado; los de tercer nivel, en la letra de los títulos. */
+function sectionBody(pi: number, si: number): JSONContent[] {
+  const sec = SECTIONS.find((s) => s.title === PARTS[pi].sections[si]);
+  if (!sec) return [];
+  const body = sec.body.map((n) => (n.type === 'heading' ? { ...n, content: (n.content ?? []).map((c) => ({ ...c, marks: [{ type: 'textStyle', attrs: { fontFamily: SANS } }] })) } : n));
+  return [{ type: 'heading', attrs: { level: 2 }, content: [st(sectionTitle(pi, si), { color: TEAL, font: SANS })] }, ...body];
+}
+
+/** Contenido del manual: portada, mapa y las seis partes. */
 export function MANUAL(): JSONContent {
-  const summary = table([
-    [['Función'], ['Para qué sirve']],
-    ...SECTIONS.map((s): Inline[][] => [[to(s.title)], [s.summary]]),
-  ], [210, 390]);
   return {
     type: 'doc',
     content: [
-      p('Guía de todas las funciones de Folio. Cada fila del cuadro lleva a su explicación; los títulos también aparecen en el panel Esquema.'),
-      summary,
-      note('tip', 'El tutorial guiado (botón ? de la barra superior, o Más > Tutorial de documentos en el móvil) recorre lo esencial con prácticas.'),
-      ...SECTIONS.flatMap((s) => [hd(2, s.title), ...s.body]),
+      ...coverPage(),
+      ...mapPage(),
+      ...PARTS.flatMap((_, pi) => [...partHead(pi).slice(pi ? 0 : 1), ...PARTS[pi].sections.flatMap((__, si) => sectionBody(pi, si))]),
     ],
   };
 }
