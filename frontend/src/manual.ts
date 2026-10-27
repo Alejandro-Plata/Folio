@@ -13,7 +13,7 @@ import cover from './assets/manual-portada.png?inline';
 import { fontStack } from './fonts';
 
 export const MANUAL_TITLE = 'Manual de Folio';
-export const MANUAL_VERSION = 3;
+export const MANUAL_VERSION = 4;
 /** Página del manual: letra con serifa para el texto, como un libro. */
 export const MANUAL_SETUP = { fontFamily: 'Literata', fontSize: 11, lineHeight: 1.5, pageNumbers: true, header: 'Manual de Folio' };
 
@@ -484,7 +484,6 @@ function mapPage(): JSONContent[] {
     pc({}, st('CÓMO SE ORGANIZA EL ESTUDIO', { color: TEAL, font: SANS, size: 9, bold: true })),
     flow(),
     pc({ textAlign: 'center' }, st('Figura 1. ', { size: 9, bold: true, italic: true }), st('Del temario al progreso: lo que hace la agenda con cada tema. Véase la parte 4.', { size: 9, italic: true })),
-    note('tip', 'El tutorial guiado (botón ? de la barra superior, o Más > Tutorial de documentos en el móvil) recorre lo esencial con prácticas.'),
     { type: 'pageBreak' },
   ];
 }
@@ -506,20 +505,77 @@ function flow(): JSONContent {
 /** Comienzo de una parte: rótulo en versalitas, título y presentación. */
 function partHead(pi: number): JSONContent[] {
   const part = PARTS[pi];
+  const head = (text: string, width: number) => box([pc({}, st(text, { color: WHITE, font: SANS, size: 9, bold: true }))], { bg: TEAL, width, header: true });
+  // «En esta parte»: la misma tabla que el mapa, con cada sección y para qué sirve
+  const rows = part.sections.map((sec, si) => row(
+    box([pc({ textAlign: 'center' }, st(`${pi + 1}.${si + 1}`, { color: TEAL, font: SANS, size: 11, bold: true }))], { width: 56 }),
+    box([
+      pc({}, { ...link(sec, `#${headingSlug(sectionTitle(pi, si))}`), marks: [{ type: 'link', attrs: { href: `#${headingSlug(sectionTitle(pi, si))}` } }, { type: 'bold' }, { type: 'textStyle', attrs: { fontFamily: SANS } }] }),
+      pc({}, st(SECTIONS.find((x) => x.title === sec)?.summary ?? '', { size: 10 })),
+    ], { width: 544 }),
+  ));
   return [
     { type: 'pageBreak' },
     pc({}, st(`PARTE ${pi + 1} DE ${PARTS.length} · ${part.sections.length} SECCIONES`, { color: TEAL, font: SANS, size: 9, bold: true })),
     { type: 'heading', attrs: { level: 1 }, content: [st(partTitle(pi), { font: SANS })] },
     pc({}, st(part.intro, { italic: true })),
+    pc({}, st('EN ESTA PARTE', { color: TEAL, font: SANS, size: 9, bold: true })),
+    { type: 'table', content: [row(head('Nº', 56), head('Sección', 544)), ...rows] },
+    ...(pi === 0 ? [note('tip', 'El tutorial guiado (botón ? de la barra superior, o Más > Tutorial de documentos en el móvil) recorre lo esencial con prácticas.')] : []),
   ];
 }
 
-/** Título de sección numerado, en verde azulado; los de tercer nivel, en la letra de los títulos. */
+/**
+ * Listas con el término en negrita al principio de cada punto («Panel lateral:
+ * …») pasan a ser una tabla de dos columnas, término y explicación: es la ficha
+ * del estilo del manual. Las demás listas quedan como están.
+ */
+function asSheet(list: JSONContent): JSONContent {
+  const items = list.content ?? [];
+  const split = items.map((it) => {
+    const para = it.content?.[0];
+    const runs = [...(para?.content ?? [])];
+    const first = runs[0];
+    if (it.content?.length !== 1 || !first?.text || !first.marks?.some((m) => m.type === 'bold')) return null;
+    let term = first.text, rest = runs.slice(1);
+    if (!/:\s*$/.test(term)) {
+      // «Menú de cada documento (clic derecho o «⋯»): …»: el término sigue hasta los dos puntos
+      const next = rest[0];
+      const i = next?.text && !next.marks?.length ? next.text.indexOf(': ') : -1;
+      if (i < 0 || i > 40) return null;
+      term += next!.text!.slice(0, i);
+      rest = [{ ...next!, text: next!.text!.slice(i + 2) }, ...rest.slice(1)];
+    }
+    term = term.replace(/:\s*$/, '').trim();
+    if (rest[0]?.text) rest[0] = { ...rest[0], text: rest[0].text.replace(/^\s+/, '') };
+    rest = rest.filter((r) => r.text !== '');
+    if (rest[0]?.text) rest[0] = { ...rest[0], text: rest[0].text[0].toUpperCase() + rest[0].text.slice(1) };
+    return { term, rest };
+  });
+  if (split.some((x) => !x)) return list;
+  return {
+    type: 'table',
+    content: split.map((x) => row(
+      box([pc({}, st(x!.term, { font: SANS, size: 10, bold: true }))], { width: 170 }),
+      box([{ type: 'paragraph', content: x!.rest }], { width: 430 }),
+    )),
+  };
+}
+
+/** Título de sección numerado en verde azulado, su resumen en cursiva y el cuerpo en fichas. */
 function sectionBody(pi: number, si: number): JSONContent[] {
   const sec = SECTIONS.find((s) => s.title === PARTS[pi].sections[si]);
   if (!sec) return [];
-  const body = sec.body.map((n) => (n.type === 'heading' ? { ...n, content: (n.content ?? []).map((c) => ({ ...c, marks: [{ type: 'textStyle', attrs: { fontFamily: SANS } }] })) } : n));
-  return [{ type: 'heading', attrs: { level: 2 }, content: [st(sectionTitle(pi, si), { color: TEAL, font: SANS })] }, ...body];
+  const body = sec.body.map((n) => {
+    if (n.type === 'heading') return { ...n, content: (n.content ?? []).map((c) => ({ ...c, marks: [{ type: 'textStyle', attrs: { fontFamily: SANS } }] })) };
+    if (n.type === 'bulletList') return asSheet(n);
+    return n;
+  });
+  return [
+    { type: 'heading', attrs: { level: 2 }, content: [st(sectionTitle(pi, si), { color: TEAL, font: SANS })] },
+    pc({}, st(sec.summary, { italic: true, size: 10.5 })),
+    ...body,
+  ];
 }
 
 /** Contenido del manual: portada, mapa y las seis partes. */
