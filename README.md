@@ -23,7 +23,8 @@ Procesador de textos para docentes con los **atajos de teclado de Microsoft Word
 - Vista de página con guías de salto, vista de lectura, zoom, marcas de formato ¶ y modo concentración.
 
 **Primeros pasos**
-- Tutorial guiado la primera vez que se abre, y en cualquier momento desde el botón de ayuda (?), Archivo > Tutorial o «Dígame»: resalta cada parte de la interfaz y propone prácticas que se comprueban solas (negrita, fuentes, menú «/», cuadros, ecuaciones, versión del alumnado, versiones y búsqueda) sobre unos apuntes de ejemplo que se borran al terminar.
+- **Manual de Folio**: la primera nota del espacio de trabajo explica todas las funciones y empieza con un cuadro resumen cuyos vínculos llevan a cada sección. Se actualiza solo con cada versión que lo cambie (guardando antes una versión) y se abre desde el botón de ayuda (?).
+- Tutorial guiado la primera vez que se abre, y en cualquier momento desde el botón de ayuda (?), Archivo > Tutorial o la búsqueda de acciones (Alt+Q): resalta cada parte de la interfaz y propone prácticas que se comprueban solas, sobre unos apuntes de ejemplo que se borran al terminar.
 - Se adapta a pantallas pequeñas: la cinta se compacta para caber sin barras de desplazamiento, el panel de documentos flota en ventanas estrechas y el zoom «Ajustar al ancho» reduce la hoja si no cabe.
 
 **Pensado para docentes**
@@ -36,7 +37,8 @@ Procesador de textos para docentes con los **atajos de teclado de Microsoft Word
 **Como Notion**
 - Menú `/` para insertar bloques, atajos Markdown (`#`, `-`, `1.`, `[ ]`, `>`, ` ``` `, `---`).
 - Páginas anidadas en el panel lateral, arrastrar para reordenar, favoritos, iconos y papelera.
-- Búsqueda en todos los documentos sin distinguir tildes, y paleta de comandos «Dígame» (Alt+Q).
+- Búsqueda en todos los documentos sin distinguir tildes, y búsqueda de acciones (Alt+Q).
+- Vínculos internos: una dirección «#titulo» lleva a ese título del documento con un clic, y se conserva en PDF, HTML y Word.
 - Tema claro/oscuro.
 
 **Versiones**
@@ -45,7 +47,7 @@ Procesador de textos para docentes con los **atajos de teclado de Microsoft Word
 - Vista previa de cualquier versión, comparación palabra a palabra con la actual, restaurar (siempre se guarda antes una copia del estado actual) o copiarla como documento nuevo.
 - Almacenamiento comprimido y deduplicado por contenido. Las versiones automáticas antiguas se aclaran solas (todas las de 24 h, una por hora durante la semana y una por día después). Las versiones con nombre nunca se borran.
 
-**Agenda de estudio (oposiciones)**
+**Agenda y plan de estudio**
 - Vistas de **día, semana, mes y año**, con minicalendario, «Ir a» («15 marzo», «semana 12», «+3 semanas») y atajos de una tecla (D, S, M, A, H, G, N).
 - **Barra rápida en lenguaje natural**: «de lunes a viernes de 9 a 11 estudio tema 4 hasta el 20 de diciembre». Antes de crear nada se ve lo que se ha entendido.
 - **Dictado sin conexión** con whisper.cpp (modelo «small», se descarga una vez). Mantén Ctrl+Mayús+Espacio para hablar.
@@ -180,4 +182,4 @@ docs/                     guías: plan de la agenda y porte a Android con sincro
 - **Círculos** de amigos (varias personas) o de pareja (dos): al crear un evento eliges «Quién lo ve»: solo tú o un círculo. Los del círculo los ven todos sus miembros y el plan de estudio los respeta como tiempo ocupado. Se entra con un código de invitación.
 - **Citas** (círculos de pareja): propones varios días, la otra persona elige uno (o propone otros) y queda en la agenda de los dos.
 - Configuración del servidor (Supabase): `docs/supabase.md`.
-- **Actualizaciones** con un botón (Archivo › Buscar actualizaciones): GitHub Releases con suma SHA-256 y firma propia. Cómo publicar: `docs/actualizaciones.md`.
+- **Actualizaciones**: al abrir Folio, si hay una versión nueva, un diálogo permite instalarla, ver sus cambios o dejarlo para más tarde. También a mano desde Archivo › Buscar actualizaciones. GitHub Releases con suma SHA-256 y firma propia. Cómo publicar: `docs/actualizaciones.md`.
