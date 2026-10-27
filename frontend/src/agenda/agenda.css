@@ -70,6 +70,10 @@ body.mode-agenda .quick > :not(:first-child), body.mode-agenda .top-actions > :n
 .ag-preview-main strong { color: var(--text-strong); font-weight: 600; }
 .ag-pills { display: flex; flex-wrap: wrap; gap: 4px; }
 .ag-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-muted); background: var(--bg-input); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+.ag-preview-head { display: flex; align-items: center; gap: 6px; padding: 6px 8px 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.ag-preview-row.is-picked { background: var(--accent-soft); }
+.ag-preview-main strong.is-done { text-decoration: line-through; opacity: 0.6; }
+.ag-preview-empty { margin: 4px 8px 6px; }
 .ag-preview-foot { display: flex; align-items: center; gap: 8px; padding: 6px 6px 2px; border-top: 1px solid var(--border); margin-top: 2px; }
 .ag-type-dot { width: 12px; height: 12px; border-radius: 4px; background-color: color-mix(in srgb, var(--c) 30%, var(--bg)); border: 2px solid var(--c); flex: none; }
 

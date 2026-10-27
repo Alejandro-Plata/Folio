@@ -14,6 +14,8 @@ export interface Draft {
   repeat?: Repeat;
   typeId?: string;
   topicNumber?: number;
+  /** Aviso: minutos antes del inicio (0 = a la hora). */
+  remind?: number;
   /** Partes de la frase que se han entendido, para mostrarlas al confirmar. */
   understood: string[];
 }
@@ -135,6 +137,17 @@ export function parse(text: string, today: string, types: TaskType[], fallbackDa
     understood.push(`hasta el ${repeat.until}`);
   }
   if (repeat) draft.repeat = repeat;
+
+  // ---------- Aviso ----------
+  // «avísame 10 minutos antes», «con aviso media hora antes», «el día antes»;
+  // va antes que las horas y la duración, que se llevarían «10 minutos»
+  if ((m = take(/\b(?:(?:y |con )?(?:avisame|avisamelo|recuerdamelo|aviso|avisar)\s+)?(media hora|(?:un |una |\d+ ?)?(?:horas?|minutos?|mins?|dias?))\s+antes\b/))) {
+    const raw = m[1];
+    const n = /^media/.test(raw) ? 1 : Number(/\d+/.exec(raw)?.[0] ?? 1);
+    draft.remind = /^media/.test(raw) ? 30 : /hora/.test(raw) ? n * 60 : /dia/.test(raw) ? n * 1440 : n;
+  } else if ((m = take(/\b(?:(?:y |con )?(?:avisame|aviso) )?(?:el dia antes|la vispera)\b/))) draft.remind = 1440;
+  if ((m = take(/\b(?:recuerdame|recordarme|recordatorio(?: de| para)?|avisame(?: de| para)?|avisamelo|recuerdamelo|con aviso)\b/))) draft.remind ??= 0;
+  if (draft.remind !== undefined) understood.push(draft.remind === 0 ? 'con aviso' : `aviso ${draft.remind} min antes`);
 
   // ---------- Horas ----------
   if ((m = take(new RegExp(`\\b(?:de(?:sde)?(?: las?)?|entre las?)\\s+${HOUR}${DAYPART}\\s+(?:a|hasta|y)(?: las?)?\\s+${HOUR}${DAYPART}`)))) {
