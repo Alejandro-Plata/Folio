@@ -565,12 +565,19 @@ export class App {
 
   private bindGlobalEvents() {
     window.addEventListener('keydown', (e) => this.onKeyDown(e), true);
-    window.addEventListener('wheel', (e) => {
+    // Ctrl + rueda amplía el documento. El oyente no pasivo solo está puesto
+    // mientras se pulsa Ctrl: si estuviera siempre, cada desplazamiento con la
+    // rueda esperaría a que el JavaScript quedara libre (retraso al empezar).
+    const zoomWheel = (e: WheelEvent) => {
       if (e.ctrlKey && this.view.scroller.contains(e.target as Node)) {
         e.preventDefault();
         this.zoom(e.deltaY < 0 ? 0.1 : -0.1);
       }
-    }, { passive: false });
+    };
+    const armZoom = (on: boolean) => on ? window.addEventListener('wheel', zoomWheel, { passive: false }) : window.removeEventListener('wheel', zoomWheel);
+    window.addEventListener('keydown', (e) => { if (e.key === 'Control') armZoom(true); }, true);
+    window.addEventListener('keyup', (e) => { if (e.key === 'Control') armZoom(false); }, true);
+    window.addEventListener('blur', () => armZoom(false));
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.applyTheme());
     window.addEventListener('beforeunload', () => { void this.flush(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) void this.flush(); });
