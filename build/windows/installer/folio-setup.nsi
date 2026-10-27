@@ -6,7 +6,7 @@
 ; explica cómo hacerlo la primera vez que se abre.
 ;
 ; Compilar (desde la raíz del proyecto): ./build.sh installer
-;   makensis -DVERSION=1.0.0 -DBIN=build/bin/folio.exe -DOUT=build/bin/Folio-Setup-1.0.0.exe build/windows/installer/folio-setup.nsi
+;   makensis -DVERSION=1.3.0 -DAPPDIR=build/desktop/win32/Folio -DOUT=build/bin/Folio-Setup-1.3.0.exe build/windows/installer/folio-setup.nsi
 
 Unicode true
 SetCompressor /SOLID lzma
@@ -15,8 +15,8 @@ RequestExecutionLevel user
 !ifndef VERSION
   !define VERSION "1.0.0"
 !endif
-!ifndef BIN
-  !error "Falta -DBIN=ruta/al/folio.exe"
+!ifndef APPDIR
+  !error "Falta -DAPPDIR=carpeta con Folio.exe y sus archivos (build/desktop/win32/Folio)"
 !endif
 !ifndef OUT
   !define OUT "Folio-Setup-${VERSION}.exe"
@@ -25,7 +25,6 @@ RequestExecutionLevel user
 !define APP "Folio"
 !define EXE "Folio.exe"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP}"
-!define WEBVIEW2_ID "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
 
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
@@ -64,13 +63,10 @@ Section "Folio"
   StrCpy $R9 0
 
   ; Si Folio está abierto, el ejecutable no se puede sustituir.
+  ; El ejecutable primero: si Folio sigue abierto, falla aquí y se reintenta
   copy:
   ClearErrors
-  File "/oname=${EXE}" "${BIN}"
-  ; Motor de dictado sin conexión (whisper.cpp), junto al ejecutable
-  !ifdef WHISPER
-    File "/oname=whisper-cli.exe" "${WHISPER}"
-  !endif
+  File "${APPDIR}\${EXE}"
   ${If} ${Errors}
     ; Actualización desde la app (instalación silenciosa): Folio se está cerrando, se espera hasta 20 s
     ${If} ${Silent}
@@ -82,6 +78,10 @@ Section "Folio"
     MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Folio está abierto. Ciérralo y pulsa Reintentar." /SD IDCANCEL IDRETRY copy
     Abort "Instalación cancelada."
   ${EndIf}
+  ; El resto de Folio: Chromium, la interfaz y el núcleo (con el motor de dictado, en «resources»)
+  File /r /x "${EXE}" "${APPDIR}/*"
+  ; Restos de las versiones con WebView2 (antes de la 1.3)
+  Delete "$INSTDIR\whisper-cli.exe"
 
   WriteUninstaller "$INSTDIR\Desinstalar.exe"
 
@@ -101,30 +101,12 @@ Section "Folio"
   WriteRegDWORD HKCU "${UNINST_KEY}" "NoModify" 1
   WriteRegDWORD HKCU "${UNINST_KEY}" "NoRepair" 1
 
-  ; Folio usa WebView2, que viene con Windows 11 (y con Windows 10 actualizado).
-  ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\${WEBVIEW2_ID}" "pv"
-  ${If} $0 == ""
-  ${OrIf} $0 == "0.0.0.0"
-    ReadRegStr $0 HKCU "Software\Microsoft\EdgeUpdate\Clients\${WEBVIEW2_ID}" "pv"
-  ${EndIf}
-  ${If} $0 == ""
-  ${OrIf} $0 == "0.0.0.0"
-    MessageBox MB_YESNO|MB_ICONINFORMATION "Folio necesita Microsoft Edge WebView2, que no está instalado en este equipo.$\n$\n¿Abrir la página de descarga de Microsoft?" /SD IDNO IDNO launch
-    ExecShell "open" "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
-    Goto done
-  ${EndIf}
-
-  launch:
   Exec '"$INSTDIR\${EXE}"'
-  done:
 SectionEnd
 
 Section "Uninstall"
   ; Los documentos (Documentos\Folio) y los ajustes del usuario no se tocan.
-  Delete "$INSTDIR\${EXE}"
-  Delete "$INSTDIR\whisper-cli.exe"
-  Delete "$INSTDIR\Desinstalar.exe"
-  RMDir "$INSTDIR"
+  RMDir /r "$INSTDIR"
   Delete "$SMPROGRAMS\${APP}.lnk"
   Delete "$DESKTOP\${APP}.lnk"
   DeleteRegKey HKCU "${UNINST_KEY}"

@@ -1,4 +1,4 @@
-package main
+package desktop
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/zalando/go-keyring"
 
 	"folio/internal/social"
@@ -69,7 +68,7 @@ func (a *App) SocialSignInGoogle() (social.Snapshot, error) {
 	go func() { _ = srv.Serve(ln) }()
 	defer srv.Close()
 
-	wruntime.BrowserOpenURL(a.ctx, authURL)
+	_ = openURL(authURL)
 	var res result
 	select {
 	case res = <-done:

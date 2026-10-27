@@ -76,12 +76,12 @@ export class DocView {
    * Cerrar pasa por el mismo camino que el botón del sistema: se guarda antes.
    */
   private windowControls() {
-    const rt = window.runtime!;
+    const win = window.folioDesktop!.window;
     const btn = (ic: string, title: string, run: () => void, cls = '') =>
       h('button', { class: `win-btn ${cls}`, title, 'aria-label': title, html: icon(ic, 14), onmousedown: (e: MouseEvent) => e.preventDefault(), onclick: run });
-    const max = btn('winMax', 'Maximizar', () => rt.WindowToggleMaximise());
+    const max = btn('winMax', 'Maximizar', () => win.toggleMaximize());
     const sync = async () => {
-      const m = await rt.WindowIsMaximised();
+      const m = await win.isMaximized();
       max.innerHTML = icon(m ? 'winRestore' : 'winMax', 14);
       max.title = m ? 'Restaurar' : 'Maximizar';
       max.setAttribute('aria-label', max.title);
@@ -89,17 +89,10 @@ export class DocView {
     };
     window.addEventListener('resize', debounce(() => void sync(), 120));
     void sync();
-    // En Linux el gestor de ventanas no ve la barra como título: doble clic para maximizar
-    if (this.app.os !== 'windows') {
-      document.addEventListener('dblclick', (e) => {
-        const t = e.target as Element;
-        if (t.closest('.topbar, .sb-head') && !t.closest('button, input, a')) rt.WindowToggleMaximise();
-      });
-    }
     return h('div', { class: 'win-controls' },
-      btn('winMin', 'Minimizar', () => rt.WindowMinimise()),
+      btn('winMin', 'Minimizar', () => win.minimize()),
       max,
-      btn('winClose', 'Cerrar', () => rt.Quit(), 'win-close'));
+      btn('winClose', 'Cerrar', () => win.close(), 'win-close'));
   }
 
   /** Estado de los botones de acceso rápido (deshacer/rehacer). */

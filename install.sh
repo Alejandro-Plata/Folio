@@ -10,11 +10,9 @@ ICONS="$HOME/.local/share/icons/hicolor"
 APPS="$HOME/.local/share/applications"
 DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
 
+# Lanzador autoextraíble: la primera vez que se abre descomprime Folio en ~/.local/share/folio
+# (el motor de dictado va dentro)
 install -Dm755 build/bin/folio "$BIN"
-# Motor de dictado (si se ha compilado con ./build.sh whisper)
-if [ -x build/bin/whisper-cli ]; then
-  install -Dm755 build/bin/whisper-cli "${XDG_DATA_HOME:-$HOME/.local/share}/folio/bin/whisper-cli"
-fi
 for size in 48 64 128 256 512; do
   mkdir -p "$ICONS/${size}x${size}/apps"
   magick build/appicon.png -resize ${size}x${size} "$ICONS/${size}x${size}/apps/folio.png" 2>/dev/null \

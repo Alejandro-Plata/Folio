@@ -235,8 +235,8 @@ button.crumb:hover { background: var(--bg-hover); color: var(--text); }
 .crumb-sep { color: var(--text-faint); }
 
 /* Barra de título propia (ventana sin marco): se arrastra por los huecos */
-.topbar, .sb-head { --wails-draggable: drag; }
-.topbar :is(button, input, a), .sb-head :is(button, input, a) { --wails-draggable: no-drag; }
+.topbar, .sb-head { -webkit-app-region: drag; }
+.topbar :is(button, input, a, [role=button]), .sb-head :is(button, input, a, [role=button]) { -webkit-app-region: no-drag; }
 .win-controls { display: flex; align-self: stretch; margin: 0 -8px 0 4px; }
 .win-btn { width: 44px; display: grid; place-items: center; color: var(--text-muted); }
 .win-btn:hover { background: var(--bg-active); color: var(--text-strong); }

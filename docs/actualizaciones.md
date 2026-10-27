@@ -8,7 +8,7 @@ También se busca a mano desde **Archivo › Buscar actualizaciones**, **Ajustes
 
 - comprueba la suma SHA-256 del archivo con `SHA256SUMS`;
 - si la app lleva clave pública, comprueba además la firma de `SHA256SUMS`;
-- **Linux**: sustituye el ejecutable y vuelve a abrir Folio;
+- **Linux**: sustituye el lanzador (`~/.local/bin/folio`, el archivo `folio-linux-amd64` de la versión) y vuelve a abrir Folio; la primera vez que se abre, el lanzador nuevo descomprime su versión en `~/.local/share/folio/<versión>`;
 - **Windows**: lanza el instalador en silencio, que espera a que Folio se cierre;
 - **Android**: abre el instalador del sistema (la primera vez pide permitir esta fuente).
 

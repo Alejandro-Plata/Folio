@@ -13,3 +13,8 @@ frontend/android/keystore.properties
 frontend/android/build/
 frontend/android/capacitor-cordova-android-plugins/build/
 frontend/tests/out/
+desktop/node_modules/
+desktop/out/
+desktop/folio-core
+desktop/icon.png
+build/desktop/

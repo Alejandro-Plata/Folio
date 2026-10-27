@@ -1,4 +1,4 @@
-package main
+package desktop
 
 import (
 	"fmt"
@@ -6,13 +6,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
-
-	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// UpdateInstall descarga la versión nueva, la verifica y la instala:
-// en Linux sustituye el ejecutable y vuelve a abrir Folio; en Windows lanza el
-// instalador en silencio (espera a que Folio se cierre) y cierra Folio.
+// UpdateInstall descarga la versión nueva, la verifica y la deja instalada; la
+// ventana se cierra (y en Linux se vuelve a abrir) cuando esta función vuelve.
+// En Linux sustituye el lanzador autoextraíble (FOLIO_LAUNCHER, el archivo que
+// se ejecuta desde el menú); en Windows lanza el instalador en silencio, que
+// espera a que Folio se cierre.
 func (a *App) UpdateInstall() error {
 	path, err := a.UpdateDownload()
 	if err != nil {
@@ -27,26 +27,19 @@ func (a *App) UpdateInstall() error {
 			return fmt.Errorf("no se pudo abrir el instalador: %w", err)
 		}
 	case "linux":
-		exe, err := os.Executable()
-		if err != nil {
-			return err
+		exe := os.Getenv("FOLIO_LAUNCHER")
+		if exe == "" {
+			return fmt.Errorf("esta copia de Folio no se abrió con su lanzador; descarga la versión nueva a mano")
 		}
-		if exe, err = filepath.EvalSymlinks(exe); err != nil {
-			return err
+		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+			exe = resolved
 		}
 		if err := replaceExecutable(path, exe); err != nil {
-			return err
-		}
-		// Se abre la nueva versión cuando esta haya soltado el bloqueo de instancia única
-		restart := exec.Command("sh", "-c", `sleep 1; exec "$0"`, exe)
-		restart.Stdout, restart.Stderr = nil, nil
-		if err := restart.Start(); err != nil {
 			return err
 		}
 	default:
 		return fmt.Errorf("instalar actualizaciones no está disponible en %s", goruntime.GOOS)
 	}
-	wruntime.Quit(a.ctx)
 	return nil
 }
 

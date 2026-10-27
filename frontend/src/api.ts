@@ -90,34 +90,31 @@ export interface Backend extends AgendaBackend {
   SocialCloseProposal(proposalId: string, status: 'declined' | 'cancelled'): Promise<SocialSnapshot>;
 }
 
-declare global {
-  interface Window {
-    go?: { main: { App: Backend } };
-    runtime?: {
-      EventsOn(name: string, cb: (...a: any[]) => void): () => void;
-      WindowSetTitle(t: string): void;
-      WindowToggleMaximise(): void;
-      WindowMinimise(): void;
-      WindowIsMaximised(): Promise<boolean>;
-      OnFileDrop(cb: (x: number, y: number, paths: string[]) => void, useDropTarget: boolean): void;
-      Quit(): void;
-    };
-  }
-}
-
 export const isNative = platform !== 'web';
 
-export const api: Backend = platform === 'desktop' ? window.go!.main.App
+/**
+ * Escritorio: cada función va por el puente de la ventana. El proceso principal
+ * resuelve las que necesitan diálogos del sistema y pasa el resto al núcleo Go.
+ */
+function createDesktopBackend(): Backend {
+  const bridge = window.folioDesktop!;
+  return new Proxy({} as Backend, {
+    get: (_t, name) => (typeof name !== 'string' || name === 'then') ? undefined : (...args: unknown[]) => bridge.call(name, args),
+  });
+}
+
+export const api: Backend = platform === 'desktop' ? createDesktopBackend()
   : platform === 'android' ? createAndroidBackend()
     : createMockBackend();
 
 /** Escucha un evento del backend; devuelve la función para dejar de escuchar. */
 export function onEvent(name: string, cb: (...a: any[]) => void): (() => void) | undefined {
-  return platform === 'android' ? onAndroidEvent(name, cb) : window.runtime?.EventsOn(name, cb);
+  if (platform === 'android') return onAndroidEvent(name, cb);
+  return window.folioDesktop?.on(name, cb);
 }
 
 export function setWindowTitle(t: string) {
-  if (window.runtime) window.runtime.WindowSetTitle(t);
+  window.folioDesktop?.window.setTitle(t);
   document.title = t;
 }
 

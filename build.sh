@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Compila Folio. Uso: ./build.sh [linux|windows|installer|whisper|android|android-debug|release|all] [versión]
+# linux/windows: ventana de escritorio con Electron (Chromium) y el núcleo Go (cmd/folio-core).
+#   Necesita Node ≥ 20; la primera vez descarga Electron para cada sistema.
 # android: necesita JDK 21, Android SDK + NDK y gomobile (ver docs/guia-android.md, § 3)
 # whisper: motor de dictado whisper-cli para Linux (necesita g++ y cmake: dnf install gcc-c++ cmake)
 # installer: folio.exe + instalador de un clic (necesita makensis: dnf install mingw32-nsis)
@@ -8,14 +10,24 @@ cd "$(dirname "$0")"
 TARGET="${1:-linux}"
 VERSION="${2:-$(git describe --tags --always 2>/dev/null || echo 1.0.0)}"
 export PATH="$HOME/.local/go/bin:$HOME/go/bin:$PATH"
-LDFLAGS="-s -w -X main.Version=${VERSION}"
+VERSION="${VERSION#v}"
 
-linux() {
-  # webkit2_41: WebKitGTK 4.1 (la que traen Fedora 38+, Ubuntu 22.04+ y Debian 12+)
-  wails build -platform linux/amd64 -tags webkit2_41 -trimpath -ldflags "$LDFLAGS" -o folio
+# Interfaz y proceso principal de la ventana (una vez por compilación)
+frontend() {
+  [ -d frontend/node_modules ] || (cd frontend && npm ci)
+  [ -d desktop/node_modules ] || (cd desktop && npm ci)
+  (cd frontend && npm run build)
+  (cd desktop && npm run build)
 }
+# build/desktop/linux/Folio y build/bin/folio (lanzador autoextraíble de un solo archivo)
+linux() {
+  frontend
+  (cd desktop && node package.mjs linux "$VERSION" "$PWD/../build/bin/whisper-cli")
+}
+# build/desktop/win32/Folio (Folio.exe y sus archivos)
 windows() {
-  wails build -platform windows/amd64 -trimpath -ldflags "$LDFLAGS" -o folio.exe
+  [ "${FRONTEND_DONE:-}" = 1 ] || frontend
+  (cd desktop && node package.mjs win32 "$VERSION" "$PWD/../build/bin/whisper-cli.exe")
 }
 whisper() {
   local tag=v1.9.5 src=build/whisper.cpp
@@ -70,13 +82,12 @@ android() {
 # firma. No publica nada: al final muestra la orden de gh para subirla.
 release() {
   [[ "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Indica la versión: ./build.sh release 1.2.3" >&2; exit 1; }
-  VERSION="${VERSION#v}"
-  LDFLAGS="-s -w -X main.Version=${VERSION}"
   local out=build/release
   rm -rf "$out" && mkdir -p "$out"
   linux
+  # Mismo nombre que antes: las versiones instaladas se actualizan sustituyendo este archivo
   cp build/bin/folio "$out/folio-linux-amd64"
-  installer
+  FRONTEND_DONE=1 installer
   cp "build/bin/Folio-Setup-$VERSION.exe" "$out/"
   if [ -f "$HOME/.config/folio-release/android-signing.properties" ]; then
     android
@@ -92,11 +103,10 @@ release() {
   echo "Versión $VERSION lista en $out. Para publicarla:"
   echo "  gh release create v$VERSION $out/* --title \"Folio $VERSION\" --notes-file NOTAS.md"
 }
+# Instalador de un clic para Windows (el motor de dictado ya va dentro de la carpeta)
 installer() {
   windows
-  local extra=()
-  [ -f build/bin/whisper-cli.exe ] && extra=(-DWHISPER="$PWD/build/bin/whisper-cli.exe")
-  makensis -V2 -DVERSION="$VERSION" -DBIN="$PWD/build/bin/folio.exe" "${extra[@]}" -DOUT="$PWD/build/bin/Folio-Setup-$VERSION.exe" build/windows/installer/folio-setup.nsi
+  makensis -V2 -DVERSION="$VERSION" -DAPPDIR="$PWD/build/desktop/win32/Folio" -DOUT="$PWD/build/bin/Folio-Setup-$VERSION.exe" build/windows/installer/folio-setup.nsi
 }
 
 case "$TARGET" in
@@ -107,7 +117,7 @@ case "$TARGET" in
   android) android ;;
   android-debug) android_debug ;;
   release) release ;;
-  all) linux; installer ;;
+  all) linux; FRONTEND_DONE=1 installer ;;
   *) echo "Uso: $0 [linux|windows|installer|whisper|android|android-debug|release|all] [versión]" >&2; exit 1 ;;
 esac
 ls -lh build/bin

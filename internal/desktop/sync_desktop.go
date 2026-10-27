@@ -1,4 +1,4 @@
-package main
+package desktop
 
 import (
 	"context"
@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/zalando/go-keyring"
-
-	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"folio/internal/cloudsync"
 	"folio/internal/core"
@@ -161,7 +159,7 @@ func (a *App) SyncLinkGoogle() error {
 	go func() { _ = srv.Serve(ln) }()
 	defer srv.Close()
 
-	wruntime.BrowserOpenURL(a.ctx, authURL)
+	_ = openURL(authURL)
 	var res result
 	select {
 	case res = <-done:

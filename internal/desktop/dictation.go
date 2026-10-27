@@ -1,4 +1,4 @@
-package main
+package desktop
 
 import (
 	"context"
@@ -16,8 +16,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"folio/internal/paths"
 )
@@ -211,7 +209,7 @@ func (a *App) DictationDownloadModel(model string) error {
 			done += int64(n)
 			if time.Since(last) > 200*time.Millisecond {
 				last = time.Now()
-				wruntime.EventsEmit(a.ctx, "dictation:download", done, total)
+				a.emit("dictation:download", done, total)
 			}
 		}
 		if rerr == io.EOF {
@@ -238,7 +236,7 @@ func (a *App) DictationDownloadModel(model string) error {
 			return errors.New("el modelo descargado está dañado; vuelve a intentarlo")
 		}
 	}
-	wruntime.EventsEmit(a.ctx, "dictation:download", total, total)
+	a.emit("dictation:download", total, total)
 	return os.Rename(part, dst)
 }
 

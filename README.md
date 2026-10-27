@@ -1,10 +1,11 @@
 # Folio
 
-Procesador de textos para docentes con los **atajos de teclado de Microsoft Word**, una interfaz que toma la organización de Word (cinta con pestañas, menú Archivo, barra de estado) y la sobriedad de **Notion** (páginas anidadas, menú «/»), e **historial de versiones** de cada documento. Escrito en **Go** (Wails v2) con un editor ProseMirror/TipTap. Funciona en **Linux y Windows** como un único ejecutable nativo.
+Procesador de textos para docentes con los **atajos de teclado de Microsoft Word**, una interfaz que toma la organización de Word (cinta con pestañas, menú Archivo, barra de estado) y la sobriedad de **Notion** (páginas anidadas, menú «/»), e **historial de versiones** de cada documento. El núcleo está escrito en **Go** y la interfaz usa un editor ProseMirror/TipTap. En **Linux y Windows** funciona dentro de una ventana de **Electron**; en **Android**, con Capacitor.
 
 ## Por qué así
 
-- **Go + webview del sistema (Wails)**: un binario de unos 15 MB que usa WebKitGTK en Linux y WebView2 (Edge) en Windows. Arranca rápido y consume mucha menos memoria que Electron, porque no incluye un Chromium.
+- **Núcleo en Go**: documentos, versiones, agenda, sincronización, exportación a Word y unión de PDF. En el escritorio corre como un proceso aparte (`folio-core`) que habla con la ventana por stdin/stdout; en Android se compila con gomobile. Los dos usan el mismo despachador, así que la interfaz llama a las mismas funciones en las dos plataformas.
+- **Ventana con Electron (Chromium)** en Linux y Windows: desplazamiento a la frecuencia del monitor (100, 120, 144 Hz…), el mismo motor que imprime el PDF y el mismo comportamiento en los dos sistemas. Antes se usaba WebKitGTK (Wails), que en Linux limita el desplazamiento a 60 fps.
 - **Editor ProseMirror**: el mismo motor que usan Notion-likes y editores profesionales. Las transacciones son incrementales, así que escribir sigue siendo fluido en documentos largos.
 - **Carga diferida**: KaTeX (ecuaciones), mammoth (importar .docx) y marked/turndown (Markdown) solo se cargan cuando se usan.
 - **Archivos normales**: cada documento es una carpeta con `content.json`, sus imágenes y su historial. Puedes sincronizar la carpeta con Drive, OneDrive o Nextcloud.
@@ -63,7 +64,7 @@ Procesador de textos para docentes con los **atajos de teclado de Microsoft Word
 
 **Importar / exportar**
 - Exporta a **Word (.docx)** generado en Go: estilos de título navegables, listas numeradas reales, tablas, imágenes, notas al pie, comentarios, índice actualizable, encabezado/pie y número de página.
-- Exporta a **PDF** (motor de impresión de Edge/Chrome; Edge viene con Windows), **HTML** autónomo y **Markdown** (GFM).
+- Exporta a **PDF** (con el motor de impresión de Chromium que lleva Folio), **HTML** autónomo y **Markdown** (GFM).
 - Imprime con el diálogo del sistema.
 - Importa **.docx**, **.md**, **.html** y **.txt**.
 
@@ -86,32 +87,28 @@ AltGr nunca se interpreta como Ctrl+Alt, así que `@`, `#` o `€` se escriben c
 
 ## Compilar
 
-Requisitos: Go ≥ 1.24, Node ≥ 20 y el CLI de Wails (`go install github.com/wailsapp/wails/v2/cmd/wails@latest`).
+Requisitos: Go ≥ 1.24 y Node ≥ 20. La primera compilación descarga Electron para cada sistema (no hace falta Wine ni herramientas de Windows).
 
-**Linux (Fedora)**
+**Linux**
 ```bash
-sudo dnf install gcc gtk3-devel webkit2gtk4.1-devel
-./build.sh linux        # → build/bin/folio
+./build.sh linux        # → build/bin/folio (lanzador de un solo archivo) y build/desktop/linux/Folio
+./install.sh            # copia el lanzador a ~/.local/bin/folio, con icono y acceso en el menú
 ```
-En Debian/Ubuntu: `sudo apt install build-essential libgtk-3-dev libwebkit2gtk-4.1-dev`.
+`build/bin/folio` es un lanzador autoextraíble: la primera vez descomprime Folio en `~/.local/share/folio/<versión>` y después lo abre directamente. Las actualizaciones sustituyen ese archivo.
 
-**Windows** (desde Linux o desde Windows; no necesita cgo)
+**Windows** (desde Linux)
 ```bash
-./build.sh windows      # → build/bin/folio.exe
+./build.sh windows      # → build/desktop/win32/Folio (Folio.exe y sus archivos)
+./build.sh installer    # → build/bin/Folio-Setup-<versión>.exe (necesita sudo dnf install mingw32-nsis)
 ```
-**Instalador de Windows** (un solo .exe; necesita `sudo dnf install mingw32-nsis`)
-```bash
-./build.sh installer    # → build/bin/Folio-Setup-<versión>.exe
-```
-Al abrirlo instala Folio para el usuario actual sin pedir permisos de administrador (en `%LocalAppData%\Programs\Folio`), crea los accesos del menú Inicio y del escritorio, lo añade a «Aplicaciones instaladas» (desde donde se desinstala) y lo abre. Windows no permite que un programa se ancle solo a la barra de tareas; la primera vez Folio explica cómo hacerlo. Desinstalar no borra los documentos.
+El instalador instala Folio para el usuario actual sin pedir permisos de administrador (en `%LocalAppData%\Programs\Folio`), crea los accesos del menú Inicio y del escritorio, lo añade a «Aplicaciones instaladas» (desde donde se desinstala) y lo abre. Windows no permite que un programa se ancle solo a la barra de tareas; la primera vez Folio explica cómo hacerlo. Desinstalar no borra los documentos.
 
-En Windows también puedes usar `build.ps1`. El ejecutable usa WebView2, que ya viene con Windows 10/11.
-
-**Desarrollo con recarga en caliente**
+**Desarrollo**
 ```bash
-wails dev -tags webkit2_41
+(cd frontend && npm run build) && go build -o desktop/folio-core ./cmd/folio-core
+(cd desktop && npm run dev)          # ventana de Electron con la interfaz compilada
 ```
-O solo la interfaz en el navegador con datos simulados: `cd frontend && npm run dev`.
+O solo la interfaz en el navegador con datos simulados: `cd frontend && npm run dev`. `FOLIO_DEVTOOLS=1` abre las herramientas de desarrollo de la ventana.
 
 **Tests**
 ```bash
@@ -119,9 +116,10 @@ go test ./...
 (cd frontend && npm test)   # analizador de frases de la agenda
 ```
 
-**Dictado (whisper.cpp)**: Folio busca `whisper-cli` junto al ejecutable, en
-`~/.local/share/folio/bin` (Linux) o `%LocalAppData%\Folio\bin` (Windows), o en
-el PATH. El modelo se descarga desde la propia app a `…/folio/models`.
+**Dictado (whisper.cpp)**: `./build.sh whisper` compila `whisper-cli`, que va dentro de
+Folio, junto al núcleo. También se busca en `~/.local/share/folio/bin` (Linux),
+`%LocalAppData%\Folio\bin` (Windows) o en el PATH. El modelo se descarga desde la
+propia app a `…/folio/models`.
 
 ## Dónde están los datos
 
@@ -144,9 +142,11 @@ Folio/agenda/
 ## Estructura del código
 
 ```
-main.go, app.go, pdf.go   ventana Wails y API expuesta a la interfaz
-app_agenda.go             API de la agenda
-pdfmerge.go, dictation.go unir PDF (pdfcpu) y dictado (whisper.cpp)
+cmd/folio-core            núcleo de escritorio: publica internal/desktop por stdin/stdout
+internal/core             funciones comunes a escritorio y Android (documentos, agenda, nube, PDF…)
+internal/desktop          lo propio del escritorio: dictado (whisper.cpp), llavero, actualizaciones
+desktop/                  ventana de Electron: diálogos, PDF (printToPDF), menú contextual y empaquetado
+mobile/                   núcleo para Android (gomobile)
 internal/store            documentos, árbol, papelera, búsqueda e historial de versiones
 internal/agenda           agenda: series, temario FSRS, sesiones y planificador
 internal/docx             exportador .docx (incluye LaTeX → Unicode)
@@ -164,10 +164,8 @@ docs/                     guías: plan de la agenda y porte a Android con sincro
 ## Limitaciones conocidas
 
 - La vista Diseño de impresión corta las páginas en los mismos sitios que el PDF, la impresión y el HTML. Word vuelve a paginar el .docx por su cuenta, así que allí los cortes pueden variar ligeramente.
-- En Linux, WebKitGTK no ofrece sugerencias ortográficas en el menú contextual. En Windows (WebView2) sí.
 - Veinte de las fuentes (Roboto, Lora, Atkinson Hyperlegible, Caveat…) van incluidas en Folio con licencia SIL OFL e incrustadas en el PDF y el HTML, solo con el alfabeto latino. Word no las incrusta en el .docx: en un equipo que no las tenga instaladas, Word las sustituye por otra.
 - Las ecuaciones se exportan a Word como texto Unicode legible (x², √, α…), no como objetos de ecuación editables de Office.
-- El PDF directo usa Chrome/Edge/Chromium. Si no hay ninguno instalado, Folio abre el diálogo de impresión del sistema.
 
 ## Sincronización y Android
 

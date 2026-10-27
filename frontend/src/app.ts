@@ -110,7 +110,18 @@ export class App {
     this.status = new StatusBar(this);
     this.view.mount();
     new BlockHandle(this, this.view.scroller);
-    window.runtime?.OnFileDrop((_x, _y, paths) => void dropPdfs(this, paths), false);
+    // Soltar PDF en cualquier parte de la ventana abre «Unir PDF» (las imágenes las recibe el editor)
+    if (window.folioDesktop) {
+      const pdfsIn = (e: DragEvent) => [...(e.dataTransfer?.files ?? [])].filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+      window.addEventListener('dragover', (e) => { if ([...(e.dataTransfer?.items ?? [])].some((i) => i.kind === 'file')) e.preventDefault(); });
+      window.addEventListener('drop', (e) => {
+        const pdfs = pdfsIn(e);
+        if (!pdfs.length) return;
+        e.preventDefault();
+        e.stopPropagation();
+        void dropPdfs(this, pdfs.map((f) => window.folioDesktop!.pathForFile(f)));
+      }, true);
+    }
     this.agenda = new AgendaView(this);
     this.sync = new SyncManager(this);
     this.sync.onChange(() => this.status.updateSync());
