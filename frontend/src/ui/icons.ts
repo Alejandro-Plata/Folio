@@ -46,6 +46,7 @@ const P: Record<string, string> = {
   layers: '<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 12 10 5 10-5M2 17l10 5 10-5"/>',
   docs: '<path d="M8 3h9a2 2 0 0 1 2 2v13"/><rect x="4" y="7" width="12" height="14" rx="2"/>',
   pin: '<path d="M12 17v5M9 3h6l-1 6 4 4H6l4-4z"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   cloud: '<path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 9.6 4.8 4.8 0 0 0 6.5 19z"/>',
   cloudOff: '<path d="M3 3l18 18M9.5 5.3A6 6 0 0 1 18 10a4.5 4.5 0 0 1 3 4.2M6.5 19A4.8 4.8 0 0 1 6 9.6M6.5 19H17"/>',
   cloudCheck: '<path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 9.6 4.8 4.8 0 0 0 6.5 19z"/><path d="m9.5 13.5 2 2 3.5-4"/>',

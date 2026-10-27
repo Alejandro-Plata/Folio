@@ -7,6 +7,7 @@
 //    (ver core.ts). Toda función de la interfaz que no esté en HOST va tal cual.
 //  - Aquí van los diálogos del sistema, abrir archivos y vínculos, el PDF
 //    (printToPDF de Chromium), la ventana y el cierre ordenado.
+//  - Avisos de la agenda (reminders.ts) y segundo plano con bandeja (background.ts).
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme, net, protocol, screen, session, shell, type FileFilter } from 'electron';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -14,6 +15,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Core } from './core';
+import { loadPrefs, savePrefs, setTray, startHidden, type DesktopPrefs } from './background';
+import { Reminders, type Reminder } from './reminders';
 
 const isWin = process.platform === 'win32';
 const resources = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, '..');
@@ -23,6 +26,9 @@ const corePath = process.env.FOLIO_CORE || path.join(resources, isWin ? 'folio-c
 // Datos de la ventana (caché, almacenamiento local) junto a los ajustes de Folio, en su propia carpeta
 app.setName('Folio');
 app.setPath('userData', path.join(app.getPath('appData'), 'Folio', 'ventana'));
+
+// Avisos de Windows: el identificador que registra el instalador
+if (isWin) app.setAppUserModelId('Folio.App');
 
 // Una sola ventana: abrir Folio otra vez trae al frente la que ya está abierta
 if (!app.requestSingleInstanceLock()) {
@@ -36,6 +42,11 @@ protocol.registerSchemesAsPrivileged([
 
 let win: BrowserWindow | null = null;
 let allowClose = false;
+/** Salir de verdad (bandeja, actualización, apagar el equipo): no basta con ocultar. */
+let quitting = false;
+let prefs: DesktopPrefs = { background: false, openAtLogin: false };
+const iconPath = path.join(resources, 'icon.png');
+const reminders = new Reminders(iconPath, (r) => { showWindow(); send('reminder:open', [{ id: r.id, date: r.date }]); });
 const tempFiles: string[] = [];
 const core = new Core(corePath, (name, data) => send(name, data));
 
@@ -150,9 +161,20 @@ const HOST: Record<string, (...a: any[]) => Promise<unknown> | unknown> = {
     if (err) throw new Error(err);
   },
   ConfirmClose() { allowClose = true; win?.close(); },
+  SetReminders(list: Reminder[]) { reminders.set(list); },
+  GetDesktopPrefs() { return prefs; },
+  SetDesktopPrefs(p: Partial<DesktopPrefs>) {
+    prefs = { background: !!(p.background ?? prefs.background), openAtLogin: !!(p.openAtLogin ?? prefs.openAtLogin) };
+    // Abrir al iniciar sesión solo tiene sentido si Folio se queda en segundo plano
+    if (!prefs.background) prefs.openAtLogin = false;
+    savePrefs(prefs);
+    applyTray();
+    return prefs;
+  },
   async UpdateInstall() {
     await core.call('UpdateInstall', []);
     allowClose = true;
+    quitting = true;
     // En Linux el lanzador ya es la versión nueva: se abre en cuanto esta suelta el bloqueo
     const launcher = process.env.FOLIO_LAUNCHER;
     if (!isWin && launcher) spawn('sh', ['-c', 'sleep 1; exec "$0"', launcher], { detached: true, stdio: 'ignore' }).unref();
@@ -186,7 +208,8 @@ function createWindow() {
   });
   // En pantallas pequeñas (portátiles de 13-14") la ventana no cabría entera
   if (area.width < 1360 || area.height < 970) win.maximize();
-  win.once('ready-to-show', () => win?.show());
+  // Al iniciar sesión se abre oculto: la interfaz carga (para los avisos) pero no se ve
+  win.once('ready-to-show', () => { if (!startHidden) win?.show(); });
   void win.loadURL('folio://app/index.html');
 
   const wc = win.webContents;
@@ -201,6 +224,8 @@ function createWindow() {
   win.on('close', (e) => {
     if (allowClose) return;
     e.preventDefault();
+    // En segundo plano, cerrar oculta la ventana (lo pendiente se guarda al ocultarse)
+    if (prefs.background && !quitting) { win?.hide(); return; }
     send('app:before-close', []);
     setTimeout(() => { allowClose = true; win?.close(); }, 3000);
   });
@@ -243,12 +268,21 @@ function registerProtocol() {
   });
 }
 
-app.on('second-instance', () => {
+function showWindow() {
   if (!win) return;
   if (win.isMinimized()) win.restore();
   win.show();
   win.focus();
-});
+}
+
+function quit() { quitting = true; win ? win.close() : app.quit(); }
+
+function applyTray() {
+  setTray(prefs.background, iconPath, { show: showWindow, agenda: () => { showWindow(); send('app:agenda', []); }, quit });
+}
+
+app.on('second-instance', showWindow);
+app.on('before-quit', () => { quitting = true; });
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
@@ -256,7 +290,9 @@ app.whenReady().then(() => {
   if (!isWin) session.defaultSession.setSpellCheckerLanguages(['es-ES']);
   core.start();
   registerProtocol();
+  prefs = loadPrefs();
   createWindow();
+  applyTray();
 }).catch((e) => { dialog.showErrorBox('Folio', String(e)); app.quit(); });
 
 app.on('window-all-closed', () => app.quit());

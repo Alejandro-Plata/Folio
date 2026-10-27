@@ -39,6 +39,7 @@ export function taskLabel(t: Task, type: TaskType, today: string): string {
   if (t.start) parts.push(`de ${timeLabel(t.start)} a ${timeLabel(taskEnd(t))}`);
   else if (t.minutes) parts.push(duration(t.minutes));
   if (t.repeat || t.occurrenceOf) parts.push('se repite');
+  if (t.remind != null) parts.push('con aviso');
   if (t.auto) parts.push(t.pinned ? 'del plan, fijada' : 'del plan');
   if (t.done) parts.push('hecha');
   if (t.circle) {
@@ -74,7 +75,8 @@ export function taskChip(host: ViewHost, t: Task, opts: { showTime?: boolean; dr
   h('span', { class: 'ag-chip-ic', html: icon(t.done ? 'checkCircle' : type.icon, 12) }),
   opts.showTime !== false && t.start ? h('span', { class: 'ag-chip-time' }, timeLabel(t.start)) : null,
   h('span', { class: 'ag-chip-title' }, shortTitle(t)),
-  t.repeat || t.occurrenceOf ? h('span', { class: 'ag-chip-rep', html: icon('repeat', 11), 'aria-hidden': 'true' }) : null);
+  t.repeat || t.occurrenceOf ? h('span', { class: 'ag-chip-rep', html: icon('repeat', 11), 'aria-hidden': 'true' }) : null,
+  t.remind != null ? h('span', { class: 'ag-chip-rep', html: icon('bell', 11), title: 'Con aviso' }) : null);
   chip.addEventListener('click', (e) => { e.stopPropagation(); host.openTask(t); });
   chip.addEventListener('keydown', (e) => {
     if (e.key === ' ') { e.preventDefault(); host.toggleDone(t); }

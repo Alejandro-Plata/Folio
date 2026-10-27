@@ -3,13 +3,13 @@
 import type { App } from '../app';
 import { defaultSetup } from '../app';
 import type { ExportFormat, Settings } from '../types';
-import { isAndroid } from '../platform/platform';
+import { isAndroid, isDesktop } from '../platform/platform';
 import { h, debounce, toast } from './dom';
 import { icon } from './icons';
 import { api } from '../api';
 import * as dialogs from './dialogs';
 
-export type SettingsSection = 'appearance' | 'writing' | 'export' | 'page' | 'storage' | 'account' | 'help';
+export type SettingsSection = 'appearance' | 'writing' | 'export' | 'page' | 'storage' | 'background' | 'account' | 'help';
 
 export const EXPORT_FORMATS: { id: ExportFormat; label: string; desc: string; ic: string }[] = [
   { id: 'docx', label: 'Documento de Word', desc: '.docx editable con estilos, notas al pie, comentarios e índice.', ic: 'word' },
@@ -156,6 +156,25 @@ export function settingsPage(app: App, main: HTMLElement, opts: {
         ];
       },
     },
+    ...(isDesktop ? [{
+      id: 'background' as const, ic: 'bell', title: 'Avisos y segundo plano', short: 'Segundo plano', desc: 'Para recibir los avisos de la agenda, Folio tiene que estar abierto, aunque sea oculto.',
+      body: () => {
+        // Preferencias de este equipo: las guarda la ventana (no van en los ajustes sincronizados)
+        const bg = toggle(false, (v) => void apply({ background: v }), 'Seguir en segundo plano al cerrar');
+        const login = toggle(false, (v) => void apply({ openAtLogin: v }), 'Abrir al iniciar sesión');
+        const bgInput = bg.querySelector('input')!, loginInput = login.querySelector('input')!;
+        const show = (p: { background: boolean; openAtLogin: boolean }) => {
+          bgInput.checked = p.background; loginInput.checked = p.openAtLogin; loginInput.disabled = !p.background;
+        };
+        const apply = async (p: { background?: boolean; openAtLogin?: boolean }) => { show(await api.SetDesktopPrefs(p)); saved(); };
+        void api.GetDesktopPrefs().then(show);
+        return [
+          row('Seguir en segundo plano al cerrar', 'La ventana se oculta y Folio queda en la bandeja del sistema. Para salir del todo: «Salir de Folio» en la bandeja.', bg),
+          row('Abrir al iniciar sesión', 'Arranca oculto, solo para avisar. Requiere el segundo plano.', login),
+          row('Aviso de las tareas nuevas', null, h('span', { class: 'muted small' }, 'Se elige en Agenda > Plan. Cada tarea tiene el suyo en «Avisar».')),
+        ];
+      },
+    }] : []),
     {
       id: 'account', ic: 'cloud', title: 'Cuenta y sincronización', short: 'Cuenta y nube', desc: 'Tus mismos documentos y agenda en todos tus dispositivos.',
       body: () => [

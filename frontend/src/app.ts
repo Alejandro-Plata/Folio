@@ -125,7 +125,8 @@ export class App {
     this.agenda = new AgendaView(this);
     this.sync = new SyncManager(this);
     this.sync.onChange(() => this.status.updateSync());
-    if (isAndroid) { initAndroid(this); void this.reminders.init(); }
+    if (isAndroid) initAndroid(this);
+    void this.reminders.init();
     if (isNative) void import('./ui/updates').then((m) => m.scheduleUpdateCheck(this));
     this.applyLayout();
     this.bindGlobalEvents();
@@ -581,6 +582,7 @@ export class App {
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.applyTheme());
     window.addEventListener('beforeunload', () => { void this.flush(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) void this.flush(); });
+    onEvent('app:agenda', () => void this.setMode('agenda')); // desde la bandeja del sistema
     onEvent('app:before-close', async () => {
       try { await this.flush(); await this.sync.runBeforeClose(); } finally { await api.ConfirmClose(); }
     });

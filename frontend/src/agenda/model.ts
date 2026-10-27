@@ -24,6 +24,8 @@ export interface Task {
   kind?: '' | 'study' | 'review' | 'mock' | 'rest';
   auto?: boolean;
   pinned?: boolean;
+  /** Aviso: minutos antes del inicio (0 = a la hora). Sin valor, no avisa. */
+  remind?: number | null;
   done: boolean;
   docId?: string;
   updated?: string;

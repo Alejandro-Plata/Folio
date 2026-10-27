@@ -192,6 +192,10 @@ func cloneTask(t Task) Task {
 		r.Done = slices.Clone(r.Done)
 		t.Repeat = &r
 	}
+	if t.Remind != nil {
+		v := *t.Remind
+		t.Remind = &v
+	}
 	return t
 }
 
@@ -409,7 +413,7 @@ func (s *Store) saveLocked(t Task, scope string, months map[string]bool) (Task, 
 		shift := DaysBetween(occDate, t.Date)
 		m := cloneTask(*master)
 		m.Title, m.TypeID, m.Start, m.Minutes, m.Notes = t.Title, t.TypeID, t.Start, t.Minutes, t.Notes
-		m.TopicID, m.Kind, m.DocID, m.Pinned = t.TopicID, t.Kind, t.DocID, t.Pinned
+		m.TopicID, m.Kind, m.DocID, m.Pinned, m.Remind = t.TopicID, t.Kind, t.DocID, t.Pinned, t.Remind
 		if t.Repeat != nil {
 			done := m.Repeat.Done
 			m.Repeat = t.Repeat
@@ -424,7 +428,7 @@ func (s *Store) saveLocked(t Task, scope string, months map[string]bool) (Task, 
 	case ScopeFollowing:
 		if occDate == master.Date {
 			return s.saveLocked(Task{ID: OccurrenceID(seriesID, occDate), Title: t.Title, TypeID: t.TypeID, Date: t.Date, Start: t.Start,
-				Minutes: t.Minutes, Notes: t.Notes, Repeat: t.Repeat, TopicID: t.TopicID, Kind: t.Kind, DocID: t.DocID, Pinned: t.Pinned}, ScopeAll, months)
+				Minutes: t.Minutes, Notes: t.Notes, Repeat: t.Repeat, TopicID: t.TopicID, Kind: t.Kind, DocID: t.DocID, Pinned: t.Pinned, Remind: t.Remind}, ScopeAll, months)
 		}
 		old := cloneTask(*master)
 		old.Repeat.Until = AddDays(occDate, -1)

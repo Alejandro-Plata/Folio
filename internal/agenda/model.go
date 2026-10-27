@@ -29,22 +29,24 @@ const (
 // Si tiene Repeat es la «madre» de una serie; sus ocurrencias se calculan al
 // leer un rango. Una ocurrencia editada por separado es otra tarea con SeriesID.
 type Task struct {
-	ID       string    `json:"id"`
-	Title    string    `json:"title"`
-	TypeID   string    `json:"typeId"`
-	Date     string    `json:"date"`
-	Start    string    `json:"start,omitempty"`
-	Minutes  int       `json:"minutes,omitempty"`
-	Notes    string    `json:"notes,omitempty"`
-	Repeat   *Repeat   `json:"repeat,omitempty"`
-	SeriesID string    `json:"seriesId,omitempty"`
-	TopicID  string    `json:"topicId,omitempty"`
-	Kind     string    `json:"kind,omitempty"`
-	Auto     bool      `json:"auto,omitempty"`
-	Pinned   bool      `json:"pinned,omitempty"`
-	Done     bool      `json:"done"`
-	DocID    string    `json:"docId,omitempty"`
-	Updated  time.Time `json:"updated"`
+	ID       string  `json:"id"`
+	Title    string  `json:"title"`
+	TypeID   string  `json:"typeId"`
+	Date     string  `json:"date"`
+	Start    string  `json:"start,omitempty"`
+	Minutes  int     `json:"minutes,omitempty"`
+	Notes    string  `json:"notes,omitempty"`
+	Repeat   *Repeat `json:"repeat,omitempty"`
+	SeriesID string  `json:"seriesId,omitempty"`
+	TopicID  string  `json:"topicId,omitempty"`
+	Kind     string  `json:"kind,omitempty"`
+	Auto     bool    `json:"auto,omitempty"`
+	Pinned   bool    `json:"pinned,omitempty"`
+	// Remind: minutos antes del inicio para avisar (0 = a la hora; nil = sin aviso).
+	Remind  *int      `json:"remind,omitempty"`
+	Done    bool      `json:"done"`
+	DocID   string    `json:"docId,omitempty"`
+	Updated time.Time `json:"updated"`
 
 	// Solo en las ocurrencias devueltas por Range (no se guardan).
 	OccurrenceOf string `json:"occurrenceOf,omitempty"`

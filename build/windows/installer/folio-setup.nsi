@@ -88,6 +88,11 @@ Section "Folio"
   CreateShortcut "$SMPROGRAMS\${APP}.lnk" "$INSTDIR\${EXE}" "" "$INSTDIR\${EXE}" 0 SW_SHOWNORMAL "" "Editor de documentos para docentes"
   CreateShortcut "$DESKTOP\${APP}.lnk" "$INSTDIR\${EXE}" "" "$INSTDIR\${EXE}" 0 SW_SHOWNORMAL "" "Editor de documentos para docentes"
 
+  ; Avisos de la agenda: Windows solo muestra las notificaciones de una
+  ; aplicación con su identificador registrado (el de app.setAppUserModelId)
+  WriteRegStr HKCU "Software\Classes\AppUserModelId\Folio.App" "DisplayName" "${APP}"
+  WriteRegStr HKCU "Software\Classes\AppUserModelId\Folio.App" "IconUri" "$INSTDIR\resources\icon.png"
+
   ; «Configuración > Aplicaciones > Aplicaciones instaladas»
   ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
   WriteRegStr HKCU "${UNINST_KEY}" "DisplayName" "${APP}"
@@ -110,4 +115,7 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\${APP}.lnk"
   Delete "$DESKTOP\${APP}.lnk"
   DeleteRegKey HKCU "${UNINST_KEY}"
+  DeleteRegKey HKCU "Software\Classes\AppUserModelId\Folio.App"
+  ; «Abrir al iniciar sesión» (lo escribe Electron con el identificador como nombre)
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Folio.App"
 SectionEnd

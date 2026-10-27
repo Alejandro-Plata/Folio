@@ -10,6 +10,9 @@ import { socialMock } from './social/mock';
 import { platform } from './platform/platform';
 import { createAndroidBackend, onAndroidEvent } from './platform/android';
 
+export interface DesktopReminder { id: string; date: string; at: number; title: string; body: string }
+export interface DesktopPrefs { background: boolean; openAtLogin: boolean }
+
 export interface Backend extends AgendaBackend {
   Init(): Promise<InitData>;
   SaveSettings(s: Settings): Promise<void>;
@@ -41,6 +44,11 @@ export interface Backend extends AgendaBackend {
   RevealFile(path: string): Promise<void>;
   OpenURL(url: string): Promise<void>;
   ConfirmClose(): Promise<void>;
+  /** Escritorio: avisos de la agenda como notificaciones del sistema. */
+  SetReminders(list: DesktopReminder[]): Promise<void>;
+  /** Escritorio: segundo plano y abrir al iniciar sesión (preferencias de este equipo). */
+  GetDesktopPrefs(): Promise<DesktopPrefs>;
+  SetDesktopPrefs(p: Partial<DesktopPrefs>): Promise<DesktopPrefs>;
   ChoosePdfs(): Promise<PdfFile[] | null>;
   ChooseNoteFiles(): Promise<{ path: string; name: string }[] | null>;
   OpenTopicFile(rel: string): Promise<void>;
@@ -279,6 +287,9 @@ function createMockBackend(): Backend {
     async RevealFile() { /* */ },
     async OpenURL(url) { window.open(url, '_blank', 'noopener'); },
     async ConfirmClose() { /* */ },
+    async SetReminders() { /* */ },
+    async GetDesktopPrefs() { return { background: false, openAtLogin: false }; },
+    async SetDesktopPrefs(p) { return { background: !!p.background, openAtLogin: !!p.openAtLogin }; },
     async ChoosePdfs() { return []; },
     async ChooseNoteFiles() {
       return new Promise((resolve) => {

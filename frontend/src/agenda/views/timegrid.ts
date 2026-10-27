@@ -159,7 +159,7 @@ function block(host: ViewHost, p: Placed, date: string, days: string[]): HTMLEle
     title: `${t.title}\n${timeLabel(t.start)}–${timeLabel(taskEnd(t))}${t.notes ? '\n' + t.notes : ''}`,
   },
   h('span', { class: 'ag-block-title' }, h('span', { class: 'ag-block-ic', html: icon(type.icon, 12) }), shortTitle(t)),
-  h('span', { class: 'ag-block-time' }, timeLabel(t.start), h('span', { class: 'ag-block-end' }, `–${timeLabel(taskEnd(t))}`), t.repeat || t.occurrenceOf ? h('span', { html: icon('repeat', 10) }) : null, t.pinned ? h('span', { html: icon('pin', 10), title: 'Fijada' }) : null));
+  h('span', { class: 'ag-block-time' }, timeLabel(t.start), h('span', { class: 'ag-block-end' }, `–${timeLabel(taskEnd(t))}`), t.repeat || t.occurrenceOf ? h('span', { html: icon('repeat', 10) }) : null, t.pinned ? h('span', { html: icon('pin', 10), title: 'Fijada' }) : null, t.remind != null ? h('span', { html: icon('bell', 10), title: 'Con aviso' }) : null));
   main.addEventListener('click', () => { if (!moved) host.openTask(t); });
   main.addEventListener('keydown', (e) => {
     if (e.key === ' ') { e.preventDefault(); host.toggleDone(t); return; }

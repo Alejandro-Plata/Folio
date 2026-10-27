@@ -2,8 +2,7 @@
 // semana (horas, franja o ambas, todo elegible, con sugerencias según lo que
 // se suele estudiar), duración de bloques y repasos, fase final y retención.
 import { h, modal, toast } from '../ui/dom';
-import { isAndroid } from '../platform/platform';
-import { REMIND_CHOICES, getRemindMinutes } from '../platform/reminders';
+import { REMIND_CHOICES, getDefaultRemind, remindLabel, remindersSupported, setDefaultRemind } from '../platform/reminders';
 import { icon } from '../ui/icons';
 import type { PlanSettings } from './model';
 import { WEEKDAYS, duration, longDate } from './dates';
@@ -86,11 +85,17 @@ export async function planDialog(view: AgendaView) {
   const dayStart = timeField({ label: 'inicio del día visible', value: s.dayStart, onChange: (v) => { s.dayStart = v; } });
   const dayEnd = timeField({ label: 'fin del día visible', value: s.dayEnd, onChange: (v) => { s.dayEnd = v; } });
   const suggestOn = h('input', { type: 'checkbox', checked: s.suggestions });
-  const remindSel = h('select', { class: 'input input-sm', 'aria-label': 'Avisarme antes de cada tarea' },
-    ...REMIND_CHOICES.map((m) => h('option', { value: String(m), selected: m === getRemindMinutes() }, m ? `${m} minutos antes` : 'No avisar')));
+  // Aviso que llevan de entrada las tareas nuevas con hora (cada tarea lo puede cambiar)
+  const remindSel = h('select', { class: 'input input-sm', 'aria-label': 'Aviso de las tareas nuevas' },
+    ...REMIND_CHOICES.filter((m) => m !== 0).map((m) => h('option', { value: m === null ? '' : String(m), selected: m === getDefaultRemind() }, remindLabel(m))));
   remindSel.addEventListener('change', async () => {
-    const ok = await app().reminders.setMinutes(Number(remindSel.value));
-    if (!ok) { remindSel.value = '0'; toast('Sin permiso para las notificaciones: actívalo en los ajustes de Android.', { kind: 'error', ms: 6000 }); }
+    const m = remindSel.value ? Number(remindSel.value) : null;
+    if (m !== null && !(await app().reminders.ensurePermission())) {
+      remindSel.value = '';
+      toast('Sin permiso para las notificaciones: actívalo en los ajustes de Android.', { kind: 'error', ms: 6000 });
+      return;
+    }
+    setDefaultRemind(m);
   });
 
   const field = (label: string, c: HTMLElement, hint?: string) => h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, label), c, hint ? h('span', { class: 'muted small' }, hint) : null);
@@ -112,7 +117,7 @@ export async function planDialog(view: AgendaView) {
         field('Retención objetivo', retention, 'Probabilidad de recordar cada tema el día del repaso'),
         field('Día visible desde', dayStart.el), field('hasta', dayEnd.el)),
       h('label', { class: 'ag-check' }, suggestOn, 'Mostrar sugerencias según mis últimas acciones'),
-      ...(isAndroid ? [field('Avisarme antes de cada tarea (solo este móvil)', remindSel, 'Notificación antes de la hora de inicio.')] : [])),
+      ...(remindersSupported ? [field('Aviso de las tareas nuevas', remindSel, 'Solo en este dispositivo. Cada tarea puede cambiarlo.')] : [])),
     report?.warnings?.length ? h('div', { class: 'ag-banner is-inline' }, h('span', { class: 'ag-banner-ic', html: icon('alert', 16) }), h('div', {}, ...report.warnings.map((w) => h('p', {}, w)))) : null,
   );
   const res = await modal('Plan de estudio', body, [

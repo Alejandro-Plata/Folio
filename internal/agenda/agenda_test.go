@@ -359,3 +359,36 @@ func TestPlannerSkipsRestDates(t *testing.T) {
 		}
 	}
 }
+
+func TestRemindTravelsWithSeries(t *testing.T) {
+	s := openTest(t)
+	ten := 10
+	if _, err := s.SaveTask(Task{Title: "Clase", Date: "2026-11-02", Start: "09:00", Remind: &ten, Repeat: &Repeat{Freq: "daily", Interval: 1}}, ""); err != nil {
+		t.Fatal(err)
+	}
+	occ := s.Range("2026-11-04", "2026-11-04")[0]
+	if occ.Remind == nil || *occ.Remind != 10 {
+		t.Fatalf("la ocurrencia no hereda el aviso: %+v", occ.Remind)
+	}
+	// Cambiar el aviso en toda la serie
+	five := 5
+	occ.Remind = &five
+	if _, err := s.SaveTask(occ, ScopeAll); err != nil {
+		t.Fatal(err)
+	}
+	if r := s.Range("2026-11-06", "2026-11-06")[0].Remind; r == nil || *r != 5 {
+		t.Fatalf("toda la serie: %+v", r)
+	}
+	// Quitarlo desde un día en adelante
+	occ = s.Range("2026-11-08", "2026-11-08")[0]
+	occ.Remind = nil
+	if _, err := s.SaveTask(occ, ScopeFollowing); err != nil {
+		t.Fatal(err)
+	}
+	if r := s.Range("2026-11-09", "2026-11-09")[0].Remind; r != nil {
+		t.Fatalf("desde el día 8 sin aviso: %+v", *r)
+	}
+	if r := s.Range("2026-11-07", "2026-11-07")[0].Remind; r == nil || *r != 5 {
+		t.Fatalf("antes del corte sigue con aviso: %+v", r)
+	}
+}

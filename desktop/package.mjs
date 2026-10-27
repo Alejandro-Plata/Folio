@@ -52,7 +52,7 @@ run('go', ['build', '-trimpath', '-ldflags', `-s -w -X main.Version=${version}`,
   { cwd: root, env: { ...process.env, CGO_ENABLED: '0', GOOS: isWin ? 'windows' : 'linux', GOARCH: 'amd64' } });
 // Motor de dictado: junto al núcleo, que es quien lo busca
 if (whisper && fs.existsSync(whisper)) fs.copyFileSync(whisper, path.join(res, isWin ? 'whisper-cli.exe' : 'whisper-cli'));
-if (!isWin) fs.copyFileSync(path.join(root, 'build/appicon.png'), path.join(res, 'icon.png'));
+fs.copyFileSync(path.join(root, 'build/appicon.png'), path.join(res, 'icon.png')); // ventana, bandeja y avisos
 
 // 4. Windows: icono y datos del ejecutable (resedit, sin rcedit ni Wine)
 if (isWin) {

@@ -1,6 +1,7 @@
 // Diálogo de tarea: crear, editar o crear la misma tarea en varios días.
 import type { App } from '../app';
-import { h, modal } from '../ui/dom';
+import { h, modal, toast } from '../ui/dom';
+import { REMIND_CHOICES, getDefaultRemind, remindLabel, remindersSupported } from '../platform/reminders';
 import { icon } from '../ui/icons';
 import type { Repeat, Scope, Task } from './model';
 import { WEEKDAYS, WEEKDAYS_LETTER, longDate, shortDate, weekday } from './dates';
@@ -60,7 +61,8 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
   drawTypes();
 
   const date = h('input', { class: 'input input-sm', type: 'date', value: base.date, 'aria-label': 'Fecha' });
-  const startF = timeField({ label: 'hora de inicio', value: base.start ?? '', allowEmpty: true });
+  let onStartChange = () => { /* lo pone el campo «Avisar» */ };
+  const startF = timeField({ label: 'hora de inicio', value: base.start ?? '', allowEmpty: true, onChange: () => onStartChange() });
   const durF = durationField({ label: 'duración', value: base.minutes ?? 0, allowEmpty: true });
   const refreshSuggestions = () => {
     if (!st.settings.suggestions) { startF.setSuggestions([]); durF.setSuggestions([]); return; }
@@ -124,6 +126,24 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
   const memory = editing && editing.topicId ? memoryPanel(view, editing) : null;
   const notes = h('textarea', { class: 'input', rows: 2, placeholder: 'Notas (opcional)', 'aria-label': 'Notas' }, base.notes ?? '');
   const pinned = h('input', { type: 'checkbox', checked: !!base.pinned });
+  // Aviso: las tareas nuevas con hora llevan el de Plan > Aviso de las tareas nuevas
+  const remind0 = editing ? base.remind ?? null : base.remind !== undefined ? base.remind : base.start ? getDefaultRemind() : null;
+  const remindSel = h('select', { class: 'input input-sm', 'aria-label': 'Avisar' });
+  const drawRemind = () => {
+    const cur = remindSel.options.length ? (remindSel.value === '' ? null : Number(remindSel.value)) : remind0;
+    const allDay = !startF.value;
+    const choices = allDay ? [null, 0, 1440] : REMIND_CHOICES;
+    const sel = allDay && cur !== null ? (cur >= 1440 ? 1440 : 0) : cur;
+    remindSel.replaceChildren(...choices.map((m) => h('option', { value: m === null ? '' : String(m), selected: m === sel }, remindLabel(m, allDay))));
+  };
+  drawRemind();
+  onStartChange = drawRemind;
+  remindSel.addEventListener('change', async () => {
+    if (remindSel.value !== '' && !(await app.reminders.ensurePermission())) {
+      remindSel.value = '';
+      toast('Sin permiso para las notificaciones: actívalo en los ajustes de Android.', { kind: 'error', ms: 6000 });
+    }
+  });
 
   const field = (label: string, ...c: (HTMLElement | null)[]) => h('div', { class: 'ag-field' }, h('span', { class: 'ag-field-label' }, label), ...c);
   // Quién lo ve: solo tú (se queda en tus dispositivos) o un círculo (lo ven todos sus miembros)
@@ -155,6 +175,7 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
       : h('div', { class: 'ag-row' }, field('Fecha', date), field('Inicio', startF.el), field('Duración', durF.el)),
     multi ? h('div', { class: 'ag-row' }, field('Inicio', startF.el), field('Duración', durF.el)) : null,
     multi ? null : priv(h('div', { class: 'ag-row' }, field('Repetir', repSel), repDetail)),
+    remindersSupported ? priv(field('Avisar', remindSel)) : null,
     priv(st.topics.length ? h('div', { class: 'ag-row' }, field('Tema', topicSel), field('Apuntes', docPicker, topicNotes)) : field('Apuntes', docPicker)),
     priv(memory),
     field('Notas', notes),
@@ -199,6 +220,7 @@ export async function taskDialog(view: AgendaView, app: App, opts: TaskDialogOpt
     typeId, date: date.value || base.date, start: startV || undefined, minutes: minutesV || undefined,
     notes: notes.value.trim() || undefined, topicId: topicSel.value || undefined, docId: docSel.value || undefined,
     pinned: base.auto ? pinned.checked : base.pinned,
+    remind: remindersSupported ? (remindSel.value === '' ? null : Number(remindSel.value)) : base.remind,
     kind: base.kind || (topicSel.value ? (typeId === 'review' ? 'review' : typeId === 'study' ? 'study' : '') : '') as Task['kind'],
   };
   if (circleId) {
