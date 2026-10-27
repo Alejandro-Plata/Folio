@@ -112,12 +112,11 @@ export class DocView {
 
   private helpMenu(anchor: HTMLElement) {
     const app = this.app;
-    const guide = app.docs.find((d) => d.title === 'Guía rápida de Folio' && !d.trashed);
     popupMenu(anchor, [
+      { label: 'Manual de Folio', icon: 'bookOpen', run: () => void app.openManual() },
       { label: 'Tutorial de documentos', icon: 'graduation', run: () => void app.startTour() },
       { label: 'Tutorial de la agenda', icon: 'calendar', run: () => void app.startTour('agenda') },
       { label: 'Atajos de teclado', icon: 'keyboard', run: () => app.run('help') },
-      ...(guide ? [{ label: 'Guía rápida de Folio', icon: 'lightbulb', run: () => void app.open(guide.id) }] : []),
     ], { align: 'right' });
   }
 

@@ -49,9 +49,10 @@ type Settings struct {
 	PageView           bool    `json:"pageView"` // vista de página (Diseño de impresión) o ancho completo
 	ShowMarks          bool    `json:"showMarks"`
 	Ribbon             bool    `json:"ribbon"`
-	Keymap             string  `json:"keymap"`      // es | en: atajos de Word en español o en inglés
-	PinTipShown        bool    `json:"pinTipShown"` // aviso de anclar a la barra de tareas (Windows) ya mostrado
-	TourDone           bool    `json:"tourDone"`    // tutorial guiado visto (o descartado)
+	Keymap             string  `json:"keymap"`        // es | en: atajos de Word en español o en inglés
+	PinTipShown        bool    `json:"pinTipShown"`   // aviso de anclar a la barra de tareas (Windows) ya mostrado
+	TourDone           bool    `json:"tourDone"`      // tutorial guiado visto (o descartado)
+	ManualVersion      int     `json:"manualVersion"` // versión del «Manual de Folio» ya instalada en el espacio de trabajo
 	// Valores predeterminados de Exportar e Imprimir
 	ExportFormat  string `json:"exportFormat"`  // docx | pdf | html | md
 	ExportNoTitle bool   `json:"exportNoTitle"` // no incluir el título del documento

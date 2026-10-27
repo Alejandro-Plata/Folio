@@ -6,7 +6,8 @@ import { createEditor, loadContent, scaleColumnDrag } from './editor/editor';
 import { changeCase, moveBlock } from './editor/extensions';
 import { clearFind } from './editor/find';
 import { findShortcut, isNativeEditingCombo, type KeymapId } from './shortcuts';
-import { TEMPLATES, WELCOME, jsonToText, type Template } from './templates';
+import { TEMPLATES, jsonToText, type Template } from './templates';
+import { MANUAL, MANUAL_TITLE, MANUAL_VERSION } from './manual';
 import { debounce, hasOpenModal, closeMenu, toast, confirmDialog, promptText } from './ui/dom';
 import { Sidebar } from './ui/sidebar';
 import { Ribbon } from './ui/ribbon';
@@ -126,10 +127,10 @@ export class App {
       if (w !== lastW) { lastW = w; this.view.applyZoom(); this.status.update(); }
     }).observe(this.view.scroller);
 
-    if (!this.docs.length) {
-      const m = await this.createFromJSON('Guía rápida de Folio', 'lightbulb', WELCOME(), '');
-      this.docs = await api.ListDocs();
-      await this.open(m.id);
+    const firstRun = !this.docs.length;
+    const manual = await this.ensureManual();
+    if (firstRun && manual) {
+      await this.open(manual.id);
     } else {
       const last = this.docs.find((d) => d.id === this.settings.lastDoc && !d.trashed) ?? this.docs.find((d) => !d.trashed);
       if (last) await this.open(last.id);
@@ -174,6 +175,48 @@ export class App {
     }
     this.view.updateBreadcrumb();
     setWindowTitle(mode === 'agenda' ? 'Agenda — Folio' : `${this.doc?.meta.title || 'Sin título'} — Folio`);
+  }
+
+  /**
+   * El «Manual de Folio» es la primera nota del espacio de trabajo. Se crea la
+   * primera vez y se actualiza cuando cambia MANUAL_VERSION (guardando antes una
+   * versión, por si se había editado). Si se borra, no se recrea solo: `force`
+   * lo hace desde la ayuda.
+   */
+  async ensureManual(force = false): Promise<Meta | null> {
+    let m = this.docs.find((d) => d.title === MANUAL_TITLE && !d.trashed) ?? null;
+    const current = (this.settings.manualVersion ?? 0) >= MANUAL_VERSION;
+    if (current && (m || !force)) return m;
+    try {
+      const content = MANUAL();
+      const text = jsonToText(content);
+      if (m) {
+        await this.flush();
+        await api.CreateVersion(m.id, 'Antes de actualizar el manual').catch(() => null);
+        await api.SaveDoc(m.id, JSON.stringify(content), text, text.split(/\s+/).filter(Boolean).length);
+      } else {
+        m = await this.createFromJSON(MANUAL_TITLE, 'bookOpen', content, '');
+      }
+      // Primero de la lista, en la raíz
+      const roots = this.docs.filter((d) => !d.parentId && !d.trashed && d.id !== m!.id).map((d) => d.order);
+      m = await api.UpdateMeta(m.id, { parentId: '', order: Math.min(0, ...roots) - 1 });
+      this.settings.manualVersion = MANUAL_VERSION;
+      this.persistSettings();
+      this.docs = await api.ListDocs();
+      return m;
+    } catch (e) {
+      console.error('Manual:', e);
+      return m;
+    }
+  }
+
+  /** Abre el manual (lo crea si se había borrado). */
+  async openManual() {
+    const m = await this.ensureManual(true);
+    if (!m) return;
+    this.sidebar.render();
+    if (this.mode !== 'docs') await this.setMode('docs');
+    await this.open(m.id);
   }
 
   startTour(kind: 'docs' | 'agenda' = 'docs') {

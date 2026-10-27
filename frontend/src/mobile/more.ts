@@ -47,6 +47,7 @@ export class MoreScreen {
       row(t?.linked ? 'cloudCheck' : 'cloud', 'Sincronización', t?.linked ? 'Vinculada con tu nube' : 'Mismos datos en todos tus dispositivos', () => void import('../sync/syncsettings').then((m) => m.syncDialog(app))),
       row('settings', 'Ajustes', 'Apariencia, exportar, página, versiones', () => void dialogs.settingsDialog(app)),
       row('download', 'Actualizaciones', `Tienes la versión ${app.version}`, () => void import('../ui/updates').then((m) => m.updateDialog(app))),
+      row('bookOpen', 'Manual de Folio', 'Todas las funciones explicadas', () => void app.openManual()),
       row('graduation', 'Tutorial de documentos', '', () => void app.startTour()),
       row('calendar', 'Tutorial de la agenda', '', () => void app.startTour('agenda')),
       h('p', { class: 'm-about muted small' }, `Folio ${app.version}`));

@@ -163,37 +163,3 @@ export function jsonToText(node: JSONContent): string {
   return ['paragraph', 'heading', 'listItem', 'taskItem', 'tableCell', 'tableHeader'].includes(node.type ?? '') ? inner + '\n' : inner;
 }
 
-/** Documento de bienvenida que se crea la primera vez que se abre la app. */
-export const WELCOME = (): JSONContent => ({
-  type: 'doc', content: [
-    p('Folio guarda automáticamente y conserva un historial de versiones de cada documento.'),
-    hd(2, 'Atajos esenciales'),
-    table([
-      ['Acción', 'Atajo'],
-      ['Menú de bloques (títulos, tablas, cuadros…)', '/ en una línea vacía'],
-      ['Negrita · Cursiva · Subrayado', 'Ctrl+N · Ctrl+K · Ctrl+S'],
-      ['Título 1 · 2 · 3 · Texto normal', 'Ctrl+Alt+1 · 2 · 3 · Ctrl+Mayús+N'],
-      ['Ecuación', 'Alt+=  o  $x^2$'],
-      ['Nota al pie · Comentario', 'Ctrl+Alt+F · Ctrl+Alt+M'],
-      ['Salto de página', 'Ctrl+Intro'],
-      ['Guardar punto de restauración · Versión con nombre', 'Ctrl+G · F12'],
-      ['Imprimir', 'Ctrl+P'],
-      ['Todos los atajos · Buscar un comando', 'F1 · Alt+Q'],
-    ], true, [380, 220]),
-    p(t('Los atajos son los de Word en español. Para usar los de Word en inglés: ', ['italic']), t('Archivo > Ajustes', ['bold']), t('.', ['italic'])),
-    hd(2, 'Páginas'),
-    ul('La vista Diseño de impresión muestra cada hoja tal como saldrá en el PDF.',
-      'Disposición: márgenes, orientación, tamaño de papel, encabezado y pie.',
-      'Vista > Lectura: el documento en continuo, sin hojas.'),
-    hd(2, 'Para clase'),
-    ul('Insertar > Docente: Solución, Líneas (para responder) y Pregunta.',
-      'Insertar > Cuadro: definición, ejemplo, importante, consejo, atención, información y ejercicio.',
-      'Vista > Vista del alumnado oculta las soluciones. Al exportar, marca «Versión del alumnado» para obtener esa misma versión.'),
-    hd(2, 'Versiones'),
-    ul('Revisar > Historial: ver, comparar o restaurar cualquier versión.',
-      'Restaurar nunca borra nada: antes se guarda una copia del estado actual.'),
-    hd(2, 'Exportar'),
-    ul('Archivo > Exportar: Word (.docx), PDF, página web y Markdown.',
-      'Archivo > Abrir > Importar archivo: .docx, .md, .html y .txt.'),
-  ],
-});

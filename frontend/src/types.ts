@@ -53,6 +53,8 @@ export interface Settings {
   pinTipShown?: boolean;
   /** Tutorial guiado visto (o descartado). */
   tourDone?: boolean;
+  /** Versión del «Manual de Folio» ya instalada en el espacio de trabajo. */
+  manualVersion?: number;
   /** Valores predeterminados de Exportar e Imprimir. */
   exportFormat?: ExportFormat;
   exportNoTitle?: boolean;
