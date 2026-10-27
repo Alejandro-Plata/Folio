@@ -31,14 +31,13 @@ export class Sidebar {
       h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, 'F'), h('span', {}, 'Folio')),
     );
     const nav = h('div', { class: 'sb-nav' },
+      this.navItem('plus', 'Nuevo documento', k === 'es' ? 'Ctrl+U' : 'Ctrl+N', () => app.run('new')),
       this.navItem('search', 'Buscar', k === 'es' ? 'Ctrl+A' : 'Ctrl+O', () => app.palette.open('docs')),
       this.navItem('template', 'Plantillas', '', () => openBackstage(app, 'new')),
       this.navItem('upload', 'Importar', '', () => dialogs.importDialog(app)),
-      this.navItem('settings', 'Ajustes', '', () => dialogs.settingsDialog(app)),
     );
     this.favSection.replaceChildren(h('div', { class: 'sb-title' }, 'Favoritos'), this.favs);
-    const docsTitle = h('div', { class: 'sb-title' }, h('span', {}, 'Documentos'),
-      iconButton('plus', 'Nuevo documento', () => app.newDoc(), { class: 'sb-title-btn' }));
+    const docsTitle = h('div', { class: 'sb-title' }, h('span', {}, 'Documentos'));
     // soltar en el título = mover a la raíz
     docsTitle.addEventListener('dragover', (e) => { if (this.dragId) { e.preventDefault(); docsTitle.classList.add('drop-inside'); } });
     docsTitle.addEventListener('dragleave', () => docsTitle.classList.remove('drop-inside'));
@@ -49,15 +48,16 @@ export class Sidebar {
     });
     const docsSection = h('div', { class: 'sb-section sb-grow' }, docsTitle, this.tree);
     const foot = h('div', { class: 'sb-foot' },
-      this.navItem('plus', 'Nuevo documento', k === 'es' ? 'Ctrl+U' : 'Ctrl+N', () => app.run('new')),
       this.navItem('trash', 'Papelera', '', () => this.trashDialog()),
+      this.navItem('settings', 'Ajustes', '', () => dialogs.settingsDialog(app)),
     );
     this.docsPart = h('div', { class: 'sb-part' }, nav, h('div', { class: 'sb-scroll' }, this.favSection, docsSection), foot);
     this.agendaPart = h('div', { class: 'sb-part sb-agenda', hidden: true });
+    // Mismo control segmentado que en Ajustes (Tema: Sistema · Claro · Oscuro)
     const modeBtn = (m: 'docs' | 'agenda', ic: string, label: string, key: string) => h('button', {
-      type: 'button', role: 'tab', class: 'sb-mode', 'data-mode': m, title: `${label} (${key})`, onclick: () => app.setMode(m),
-    }, h('span', { html: icon(ic, 15) }), label);
-    this.modes = h('div', { class: 'sb-modes', role: 'tablist', 'aria-label': 'Espacio' },
+      type: 'button', role: 'tab', class: 'seg-btn sb-mode', 'data-mode': m, title: `${label} (${key})`, onclick: () => app.setMode(m),
+    }, h('span', { html: icon(ic, 14) }), label);
+    this.modes = h('div', { class: 'seg sb-modes', role: 'tablist', 'aria-label': 'Espacio' },
       modeBtn('docs', 'docs', 'Documentos', 'Ctrl+Mayús+1'), modeBtn('agenda', 'calendar', 'Agenda', 'Ctrl+Mayús+2'));
     this.el.append(head, this.modes, this.docsPart, this.agendaPart);
     this.setMode(this.mode, this.agendaEl);
@@ -153,7 +153,7 @@ export class Sidebar {
     });
     const row = h('div', {
       class: `tree-row ${active ? 'active' : ''}`, role: 'treeitem', tabindex: 0, draggable: !isFav,
-      style: { paddingLeft: `${8 + depth * 14}px` }, title: `${d.title || 'Sin título'}\nEditado ${relTime(d.updated)} · ${d.words} palabras`,
+      style: { paddingLeft: `${6 + depth * 14}px` }, title: `${d.title || 'Sin título'}\nEditado ${relTime(d.updated)} · ${d.words} palabras`,
       onclick: () => app.open(d.id),
       onkeydown: (e: KeyboardEvent) => { if (e.key === 'Enter') app.open(d.id); },
       oncontextmenu: (e: MouseEvent) => { e.preventDefault(); this.menu(d, new DOMRect(e.clientX, e.clientY, 0, 0)); },

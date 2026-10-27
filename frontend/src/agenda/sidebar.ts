@@ -33,7 +33,7 @@ export class AgendaSidebar {
     const today = v.state.today;
     const upcoming = (await v.state.range(today, addDays(today, 1))).filter((t) => !t.done && (t.date > today || !t.start || minutesOf(t.start) + (t.minutes || 30) >= new Date().getHours() * 60 + new Date().getMinutes()));
     this.nextTasks = upcoming.slice(0, 6);
-    this.el.replaceChildren(this.mini(), this.next(), this.types(), this.circles(), this.nav());
+    this.el.replaceChildren(this.mini(), this.next(), this.nav(), this.types(), this.circles());
   }
 
   /** Minicalendario (también lo usa el móvil, en una hoja). */
@@ -71,9 +71,8 @@ export class AgendaSidebar {
         lastDate = t.date;
         list.append(h('div', { class: 'ag-next-day' }, t.date === v.state.today ? 'Hoy' : 'Mañana'));
       }
+      // Fila compacta; el detalle del repaso está en la propia tarea
       list.append(taskChip(v, t, { draggable: true }));
-      const mem = v.memoryPanel(t);
-      if (mem) list.append(mem);
     }
     return h('section', { class: 'ag-side-sec' }, h('div', { class: 'sb-title' }, 'Próximo'), list);
   }
@@ -134,7 +133,7 @@ export class AgendaSidebar {
       h('button', { type: 'button', class: 'sb-item', onclick: run, title: hint }, h('span', { class: 'sb-ic', html: icon(ic) }), h('span', { class: 'sb-label' }, label));
     const topics = v.state.topics.filter((t) => !t.archived);
     const studied = topics.filter((t) => t.studied).length;
-    return h('section', { class: 'ag-side-sec ag-side-nav' },
+    return h('section', { class: 'ag-side-sec ag-side-nav' }, h('div', { class: 'sb-title' }, 'Estudio'),
       item('layers', `Temario${topics.length ? ` · ${studied}/${topics.length}` : ''}`, 'Temas de la oposición', () => void topicsDialog(v, this.app)),
       item('clock', 'Plan de estudio', 'Examen, tiempo de estudio y repasos', () => void planDialog(v)),
       item('barChart', 'Progreso', 'Horas, temario y repasos', () => void statsDialog(v, this.app)));
