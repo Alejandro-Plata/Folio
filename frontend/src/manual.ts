@@ -1,10 +1,9 @@
 // «Manual de Folio»: la primera nota del espacio de trabajo. Explica todas las
 // funciones, agrupadas en partes. Empieza con una portada y un mapa cuyos
-// enlaces llevan a cada parte y sección. Es un documento normal (tablas con
-// color de celda, texto con color y fuente), así que se edita y se exporta
-// como cualquier otro. Los colores solo van sobre fondos propios (azul marino
-// y verde azulado) o son el acento verde, para leerse en el tema claro y en
-// el oscuro.
+// enlaces llevan a cada parte y sección. Es un documento normal (texto con
+// color y fuente, tablas), así que se edita y se exporta como cualquier otro.
+// Usa el fondo del tema; el único color es el acento verde azulado, que se lee
+// en el tema claro y en el oscuro.
 // Los enlaces se generan con headingSlug a partir del propio título, así que no
 // pueden desincronizarse. Al cambiar el contenido, sube MANUAL_VERSION: las
 // instalaciones existentes lo actualizan al arrancar (guardando antes una versión).
@@ -14,7 +13,7 @@ import cover from './assets/manual-portada.png?inline';
 import { fontStack } from './fonts';
 
 export const MANUAL_TITLE = 'Manual de Folio';
-export const MANUAL_VERSION = 2;
+export const MANUAL_VERSION = 3;
 /** Página del manual: letra con serifa para el texto, como un libro. */
 export const MANUAL_SETUP = { fontFamily: 'Literata', fontSize: 11, lineHeight: 1.5, pageNumbers: true, header: 'Manual de Folio' };
 
@@ -35,16 +34,14 @@ const table = (rows: Inline[][][], widths: number[]): JSONContent => ({
   content: rows.map((r, i) => ({
     type: 'tableRow',
     content: r.map((c, j) => i === 0
-      ? { ...cell(c.map((x) => (typeof x === 'string' ? st(x, { color: WHITE, font: SANS, bold: true }) : x)), true, widths[j]), attrs: { colspan: 1, rowspan: 1, colwidth: [widths[j]], background: j === 0 ? NAVY : TEAL } }
+      ? { ...cell(c.map((x) => (typeof x === 'string' ? st(x, { color: WHITE, font: SANS, bold: true }) : x)), true, widths[j]), attrs: { colspan: 1, rowspan: 1, colwidth: [widths[j]], background: TEAL } }
       : cell(c, false, widths[j])),
   })),
 });
-// Colores de la referencia: azul marino y verde azulado
-const NAVY = '#15233f';
-const TEAL = '#0f7c6e';
-const MINT = '#7fe0cd';
+// Acento verde azulado (se lee sobre el fondo claro y el oscuro); el resto del
+// texto usa el color del tema
+const TEAL = '#0f8a7a';
 const WHITE = '#ffffff';
-const ON_NAVY = '#c9d3e4';
 const SANS = fontStack('Inter');
 /** Texto con estilo: color, fuente, tamaño (pt), negrita, cursiva. */
 function st(text: string, o: { color?: string; font?: string; size?: number; bold?: boolean; italic?: boolean } = {}): JSONContent {
@@ -433,32 +430,42 @@ const SECTIONS: Section[] = [
   },
 ];
 
-/** Portada: fondo azul marino, la red de nodos, el título y unas líneas de contexto. */
+/**
+ * Portada sobre el fondo del tema (claro u oscuro): la red de nodos, rótulo,
+ * título, subtítulo y tres líneas de contexto separadas por filetes, como una
+ * ficha. Sin tablas: así la paginación nunca la parte.
+ */
 function coverPage(): JSONContent[] {
-  const label = (text: string) => box([pc({}, st(text.toUpperCase(), { color: MINT, font: SANS, size: 8, bold: true }))], { bg: NAVY, width: 150 });
-  const value = (text: string) => box([pc({}, st(text, { color: ON_NAVY, font: SANS, size: 10 }))], { bg: NAVY, width: 450 });
-  return [{
-    type: 'table',
-    content: [
-      row(box([
-        { type: 'image', attrs: { src: cover, alt: '', width: 600, align: 'center' } },
-        pc({}, st('MANUAL DE FOLIO · VERSIÓN 1.3', { color: MINT, font: SANS, size: 9, bold: true })),
-        pc({}, st('Escribir, organizar y estudiar', { color: WHITE, font: SANS, size: 30, bold: true })),
-        pc({}, st('Todo lo que hace Folio, explicado en orden: escribir y dar formato, preparar documentos para clase, organizar la agenda y el estudio, trabajar con Folito y tenerlo todo en varios dispositivos.', { color: ON_NAVY, font: fontStack('Literata'), size: 12.5, italic: true })),
-        pc({}),
-      ], { bg: NAVY, colspan: 2, width: 600 })),
-      row(label('Qué es'), value('Un procesador de textos con agenda de estudio, para Linux, Windows y Android.')),
-      row(label('Cómo leerlo'), value('El mapa de la página siguiente lleva a cada parte. Los títulos también están en el panel Esquema.')),
-      row(label('Ayuda rápida'), value('F1 muestra los atajos de teclado. El botón ? de la barra superior abre el tutorial guiado.')),
-    ],
-  }, { type: 'pageBreak' }];
+  const rule: JSONContent = { type: 'horizontalRule' };
+  // Rótulo encima y texto debajo: alineados sin depender del largo del rótulo
+  const meta = (label: string, text: string): JSONContent[] => [
+    pc({}, st(label.toUpperCase(), { color: TEAL, font: SANS, size: 8, bold: true })),
+    pc({}, st(text, { font: SANS, size: 10 })),
+  ];
+  return [
+    p(), // el cursor empieza aquí y no selecciona la imagen al abrir
+    { type: 'image', attrs: { src: cover, alt: '', width: 600, align: 'center' } },
+    p(),
+    pc({}, st('MANUAL DE FOLIO · VERSIÓN 1.3', { color: TEAL, font: SANS, size: 9, bold: true })),
+    pc({}, st('Escribir, organizar y estudiar', { font: SANS, size: 30, bold: true })),
+    pc({}, st('Todo lo que hace Folio, explicado en orden: escribir y dar formato, preparar documentos para clase, organizar la agenda y el estudio, trabajar con Folito y tenerlo todo en varios dispositivos.', { font: fontStack('Literata'), size: 13, italic: true })),
+    p(),
+    rule,
+    ...meta('Qué es', 'Un procesador de textos con agenda de estudio, para Linux, Windows y Android.'),
+    rule,
+    ...meta('Cómo leerlo', 'El mapa de la página siguiente lleva a cada parte; los títulos también están en el panel Esquema.'),
+    rule,
+    ...meta('Ayuda rápida', 'F1 muestra los atajos de teclado; el botón ? de la barra superior abre el tutorial guiado.'),
+    rule,
+    { type: 'pageBreak' },
+  ];
 }
 
 /** Mapa: las partes con su número en color, su descripción y los enlaces a sus secciones. */
 function mapPage(): JSONContent[] {
   const head = (text: string, bg: string, width: number) => box([pc({}, st(text, { color: WHITE, font: SANS, size: 9, bold: true }))], { bg, width, header: true });
   const rows = PARTS.map((part, pi) => row(
-    box([pc({ textAlign: 'center' }, st(String(pi + 1), { color: WHITE, font: SANS, size: 16, bold: true }))], { bg: pi % 2 ? NAVY : TEAL, width: 56 }),
+    box([pc({ textAlign: 'center' }, st(String(pi + 1), { color: TEAL, font: SANS, size: 20, bold: true }))], { width: 56 }),
     box([
       pc({}, { ...link(partTitle(pi), `#${headingSlug(partTitle(pi))}`), marks: [{ type: 'link', attrs: { href: `#${headingSlug(partTitle(pi))}` } }, { type: 'bold' }, { type: 'textStyle', attrs: { fontFamily: SANS } }] }),
       pc({}, st(part.intro, { size: 10 })),
@@ -472,7 +479,7 @@ function mapPage(): JSONContent[] {
     pc({}, st('ANTES DE EMPEZAR', { color: TEAL, font: SANS, size: 9, bold: true })),
     { type: 'heading', attrs: { level: 1 }, content: [st('Mapa del manual', { font: SANS })] },
     p('Folio reúne dos cosas: un procesador de textos que trabaja como Word, y una agenda pensada para organizar el tiempo y el estudio. El manual sigue ese orden, en seis partes. Cada fila lleva a su parte; los nombres de la derecha, a cada sección.'),
-    { type: 'table', content: [row(head('Nº', NAVY, 56), head('Parte', TEAL, 330), head('Secciones', TEAL, 214)), ...rows] },
+    { type: 'table', content: [row(head('Nº', TEAL, 56), head('Parte', TEAL, 330), head('Secciones', TEAL, 214)), ...rows] },
     p(),
     pc({}, st('CÓMO SE ORGANIZA EL ESTUDIO', { color: TEAL, font: SANS, size: 9, bold: true })),
     flow(),
@@ -489,9 +496,9 @@ function flow(): JSONContent {
     ['Estudiar', '#fbdcdc', '#b91c1c'], ['Repasar', '#d9f1df', '#15803d'], ['Progreso', '#d3eeea', '#0f766e'],
   ];
   const cells: JSONContent[] = [];
+  // Pasos numerados en vez de flechas: las celdas de flecha, con su margen, no cabían a lo ancho
   steps.forEach(([name, bg, fg], i) => {
-    if (i) cells.push(box([pc({ textAlign: 'center' }, st('→', { font: SANS, size: 11 }))], { width: 18 }));
-    cells.push(box([pc({ textAlign: 'center' }, st(name, { color: fg, font: SANS, size: 9, bold: true }))], { bg, width: 84 }));
+    cells.push(box([pc({ textAlign: 'center' }, st(`${i + 1} `, { color: fg, font: SANS, size: 8 }), st(name, { color: fg, font: SANS, size: 8.5, bold: true }))], { bg, width: 96 }));
   });
   return { type: 'table', content: [row(...cells)] };
 }
