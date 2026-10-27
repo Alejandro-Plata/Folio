@@ -71,10 +71,10 @@ button.m-row { width: 100%; }
 .m-about { text-align: center; padding: 20px; }
 
 /* ---------- Hojas inferiores ---------- */
-.m-sheet-backdrop { position: fixed; inset: 0; z-index: 950; display: grid; place-items: end stretch; background: rgba(15, 15, 15, 0); transition: background 0.18s; }
+.m-sheet-backdrop { position: fixed; inset: 0; z-index: 950; display: grid; place-items: end stretch; background: rgba(15, 15, 15, 0); }
 .m-sheet-backdrop.is-open { background: rgba(15, 15, 15, 0.42); }
 .m-sheet-backdrop.is-closing { background: rgba(15, 15, 15, 0); }
-.m-sheet { width: 100%; max-height: 88dvh; display: flex; flex-direction: column; background: var(--bg-elev); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-pop); transform: translateY(100%); transition: transform 0.2s ease-out; padding-bottom: env(safe-area-inset-bottom); user-select: none; }
+.m-sheet { width: 100%; max-height: 88dvh; display: flex; flex-direction: column; background: var(--bg-elev); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-pop); transform: translateY(100%); transition: transform 0.16s ease-out; padding-bottom: env(safe-area-inset-bottom); user-select: none; }
 .m-sheet-backdrop.is-open .m-sheet { transform: translateY(0); }
 .m-sheet-backdrop.is-closing .m-sheet { transform: translateY(100%); transition-duration: 0.15s; }
 .m-sheet.is-tall { height: 88dvh; }
@@ -137,7 +137,7 @@ body.is-mobile .findbar { left: 8px; right: 8px; top: 8px; width: auto; }
 /* ---------- Diálogos como hojas ---------- */
 body.is-mobile .modal-backdrop { padding: 0; place-items: end stretch; }
 body.is-mobile .modal, body.is-mobile .modal.modal-wide, body.is-mobile .modal.ag-modal, body.is-mobile .modal.ag-modal.modal-wide {
-  width: 100%; max-width: none; height: 100dvh; max-height: 100dvh; border-radius: 0; animation: m-sheet-in 0.2s ease-out;
+  width: 100%; max-width: none; height: 100dvh; max-height: 100dvh; border-radius: 0;
 }
 body.is-mobile .modal.is-small { height: auto; max-height: 85dvh; border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
 body.is-mobile .modal-head { padding-top: calc(10px + env(safe-area-inset-top)); flex: none; }
@@ -146,7 +146,6 @@ body.is-mobile .modal-body { flex: 1; min-height: 0; }
 body.is-mobile .modal-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom)); flex: none; }
 body.is-mobile .modal.is-small .modal-foot { padding-bottom: 12px; }
 body.is-mobile .modal-foot .btn { flex: 1; }
-@keyframes m-sheet-in { from { transform: translateY(24px); opacity: 0.6; } }
 body.is-mobile .toasts { bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom)); width: calc(100vw - 24px); }
 body.is-mobile.m-editing .toasts { bottom: calc(64px + env(safe-area-inset-bottom)); }
 body.is-mobile .toast { max-width: none; font-size: 14.5px; }
@@ -206,6 +205,8 @@ body.is-mobile .ag-rec { bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-
 /* Lista */
 .ag-list { display: flex; flex-direction: column; gap: 4px; }
 .ag-list-day { border-radius: 12px; background: var(--bg); }
+/* Los días fuera de la pantalla no se maquetan ni se pintan hasta acercarse a ellos */
+.ag-list-day:not(.is-today) { content-visibility: auto; contain-intrinsic-size: auto 160px; }
 .ag-list-head { position: sticky; top: -8px; z-index: 1; display: flex; align-items: center; gap: 8px; padding: 8px 4px 4px 8px; background: var(--bg); }
 .ag-list-head > div { flex: 1; min-width: 0; }
 .ag-list-day.is-today .ag-list-head strong { color: var(--accent); }

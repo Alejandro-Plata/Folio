@@ -629,7 +629,8 @@ export class Ribbon {
 
   update() {
     const ed = this.app.editor;
-    if (!ed) return;
+    // Oculta (móvil, cinta plegada o agenda): no merece la pena consultar el formato
+    if (!ed || this.app.mobile || !this.app.settings.ribbon || this.app.mode === 'agenda') return;
     const inTable = ed.isActive('table');
     const onImage = !!this.app.selectedImage();
     this.tabButtons.get('table')!.hidden = !inTable;

@@ -33,11 +33,13 @@ export class QuickAdd {
       h('span', { class: 'ag-quick-ic', html: icon('plus', 16), 'aria-hidden': 'true' }),
       this.input, this.mic, this.preview,
       h('span', { id: 'ag-quick-help', class: 'sr-only' }, 'Intro crea lo que se muestra debajo. Mayús e Intro abre el editor completo. Escape cancela.'));
-    this.input.addEventListener('input', () => this.update());
+    // Analizar la frase en cada letra es caro en móviles: se espera a que se deje de teclear
+    let t: ReturnType<typeof setTimeout> | undefined;
+    this.input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => this.update(), this.input.value.length < 3 ? 0 : 90); });
     this.input.addEventListener('focus', () => this.update());
     this.input.addEventListener('blur', () => setTimeout(() => { if (!this.el.contains(document.activeElement)) this.preview.hidden = true; }, 150));
     this.input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); void (e.shiftKey ? this.edit(0) : this.create()); }
+      if (e.key === 'Enter') { e.preventDefault(); clearTimeout(t); this.update(); void (e.shiftKey ? this.edit(0) : this.create()); }
       else if (e.key === 'Escape') { e.preventDefault(); this.clear(); this.input.blur(); }
     });
     // Pulsar para hablar: mantener Ctrl+Mayús+Espacio

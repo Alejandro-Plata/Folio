@@ -82,6 +82,7 @@ export class Tour {
   private shade = h('div', { class: 'tour-shade' });
   private card = h('div', { class: 'tour-card', role: 'dialog', 'aria-live': 'polite' });
   private raf = 0;
+  private unfollow = () => {};
   private poll: ReturnType<typeof setInterval> | undefined;
   private taskDone = false;
   private active = false;
@@ -101,8 +102,13 @@ export class Tour {
     this.index = 0;
     document.body.append(this.shade, this.ring, this.card);
     document.body.classList.add('touring');
-    const follow = () => { this.place(); this.raf = requestAnimationFrame(follow); };
-    this.raf = requestAnimationFrame(follow);
+    // Recolocar en cada fotograma obliga a medir sin parar: solo al cambiar el tamaño,
+    // al desplazarse y con una comprobación ligera por si el elemento se ha movido.
+    const follow = () => { cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(() => this.place()); };
+    this.unfollow = () => { window.removeEventListener('resize', follow); window.removeEventListener('scroll', follow, true); clearInterval(tick); };
+    window.addEventListener('resize', follow);
+    window.addEventListener('scroll', follow, { capture: true, passive: true });
+    const tick = setInterval(follow, 300);
     await this.show();
   }
 
@@ -601,6 +607,7 @@ export class Tour {
     this.active = false;
     clearInterval(this.poll);
     cancelAnimationFrame(this.raf);
+    this.unfollow();
     this.shade.remove();
     this.ring.remove();
     this.card.remove();

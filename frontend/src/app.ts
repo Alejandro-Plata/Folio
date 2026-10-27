@@ -163,11 +163,13 @@ export class App {
       await this.agenda.mount(document.querySelector('.main')!);
       this.agenda.show();
       this.sidebar.setMode('agenda', this.agenda.sidebar.el);
+      if (this.agenda.sidebar.stale) void this.agenda.sidebar.render();
       this.findbar.close();
       this.panels.close();
     } else {
       this.agenda.hide();
       this.sidebar.setMode('docs');
+      this.ribbon.update();
       if (this.doc && !this.mobile) this.editor.commands.focus();
     }
     this.view.updateBreadcrumb();
@@ -500,6 +502,7 @@ export class App {
     this.applyLayout();
     this.status.update();
     if (k === 'spellcheck') this.editor.view.dom.setAttribute('spellcheck', String(v));
+    if (k === 'ribbon') this.ribbon.update();
   }
 
   get keymap(): KeymapId { return this.settings.keymap === 'en' ? 'en' : 'es'; }

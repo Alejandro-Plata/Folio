@@ -19,10 +19,15 @@ export class AgendaSidebar {
   el = h('div', { class: 'ag-side' });
   private miniMonth = '';
   private nextTasks: Task[] = [];
+  /** Hay cambios sin pintar porque el panel estaba oculto. */
+  stale = true;
 
   constructor(private view: AgendaView, private app: App) {}
 
   async render() {
+    // Oculto (otro modo o móvil): se pinta al volver a mostrarse
+    if (!this.el.isConnected || this.el.closest('[hidden]')) { this.stale = true; return; }
+    this.stale = false;
     const v = this.view;
     if (!this.miniMonth || !v.cursor.startsWith(this.miniMonth)) this.miniMonth = v.cursor.slice(0, 7);
     const today = v.state.today;

@@ -1,10 +1,10 @@
 // Estado de la agenda en la interfaz: datos iniciales, caché de tareas por
 // rango y operaciones que llaman al backend. Avisa de los cambios por el bus.
 import { api } from '../api';
-import { emit } from '../bus';
+import { emit, on } from '../bus';
 import { toast } from '../ui/dom';
 import type { AgendaInitData, PlanReport, PlanSettings, Scope, Session, Task, TaskType, Topic, WeekTemplate } from './model';
-import { addDays, todayISO } from './dates';
+import { addDays, addMonths, endOfMonth, todayISO } from './dates';
 import type { Circle } from '../types';
 
 /** Los eventos de los círculos llevan el id «c:…» y se guardan en el servidor. */
@@ -28,6 +28,18 @@ export class AgendaState {
   /** Tareas recientes (4 semanas atrás y 2 adelante) para las sugerencias. */
   recent: Task[] = [];
   recentSessions: Session[] = [];
+  /**
+   * Tareas por mes («AAAA-MM»). Cada mes se pide al backend una sola vez hasta
+   * el siguiente cambio: moverse por semanas, abrir el panel lateral o volver a
+   * una vista no repite consultas (en Android cada una cruza el puente con Go).
+   */
+  private months = new Map<string, Promise<Task[]>>();
+
+  constructor() {
+    // Cualquier cambio (propio, de la sincronización o de un círculo) invalida la caché
+    // antes de que las vistas se vuelvan a pintar: este oyente se registra el primero.
+    on('agenda:changed', () => this.months.clear());
+  }
 
   async load() {
     const d: AgendaInitData = await api.AgendaInit();
@@ -45,7 +57,7 @@ export class AgendaState {
   async refreshRecent() {
     this.today = todayISO();
     const [tasks, sessions] = await Promise.all([
-      api.AgendaRange(addDays(this.today, -28), addDays(this.today, 14)),
+      this.range(addDays(this.today, -28), addDays(this.today, 14)),
       api.AgendaSessions(addDays(this.today, -56), this.today),
     ]);
     this.recent = tasks ?? [];
@@ -64,8 +76,23 @@ export class AgendaState {
   topicByNumber(n: number | undefined): Topic | undefined { return n ? this.topics.find((t) => t.number === n && !t.archived) : undefined; }
 
   async range(from: string, to: string): Promise<Task[]> {
-    return (await api.AgendaRange(from, to)) ?? [];
+    // Meses que faltan, pedidos de una vez y repartidos en la caché
+    const keys: string[] = [];
+    for (let m = from.slice(0, 7); m <= to.slice(0, 7); m = addMonths(`${m}-01`, 1).slice(0, 7)) keys.push(m);
+    const missing = keys.filter((k) => !this.months.has(k));
+    if (missing.length) {
+      const first = missing[0], last = missing[missing.length - 1];
+      const all = api.AgendaRange(`${first}-01`, endOfMonth(`${last}-01`)).then((l) => l ?? []);
+      for (const k of missing) this.months.set(k, all.then((l) => l.filter((t) => t.date.startsWith(k))));
+      // Si falla, que el siguiente intento vuelva a pedirlo
+      all.catch(() => missing.forEach((k) => this.months.delete(k)));
+    }
+    const parts = await Promise.all(keys.map((k) => this.months.get(k)!));
+    return parts.flat().filter((t) => t.date >= from && t.date <= to);
   }
+
+  /** Olvida la caché (tras cambiar algo sin pasar por «agenda:changed»). */
+  invalidate() { this.months.clear(); }
 
   /** Ejecuta una operación, avisa del cambio y muestra los errores. */
   private async mutate<T>(op: () => Promise<T>, message?: string, opts: { replan?: boolean; shared?: boolean } = {}): Promise<T | undefined> {
@@ -73,6 +100,7 @@ export class AgendaState {
       const r = await op();
       // El plan automático cuenta como otro paso: «Deshacer» deshace los dos
       let steps = 1;
+      this.invalidate();
       if (opts.replan && this.topics.length && await this.plan(true)) steps++;
       await this.refreshRecent();
       emit('agenda:changed');
@@ -117,6 +145,7 @@ export class AgendaState {
       let ok = false;
       for (let i = 0; i < steps; i++) ok = (await api.AgendaUndo()) || ok;
       if (!ok) { toast('No hay nada que deshacer en la agenda'); return; }
+      this.invalidate();
       const d = await api.AgendaInit();
       this.topics = d.topics ?? [];
       await this.refreshRecent();
@@ -149,6 +178,7 @@ export class AgendaState {
   async plan(quiet = false): Promise<PlanReport | null> {
     try {
       const r = await api.AgendaPlan();
+      this.invalidate();
       this.lastReport = r;
       if (!quiet) {
         emit('agenda:changed');

@@ -94,7 +94,25 @@ export class AgendaView implements ViewHost {
     // A medianoche cambia «hoy»
     setInterval(() => { if (todayISO() !== this.state.today) { this.state.today = todayISO(); void this.reload(); } }, 60_000);
     await this.reload();
-    if (this.state.topics.length) void this.state.plan(true).then(() => this.reload());
+    this.autoPlan();
+  }
+
+  /**
+   * Rehace el plan una vez al día (para recolocar lo que no se hizo) cuando la
+   * agenda ya está pintada y el dispositivo está libre. Los cambios que afectan
+   * al plan ya lo rehacen al guardarse.
+   */
+  private autoPlan() {
+    const KEY = 'folio-agenda-planned';
+    let last = '';
+    try { last = localStorage.getItem(KEY) || ''; } catch { /* */ }
+    if (!this.state.topics.length || last === this.state.today) return;
+    const idle = (window as any).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 400));
+    idle(() => void this.state.plan(true).then((r) => {
+      if (!r) return;
+      try { localStorage.setItem(KEY, this.state.today); } catch { /* */ }
+      void this.state.refreshRecent().then(() => this.reload());
+    }));
   }
 
   // ---------- Cabecera ----------
@@ -169,7 +187,14 @@ export class AgendaView implements ViewHost {
     return [`${c.slice(0, 4)}-01-01`, `${c.slice(0, 4)}-12-31`];
   }
 
-  async reload() {
+  /** Vuelve a pedir los datos y a pintar. Las llamadas seguidas se agrupan en una. */
+  reload(): Promise<void> {
+    this.pending ??= new Promise<void>((resolve) => queueMicrotask(() => { this.pending = null; void this.doReload().then(resolve); }));
+    return this.pending;
+  }
+  private pending: Promise<void> | null = null;
+
+  private async doReload() {
     if (!this.started) return;
     const token = ++this.loadToken;
     const [from, to] = this.visibleRange();
