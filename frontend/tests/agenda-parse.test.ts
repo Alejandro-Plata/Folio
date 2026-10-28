@@ -1,7 +1,7 @@
 // Pruebas del analizador de frases de la agenda (fecha fija: lunes 26-10-2026).
 // Se ejecutan con «npm test».
 import { parse, parseMany, parseGoTo } from '../src/agenda/parse';
-import { matchTasks, parseCommand } from '../src/agenda/commands';
+import { matchTasks, parseCommand, splitClauses } from '../src/agenda/commands';
 import { parseTime, parseDuration } from '../src/agenda/time';
 const types: any[] = [
   { id: 'mock', name: 'Simulacro / examen', priority: 1 }, { id: 'review', name: 'Repaso', priority: 2 },
@@ -83,5 +83,11 @@ eq('busca la próxima', { v: matchTasks(pool, 'dentista', T).map((t) => t.id) },
 eq('sin tildes', { v: matchTasks(pool, 'ingles', T).map((t) => t.id) }, { v: ['c'] });
 eq('por día', { v: matchTasks(pool, 'reunion', T, '2026-11-05').map((t) => t.id) }, { v: ['e'] });
 eq('varias palabras', { v: matchTasks(pool, 'reunion departamento', T).map((t) => t.id) }, { v: ['d'] });
+eq('avísame N antes de X', C('avísame 15 minutos antes de la clase de inglés'), { kind: 'remind', query: 'clase de ingles', minutes: 15 });
+eq('verbo de crear fuera del título', P('apunta fisio el lunes a las 9'), { title: 'Fisio', date: '2026-11-02', start: '09:00' });
+eq('ponme', P('ponme correr todos los días a las 7 de la mañana'), { title: 'Correr', start: '07:00', repeat: { freq: 'daily', interval: 1 } });
+eq('pon no es ponencia', P('ponencia el jueves'), { title: 'Ponencia' });
+eq('dos órdenes', { v: splitClauses('borra el dentista y apunta fisio el lunes a las 9') }, { v: ['borra el dentista', 'apunta fisio el lunes a las 9'] });
+eq('«y» dentro del título', { v: splitClauses('reunión con Ana y Luis el martes') }, { v: ['reunión con Ana y Luis el martes'] });
 console.log(`${total - fails}/${total} correctas`);
 if (fails) process.exit(1);
