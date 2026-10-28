@@ -81,6 +81,14 @@ export async function accountDialog(app: App) {
         h('button', { type: 'button', class: 'btn btn-sm btn-primary', disabled: busy, onclick: () => void busyRun(async () => { await mgr.run(() => api.SocialUpdateProfile(name.value, color.get()), 'Perfil guardado'); }) }, 'Guardar'),
         h('div', { class: 'spacer' }),
         h('button', { type: 'button', class: 'btn btn-sm', onclick: () => { closeFn?.(null); void import('./circles').then((m) => m.circlesDialog(app)); } }, h('span', { html: icon('users', 14) }), 'Mis círculos')),
+      // La cuenta no lleva los datos: sin esto parece que basta con entrar en todos los dispositivos
+      h('div', { class: 'so-section' }, 'Tus datos en otros dispositivos'),
+      h('p', { class: 'muted small' }, app.sync?.linked
+        ? 'Este dispositivo sincroniza documentos y agenda con tu nube. En los demás, vincula la misma nube desde Sincronización.'
+        : 'La cuenta no sincroniza tus documentos ni tu agenda: van por Sincronización, con tu Google Drive o tu servidor WebDAV. Vincula la misma nube en cada dispositivo.'),
+      h('div', { class: 'btn-row' },
+        h('button', { type: 'button', class: `btn btn-sm ${app.sync?.linked ? '' : 'btn-primary'}`, onclick: () => { closeFn?.(null); void import('../sync/syncsettings').then((m) => m.syncDialog(app)); } },
+          h('span', { html: icon(app.sync?.linked ? 'cloudCheck' : 'cloud', 14) }), app.sync?.linked ? 'Sincronización' : 'Vincular la sincronización')),
       h('div', { class: 'so-section' }, 'Sesión'),
       h('div', { class: 'btn-row' },
         h('button', { type: 'button', class: 'btn btn-sm', disabled: busy, onclick: () => void busyRun(async () => {
