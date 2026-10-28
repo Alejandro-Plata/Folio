@@ -21,7 +21,7 @@ body.is-mobile .m-screen, body.is-mobile .work, body.is-mobile #agenda { display
 body.is-mobile[data-m='docs'] .m-docs, body.is-mobile[data-m='search'] .m-search-screen, body.is-mobile[data-m='more'] .m-more { display: flex; }
 body.is-mobile[data-m='editor'] .work { display: flex; }
 body.is-mobile[data-m='agenda'] #agenda { display: flex; }
-.m-screen { flex: 1; min-height: 0; flex-direction: column; overflow-y: auto; background: var(--bg); padding-bottom: calc(var(--nav-h) + 80px + env(safe-area-inset-bottom)); }
+.m-screen { flex: 1; min-height: 0; flex-direction: column; overflow-y: auto; background: var(--bg); padding-bottom: 88px; } /* hueco para el botón flotante; la barra inferior no tapa la pantalla */
 
 /* ---------- Barra superior ---------- */
 .m-appbar { flex: none; height: 56px; display: flex; align-items: center; gap: 2px; padding: 0 4px; background: var(--chrome); border-bottom: 1px solid var(--chrome-line); }
@@ -69,6 +69,9 @@ button.m-row { width: 100%; }
 .m-row-open .m-row-title { color: var(--accent); }
 .m-row-more { margin-right: 4px; color: var(--text-faint); }
 .m-about { text-align: center; padding: 20px; }
+/* «Más» no tiene botón flotante: el pie con la versión queda al fondo */
+.m-more { padding-bottom: 0; }
+.m-more > .m-about { margin-top: auto; padding: 24px 20px 16px; }
 
 /* ---------- Hojas inferiores ---------- */
 .m-sheet-backdrop { position: fixed; inset: 0; z-index: 950; display: grid; place-items: end stretch; background: rgba(15, 15, 15, 0); }
@@ -267,6 +270,25 @@ body.is-mobile .ag-block .ag-done { width: 18px; height: 18px; }
 body.is-mobile .ag-tg.is-week .ag-block-end { display: none; } /* columnas estrechas: solo la hora de inicio */
 body.is-mobile .ag-block-main { cursor: default; }
 body.is-mobile .ag-tg-day { min-height: 44px; }
+/* Cabecera y «todo el día» como parte de la misma tabla: mismas líneas de columna
+   y el tinte de hoy de arriba abajo */
+body.is-mobile .ag-tg-top { border-bottom: 1px solid var(--line); box-shadow: 0 6px 10px -10px color-mix(in srgb, var(--text) 40%, transparent); }
+body.is-mobile .ag-tg-head { padding-bottom: 0; }
+body.is-mobile .ag-tg-day { border-radius: 0; padding: 6px 2px 7px; gap: 3px; justify-content: flex-start; }
+body.is-mobile .ag-tg-day:hover { background: none; }
+body.is-mobile .ag-tg-day:active { background: var(--bg-hover); }
+body.is-mobile .ag-tg.is-week :is(.ag-tg-day, .ag-tg-allday-cell) { border-left: 1px solid var(--line-soft); }
+body.is-mobile .ag-tg.is-week :is(.ag-tg-day, .ag-tg-allday-cell).is-weekend { background: color-mix(in srgb, var(--text) 1.8%, transparent); }
+body.is-mobile .ag-tg.is-week :is(.ag-tg-day, .ag-tg-allday-cell).is-today { background: color-mix(in srgb, var(--accent) 3.5%, transparent); }
+body.is-mobile .ag-tg-dname { font-size: 11px; letter-spacing: 0.1em; }
+body.is-mobile .ag-tg-load { width: calc(100% - 16px); margin-top: 1px; gap: 4px; }
+body.is-mobile .ag-tg-load-text { font-size: 10.5px; }
+body.is-mobile .ag-tg-load-bar { height: 4px; }
+/* Sin tareas de todo el día no se reserva la fila (en el móvil no se arrastra a ella) */
+body.is-mobile .ag-tg-allday { min-height: 0; border-bottom: 0; }
+body.is-mobile .ag-tg-allday.is-empty { display: none; }
+body.is-mobile .ag-tg-allday-cell { padding: 3px 3px 4px; }
+body.is-mobile .ag-tg-body { padding-top: 10px; } /* que se lea la primera hora */
 
 /* Año: dos meses por fila */
 body.is-mobile .ag-year { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
@@ -315,3 +337,11 @@ body.is-mobile .ag-note-open { min-height: 40px; padding: 0 12px; }
 body.is-mobile .ag-note-x { width: 40px; height: 40px; }
 body.is-mobile .ag-topic-row { grid-template-columns: 52px minmax(0, 1fr) auto auto; gap: 4px; }
 .ag-topic-row .ag-num { width: 100%; }
+body.is-mobile .ag-tg.is-week .ag-tg-load.is-free .ag-tg-load-text { display: none; } /* «Libre» en cada día es ruido: basta la barra vacía */
+/* Tarjetas en columnas estrechas: el título se parte en varias líneas en vez de cortarse */
+body.is-mobile .ag-tg.is-week .ag-block { padding: 5px 5px 5px 9px; }
+body.is-mobile .ag-tg.is-week .ag-block-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; overflow-wrap: anywhere; font-size: 12.5px; line-height: 1.25; }
+body.is-mobile .ag-tg.is-week .ag-block.is-short .ag-block-title { -webkit-line-clamp: 1; }
+body.is-mobile .ag-tg.is-week .ag-block-ic { display: inline-block; vertical-align: -2px; margin-right: 4px; }
+body.is-mobile .ag-tg.is-week .ag-allday-item .ag-done { display: none; } /* se marca al abrirla; así el título cabe */
+body.is-mobile .ag-tg.is-week .ag-allday-item .ag-chip { flex: 1; min-width: 0; }

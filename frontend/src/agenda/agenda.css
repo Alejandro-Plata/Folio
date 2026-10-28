@@ -137,7 +137,8 @@ body.mode-agenda .quick > :not(:first-child), body.mode-agenda .top-actions > :n
    líneas muy suaves, fecha grande con hoy en un círculo de acento, tareas como
    tarjetas planas con un tinte del color del tipo y su barra a la izquierda. */
 .ag-tg { --gut: 56px; --line: color-mix(in srgb, var(--text) 7%, transparent); --line-soft: color-mix(in srgb, var(--text) 3.5%, transparent);
-  flex: 1; min-height: 0; display: grid; grid-template-rows: auto auto 1fr; background: var(--bg); }
+  flex: 1; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); background: var(--bg); }
+.ag-tg-top { position: sticky; top: 0; z-index: 6; background: var(--bg); }
 .ag-tg-head, .ag-tg-allday, .ag-tg-body { display: grid; grid-template-columns: var(--gut) repeat(var(--days), minmax(0, 1fr)); }
 .ag-tg-head { padding-bottom: 6px; }
 

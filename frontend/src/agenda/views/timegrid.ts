@@ -62,7 +62,7 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
     const goal = dailyGoal(host, d);
     const weekend = dt.getDay() === 0 || dt.getDay() === 6;
     // Estudio del día frente al objetivo del plan: una barra fina bajo la fecha
-    const loadEl = load || goal ? h('span', { class: `ag-tg-load ${goal && load >= goal ? 'is-full' : ''}`, title: goal ? `${duration(load)} de estudio de ${duration(goal)}` : `${duration(load)} de estudio` },
+    const loadEl = load || goal ? h('span', { class: `ag-tg-load ${goal && load >= goal ? 'is-full' : ''} ${load ? '' : 'is-free'}`, title: goal ? `${duration(load)} de estudio de ${duration(goal)}` : `${duration(load)} de estudio` },
       h('span', { class: 'ag-tg-load-text' }, load ? duration(load) : 'Libre'),
       goal ? h('span', { class: 'ag-tg-load-bar' }, h('span', { style: { width: `${Math.min(100, Math.round((load / goal) * 100))}%` } })) : null) : null;
     head.append(h('button', {
@@ -77,7 +77,7 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
     h('span', { class: 'ag-tg-dname' }, single ? WEEKDAYS[(dt.getDay() + 6) % 7] : WEEKDAYS_SHORT[(dt.getDay() + 6) % 7]),
     h('span', { class: 'ag-tg-dnum' }, String(dt.getDate())),
     loadEl));
-    const cell = h('div', { class: 'ag-tg-allday-cell', 'data-date': d });
+    const cell = h('div', { class: `ag-tg-allday-cell ${isToday ? 'is-today' : ''} ${weekend ? 'is-weekend' : ''}`, 'data-date': d });
     for (const t of byDay.get(d)!.filter((x) => !x.start)) {
       const row = h('div', { class: 'ag-allday-item' }, doneBox(host, t), taskChip(host, t, { draggable: true }));
       cell.append(row);
@@ -117,8 +117,11 @@ export function renderTimeGrid(host: ViewHost, root: HTMLElement, days: string[]
     dropTarget(host, col, d, dayStart);
     body.append(col);
   }
-  const scroll = h('div', { class: 'ag-tg-scroll' }, body);
-  grid.append(head, allDay, scroll);
+  // La cabecera va dentro del desplazamiento (fija arriba) para que sus columnas
+  // midan lo mismo que las de las horas, haya o no barra de desplazamiento
+  allDay.classList.toggle('is-empty', !list.some((t) => !t.start && byDay.has(t.date)));
+  const scroll = h('div', { class: 'ag-tg-scroll' }, h('div', { class: 'ag-tg-top' }, head, allDay), body);
+  grid.append(scroll);
   root.replaceChildren(grid);
   // Al abrir, se ve la franja de estudio o la hora actual
   requestAnimationFrame(() => {
