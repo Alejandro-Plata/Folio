@@ -48,7 +48,7 @@ await createPackage(stage, path.join(res, 'app.asar'));
 fs.rmSync(stage, { recursive: true, force: true });
 
 // 3. El núcleo Go (sin cgo: se compila para cualquier sistema desde aquí)
-run('go', ['build', '-trimpath', '-ldflags', `-s -w -X main.Version=${version}`, '-o', path.join(res, isWin ? 'folio-core.exe' : 'folio-core'), './cmd/folio-core'],
+run('go', ['build', '-trimpath', '-ldflags', `-s -w -X main.Version=${version}${process.env.FOLIO_GO_LDFLAGS ? ' ' + process.env.FOLIO_GO_LDFLAGS : ''}`, '-o', path.join(res, isWin ? 'folio-core.exe' : 'folio-core'), './cmd/folio-core'],
   { cwd: root, env: { ...process.env, CGO_ENABLED: '0', GOOS: isWin ? 'windows' : 'linux', GOARCH: 'amd64' } });
 // Motor de dictado: junto al núcleo, que es quien lo busca
 if (whisper && fs.existsSync(whisper)) fs.copyFileSync(whisper, path.join(res, isWin ? 'whisper-cli.exe' : 'whisper-cli'));

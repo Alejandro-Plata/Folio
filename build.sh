@@ -12,6 +12,11 @@ TARGET="${1:-linux}"
 VERSION="${2:-$(git describe --tags --always 2>/dev/null || echo 1.0.0)}"
 export PATH="$HOME/.local/go/bin:$HOME/go/bin:$PATH"
 VERSION="${VERSION#v}"
+# ID y secreto del cliente OAuth de Google (escritorio): fuera del repositorio, que es público
+OAUTH="$HOME/.config/folio-release/google-oauth.properties"
+if [ -f "$OAUTH" ]; then
+  export FOLIO_GO_LDFLAGS="-X folio/internal/cloudsync.GoogleDesktopClientID=$(sed -n 's/^clientId=//p' "$OAUTH") -X folio/internal/cloudsync.GoogleDesktopClientSecret=$(sed -n 's/^clientSecret=//p' "$OAUTH")"
+fi
 
 # Interfaz y proceso principal de la ventana (una vez por compilación)
 frontend() {

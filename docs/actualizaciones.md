@@ -48,7 +48,20 @@ También se busca a mano desde **Archivo › Buscar actualizaciones**, **Ajustes
    Usa siempre la misma: Android rechaza actualizar una app firmada con otra clave.
    Un APK de depuración (`android-debug`) va firmado con otra clave, así que hay que
    desinstalarlo antes de instalar la primera versión publicada.
-5. Instala y autentica la CLI de GitHub: `gh auth login`.
+5. **Google Drive en el escritorio**: crea en Google Cloud un ID de cliente OAuth
+   «App de escritorio» (y uno «Android» con el paquete `es.folio.app` y la huella
+   SHA-1 de `folio.jks`; ese no va en ningún archivo). Guarda el de escritorio en
+   `~/.config/folio-release/google-oauth.properties`:
+
+   ```
+   clientId=….apps.googleusercontent.com
+   clientSecret=GOCSPX-…
+   ```
+
+   `build.sh` lo pone en el núcleo al compilar. No va en el repositorio: es público
+   y Google desactiva los secretos que encuentra en GitHub. Sin este archivo, al
+   vincular Google Drive en el escritorio sale «falta configurar el ID de cliente».
+6. Instala y autentica la CLI de GitHub: `gh auth login`.
 
 ## Publicar una versión
 

@@ -15,10 +15,12 @@ import (
 	"time"
 )
 
-// IDs públicos del cliente OAuth «App de escritorio» de Folio en Google Cloud.
-// No son secretos en una app instalada (Google los pide, y el flujo se protege
-// con PKCE). Se rellenan al crear el proyecto de Google Cloud (docs/guia-android.md § I.7).
-const (
+// IDs del cliente OAuth «App de escritorio» de Folio en Google Cloud. No son
+// secretos en una app instalada (el flujo se protege con PKCE), pero el
+// repositorio es público y Google desactiva los secretos que encuentra en
+// GitHub: build.sh los pone al compilar desde ~/.config/folio-release/google-oauth.properties
+// (docs/actualizaciones.md).
+var (
 	GoogleDesktopClientID     = ""
 	GoogleDesktopClientSecret = ""
 )
