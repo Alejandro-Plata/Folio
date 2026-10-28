@@ -146,6 +146,13 @@ const P: Record<string, string> = {
   share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>',
   toggleBlock: '<path d="m9 6 6 6-6 6"/><path d="M4 4v16" stroke-dasharray="2 3"/>',
   question: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+  wallet: '<path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><path d="M16 12h3a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-3a3 3 0 0 1 0-6z"/><path d="M3 7V5a2 2 0 0 1 2-2h12"/>',
+  trendUp: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  trendDown: '<path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/>',
+  pieChart: '<path d="M21.2 15a9 9 0 1 1-9.2-9v9z"/>',
+  arrowDownLeft: '<path d="M17 7 7 17"/><path d="M17 17H7V7"/>',
+  arrowUpRight: '<path d="M7 17 17 7"/><path d="M7 7h10v10"/>',
+  filter: '<path d="M3 4h18l-7 8v6l-4 2v-8z"/>',
 };
 
 export function icon(name: string, size = 16): string {

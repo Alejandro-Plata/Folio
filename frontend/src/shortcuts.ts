@@ -30,6 +30,7 @@ export const SHORTCUTS: ShortcutDef[] = [
   S('versions', 'Historial de versiones', 'Archivo', 'Ctrl+Alt+H', 'Ctrl+Alt+H', 'app'),
   S('modeDocs', 'Ir a Documentos', 'Espacios', 'Ctrl+Mayús+1', 'Ctrl+Mayús+1', 'app'),
   S('modeAgenda', 'Ir a la Agenda', 'Espacios', 'Ctrl+Mayús+2', 'Ctrl+Mayús+2', 'app'),
+  S('modeGastos', 'Ir a Gastos', 'Espacios', 'Ctrl+Mayús+3', 'Ctrl+Mayús+3', 'app'),
   // Edición
   S('undo', 'Deshacer', 'Edición', 'Ctrl+Z'),
   S('redo', 'Rehacer', 'Edición', ['Ctrl+Y', 'Ctrl+Mayús+Z']),

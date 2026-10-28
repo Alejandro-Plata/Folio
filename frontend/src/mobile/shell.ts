@@ -13,9 +13,9 @@ import { FormatBar } from './formatbar';
 import { MoreScreen } from './more';
 import { SearchScreen } from './search';
 
-export type Screen = 'docs' | 'editor' | 'agenda' | 'search' | 'more';
+export type Screen = 'docs' | 'editor' | 'agenda' | 'gastos' | 'search' | 'more';
 
-const NAV: [Screen, string, string][] = [['docs', 'file', 'Documentos'], ['agenda', 'calendar', 'Agenda'], ['search', 'search', 'Buscar'], ['more', 'more', 'Más']];
+const NAV: [Screen, string, string][] = [['docs', 'file', 'Documentos'], ['agenda', 'calendar', 'Agenda'], ['gastos', 'wallet', 'Gastos'], ['search', 'search', 'Buscar'], ['more', 'more', 'Más']];
 
 export class MobileShell {
   screen: Screen = 'docs';
@@ -69,7 +69,7 @@ export class MobileShell {
     initBack(() => app.flush());
     this.watchPanels();
     this.watchEditorFocus();
-    void this.go(app.mode === 'agenda' ? 'agenda' : 'docs', true);
+    void this.go(app.mode === 'agenda' ? 'agenda' : app.mode === 'gastos' ? 'gastos' : 'docs', true);
     this.docList.render();
   }
 
@@ -78,8 +78,8 @@ export class MobileShell {
   async go(screen: Screen, initial = false) {
     const app = this.app;
     if (screen !== 'editor' && this.screen === 'editor') { await app.flush(); this.removeEditorBack?.(); this.removeEditorBack = null; }
-    if (screen === 'agenda') await app.setMode('agenda');
-    else if (app.mode === 'agenda') await app.setMode('docs');
+    if (screen === 'agenda' || screen === 'gastos') await app.setMode(screen);
+    else if (app.mode === 'agenda' || app.mode === 'gastos') await app.setMode('docs');
     this.screen = screen;
     document.body.dataset.m = screen;
     document.body.classList.toggle('m-editing', screen === 'editor');
@@ -129,20 +129,24 @@ export class MobileShell {
     } else if (s === 'editor') {
       title = app.doc?.meta.title || 'Sin título';
       items.push(back('Volver a los documentos'));
-    } else if (s === 'more') title = 'Más';
+    } else if (s === 'agenda') title = 'Agenda';
+    else if (s === 'gastos') title = 'Gastos';
+    else if (s === 'search') title = 'Buscar';
+    else if (s === 'more') title = 'Más';
     const t = h('h1', { class: 'm-title', onclick: () => { if (s === 'editor') { app.view.scroller.scrollTop = 0; app.view.focusTitle(); } } }, title);
     const actions = h('div', { class: 'm-bar-actions' });
     if (s === 'editor') {
       actions.append(
         btn('undo', 'Deshacer', () => app.run('undo')),
         btn('more', 'Más acciones', () => this.editorMenu()));
-    } else if (s === 'docs') {
-      actions.append(btn('trash', 'Papelera', () => void app.sidebar.trashDialog()));
+    } else {
+      if (s === 'docs') actions.append(btn('trash', 'Papelera', () => void app.sidebar.trashDialog()));
+      actions.append(btn('settings', 'Ajustes', () => void dialogs.settingsDialog(app)));
     }
     this.appbar.replaceChildren(...items.filter((x): x is HTMLElement => !!x), t, actions);
 
     // Botón flotante
-    const fab = s === 'docs' ? { label: 'Nuevo documento', ic: 'plus' } : s === 'agenda' ? { label: 'Nueva tarea', ic: 'plus' } : null;
+    const fab = s === 'docs' ? { label: 'Nuevo documento', ic: 'plus' } : s === 'agenda' ? { label: 'Nueva tarea', ic: 'plus' } : s === 'gastos' ? { label: 'Añadir movimiento', ic: 'plus' } : null;
     this.fab.hidden = !fab;
     if (fab) {
       this.fab.innerHTML = icon(fab.ic, 26);
@@ -154,6 +158,7 @@ export class MobileShell {
   private fabAction() {
     if (this.screen === 'docs') this.docList.newDocSheet();
     else if (this.screen === 'agenda') this.app.agenda.quick.openMobile();
+    else if (this.screen === 'gastos') this.app.gastos.newMovement();
   }
 
   private editorMenu() {

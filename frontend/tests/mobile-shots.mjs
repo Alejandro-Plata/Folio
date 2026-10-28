@@ -65,8 +65,12 @@ for (const scheme of ['light', 'dark']) {
     await p.waitForTimeout(250);
     await p.tap('.ag-list .ag-chip'); await check('10-agenda-tarea'); await p.keyboard.press('Escape');
     await p.waitForTimeout(250);
-    await p.tap('.m-nav-btn:nth-child(3)'); await p.fill('.m-search-screen .m-search', 'atajos'); await check('11-buscar');
-    await p.tap('.m-nav-btn:nth-child(4)'); await check('12-mas');
+    await p.tap('.m-nav-btn:nth-child(3)'); await check('14-gastos');
+    await p.tap('.gx-tabs .seg-btn:nth-child(2)'); await check('14b-gastos-resumen');
+    await p.tap('.gx-tabs .seg-btn:nth-child(3)'); await check('14c-gastos-presupuesto');
+    await p.tap('.gx-tabs .seg-btn:nth-child(1)');
+    await p.tap('.m-nav-btn:nth-child(4)'); await p.fill('.m-search-screen .m-search', 'atajos'); await check('11-buscar');
+    await p.tap('.m-nav-btn:nth-child(5)'); await check('12-mas');
     await p.evaluate(async () => { const m = await import('/src/sync/syncsettings.ts'); m.syncDialog(folio); });
     await check('13-sincronizacion'); await p.keyboard.press('Escape');
     await ctx.close();

@@ -17,6 +17,7 @@ import (
 
 	"folio/internal/agenda"
 	"folio/internal/docx"
+	"folio/internal/gastos"
 	"folio/internal/social"
 	"folio/internal/store"
 )
@@ -105,6 +106,7 @@ type Service struct {
 	store      atomic.Pointer[store.Store]
 	agenda     atomic.Pointer[agenda.Store]
 	realAgenda atomic.Pointer[agenda.Store] // guardada mientras dura el tutorial
+	gastos     atomic.Pointer[gastos.Store]
 	mu         sync.Mutex
 	settings   Settings
 	syncing    atomic.Bool
@@ -145,8 +147,13 @@ func (s *Service) openWorkspace(dir string) error {
 		return err
 	}
 	ag.SetExternal(s.circleTasks)
+	gs, err := gastos.Open(filepath.Join(dir, "gastos"))
+	if err != nil {
+		return err
+	}
 	s.store.Store(st)
 	s.agenda.Store(ag)
+	s.gastos.Store(gs)
 	return nil
 }
 

@@ -6,6 +6,7 @@ import type {
   SearchHit, Settings, Version, VersionData, PdfFile, MergeItem, MergeOptions, SyncConfig, SyncStatus, SyncResult, UpdateInfo, SocialSnapshot, DateOption } from './types';
 
 import { agendaMock, mockFileNames, mockFileURLs, type AgendaBackend } from './agenda/mock';
+import { gastosMock, type GastosBackend } from './gastos/mock';
 import { socialMock } from './social/mock';
 import { platform } from './platform/platform';
 import { createAndroidBackend, onAndroidEvent } from './platform/android';
@@ -14,7 +15,7 @@ export interface DesktopReminder { id: string; date: string; at: number; title: 
 export interface DesktopPrefs { background: boolean; openAtLogin: boolean }
 export interface FolitoInfo { model: string; modelReady: boolean; modelSize: number; engineReady: boolean; downloading: boolean; running: boolean }
 
-export interface Backend extends AgendaBackend {
+export interface Backend extends AgendaBackend, GastosBackend {
   Init(): Promise<InitData>;
   SaveSettings(s: Settings): Promise<void>;
   ListDocs(): Promise<Meta[]>;
@@ -138,6 +139,7 @@ export function setWindowTitle(t: string) {
 // ---------------------------------------------------------------------------
 function createMockBackend(): Backend {
   const agenda = agendaMock();
+  const gastos = gastosMock();
   const KEY = 'folio-mock-v1';
   type MockDoc = { meta: Meta; setup: PageSetup; content: string; text: string; versions: VersionData[]; images: Record<string, string> };
   const load = (): Record<string, MockDoc> => {
@@ -342,6 +344,7 @@ function createMockBackend(): Backend {
     async ImportFromPath() { throw new Error('Importar necesita la aplicación.'); },
     async MergePdfsTo() { throw new Error('Unir PDF necesita la aplicación.'); },
     ...agenda,
+    ...gastos,
     ...socialMock(agenda),
   };
 }

@@ -89,6 +89,26 @@ func TestMergeTaskEditBeatsDelete(t *testing.T) {
 	}
 }
 
+func TestMergeGastosMovements(t *testing.T) {
+	base := `[{"id":"a","kind":"expense","date":"2026-10-05","name":"Compra","categoryId":"compra","amountCents":4000,"updated":"2026-10-05T10:00:00Z"}]`
+	// Local sube el importe; remoto cambia el nombre: los dos cambios deben conservarse, y el campo
+	// "updated" se queda con el más reciente, como en las tareas de la agenda.
+	local := `[{"id":"a","kind":"expense","date":"2026-10-05","name":"Compra","categoryId":"compra","amountCents":5000,"updated":"2026-10-06T09:00:00Z"},
+	            {"id":"b","kind":"income","date":"2026-10-07","name":"Nómina","amountCents":150000,"updated":"2026-10-07T09:00:00Z"}]`
+	remote := `[{"id":"a","kind":"expense","date":"2026-10-05","name":"Compra semanal","categoryId":"compra","amountCents":4000,"updated":"2026-10-06T11:00:00Z"}]`
+	out, _ := mustMerge(t, MergeInput{Path: "gastos/movements/2026-10.json", Base: []byte(base), Local: []byte(local), Remote: []byte(remote)})
+	got := tasksOf(t, out)
+	if got["a"]["name"] != "Compra semanal" || got["a"]["amountCents"].(float64) != 5000 {
+		t.Errorf("a: los dos cambios deben conservarse: %v", got["a"])
+	}
+	if got["a"]["updated"] != "2026-10-06T11:00:00Z" {
+		t.Errorf("a: debe quedarse la fecha de modificación más reciente: %v", got["a"]["updated"])
+	}
+	if got["b"] == nil {
+		t.Error("b: añadido solo en local debe existir")
+	}
+}
+
 func TestMergeSeriesDoneAndExceptAreSets(t *testing.T) {
 	series := func(except, done string) string {
 		return `[{"id":"s","title":"Serie","date":"2026-11-02","updated":"2026-11-01T10:00:00Z","repeat":{"freq":"daily","interval":1,"except":[` + except + `],"done":[` + done + `]}}]`

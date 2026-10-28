@@ -30,10 +30,11 @@ const (
 )
 
 var (
-	reImmutable = regexp.MustCompile(`^(docs/[^/]+/(files/[^/]+|versions/[^/]+\.json\.gz)|agenda/apuntes/[^/]+)$`)
-	reDocFile   = regexp.MustCompile(`^docs/([^/]+)/(meta\.json|content\.json|content\.txt|versions/index\.json)$`)
-	reTasks     = regexp.MustCompile(`^agenda/tasks/[^/]+\.json$`)
-	reSessions  = regexp.MustCompile(`^agenda/sessions/[^/]+\.jsonl$`)
+	reImmutable       = regexp.MustCompile(`^(docs/[^/]+/(files/[^/]+|versions/[^/]+\.json\.gz)|agenda/apuntes/[^/]+)$`)
+	reDocFile         = regexp.MustCompile(`^docs/([^/]+)/(meta\.json|content\.json|content\.txt|versions/index\.json)$`)
+	reTasks           = regexp.MustCompile(`^agenda/tasks/[^/]+\.json$`)
+	reSessions        = regexp.MustCompile(`^agenda/sessions/[^/]+\.jsonl$`)
+	reGastosMovements = regexp.MustCompile(`^gastos/movements/[^/]+\.json$`)
 )
 
 // Classify devuelve el tipo de un archivo según su ruta relativa.
@@ -41,17 +42,17 @@ func Classify(path string) Kind {
 	switch {
 	case reImmutable.MatchString(path):
 		return KindImmutable
-	case reTasks.MatchString(path):
+	case reTasks.MatchString(path), reGastosMovements.MatchString(path):
 		return KindTasks
 	case reSessions.MatchString(path):
 		return KindSessions
 	case path == "agenda/topics.json":
 		return KindTopics
-	case path == "agenda/types.json":
+	case path == "agenda/types.json", path == "gastos/categories.json", path == "gastos/budgets.json":
 		return KindTypes
 	case path == "agenda/templates.json":
 		return KindTemplates
-	case path == "agenda/settings.json":
+	case path == "agenda/settings.json", path == "gastos/settings.json":
 		return KindAgendaSettings
 	}
 	if m := reDocFile.FindStringSubmatch(path); m != nil {

@@ -104,6 +104,10 @@ export class SyncManager {
         await this.app.agenda.state.load();
         emit('agenda:changed');
       }
+      if (res.gastosChanged && this.app.gastos?.state.ready) {
+        await this.app.gastos.state.load();
+        emit('gastos:changed');
+      }
       if (res.conflicts) {
         toast(res.conflicts === 1
           ? 'Un documento se editó en dos dispositivos a la vez: se ha quedado la versión más reciente y la otra está en su historial de versiones.'

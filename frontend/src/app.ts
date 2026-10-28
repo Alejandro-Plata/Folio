@@ -10,6 +10,7 @@ import { TEMPLATES, jsonToText, type Template } from './templates';
 import { MANUAL, MANUAL_SETUP, MANUAL_TITLE, MANUAL_VERSION } from './manual';
 import { debounce, hasOpenModal, closeMenu, toast, confirmDialog, promptText } from './ui/dom';
 import { Sidebar } from './ui/sidebar';
+import { Rail } from './ui/rail';
 import { Ribbon } from './ui/ribbon';
 import { Panels } from './ui/panels';
 import { Palette } from './ui/palette';
@@ -23,6 +24,7 @@ import { Tour, removeLeftoverPractice } from './ui/tour';
 import { BlockHandle } from './ui/blockhandle';
 import { dropPdfs } from './ui/pdfmerge';
 import { AgendaView } from './agenda/view';
+import { GastosView } from './gastos/view';
 import { SyncManager } from './sync/manager';
 import type { MobileShell } from './mobile/shell';
 import { isAndroid } from './platform/platform';
@@ -46,6 +48,7 @@ export class App {
   editor!: Editor;
 
   sidebar!: Sidebar;
+  rail!: Rail;
   ribbon!: Ribbon;
   panels!: Panels;
   palette!: Palette;
@@ -54,9 +57,10 @@ export class App {
   view!: DocView;
   paginator!: Paginator;
   private tour: Tour | null = null;
-  /** Espacio activo: documentos o agenda. */
-  mode: 'docs' | 'agenda' = 'docs';
+  /** Espacio activo: documentos, agenda o gastos. */
+  mode: 'docs' | 'agenda' | 'gastos' = 'docs';
   agenda!: AgendaView;
+  gastos!: GastosView;
   sync!: SyncManager;
   social = new SocialManager(this);
   mobile: MobileShell | null = null;
@@ -103,6 +107,7 @@ export class App {
     scaleColumnDrag(this.editor.view, () => this.zoomLevel);
     this.paginator = new Paginator(this);
     this.sidebar = new Sidebar(this);
+    this.rail = new Rail(this);
     this.ribbon = new Ribbon(this);
     this.panels = new Panels(this);
     this.palette = new Palette(this);
@@ -123,6 +128,7 @@ export class App {
       }, true);
     }
     this.agenda = new AgendaView(this);
+    this.gastos = new GastosView(this);
     this.sync = new SyncManager(this);
     this.sync.onChange(() => this.status.updateSync());
     if (isAndroid) initAndroid(this);
@@ -149,7 +155,10 @@ export class App {
       else this.view.showEmpty();
     }
     this.sidebar.render();
-    try { if (localStorage.getItem('folio-mode') === 'agenda') await this.setMode('agenda'); } catch { /* */ }
+    try {
+      const savedMode = localStorage.getItem('folio-mode');
+      if (savedMode === 'agenda' || savedMode === 'gastos') await this.setMode(savedMode);
+    } catch { /* */ }
     // Interfaz móvil: se monta al final, para no saltar al editor al abrir el último documento
     if (document.body.classList.contains('is-mobile')) {
       const { MobileShell } = await import('./mobile/shell');
@@ -163,30 +172,59 @@ export class App {
     if (!this.settings.tourDone) void this.startTour(); else this.showPinTip();
   }
 
-  /** Cambia entre Documentos y Agenda. */
-  async setMode(mode: 'docs' | 'agenda') {
-    if (mode === 'agenda' && !this.agenda.root.isConnected) {
-      document.getElementById('ribbon')!.after(this.agenda.root);
+  /** Mapa de espacios distintos de Documentos: cómo montarlos, mostrarlos y ocultarlos. */
+  private get spaces() {
+    return {
+      agenda: {
+        root: () => this.agenda.root,
+        mount: () => this.agenda.mount(document.querySelector('.main')!),
+        afterMount: () => { if (this.agenda.sidebar.stale) void this.agenda.sidebar.render(); },
+        show: () => this.agenda.show(),
+        hide: () => this.agenda.hide(),
+        sidebarEl: () => this.agenda.sidebar.el,
+        title: 'Agenda — Folio',
+      },
+      gastos: {
+        root: () => this.gastos.root,
+        mount: () => this.gastos.mount(document.querySelector('.main')!),
+        afterMount: () => { /* */ },
+        show: () => this.gastos.show(),
+        hide: () => this.gastos.hide(),
+        sidebarEl: () => this.gastos.sidebar,
+        title: 'Gastos — Folio',
+      },
+    } as const;
+  }
+
+  /** Cambia entre Documentos, Agenda y Gastos. */
+  async setMode(mode: 'docs' | 'agenda' | 'gastos') {
+    if (mode !== 'docs') {
+      const space = this.spaces[mode];
+      if (!space.root().isConnected) document.getElementById('ribbon')!.after(space.root());
     }
+    const prev = this.mode;
     this.mode = mode;
     document.body.classList.toggle('mode-agenda', mode === 'agenda');
+    document.body.classList.toggle('mode-gastos', mode === 'gastos');
     try { localStorage.setItem('folio-mode', mode); } catch { /* */ }
-    if (mode === 'agenda') {
+    if (prev !== 'docs' && prev !== mode) this.spaces[prev].hide();
+    if (mode !== 'docs') {
+      const space = this.spaces[mode];
       await this.flush();
-      await this.agenda.mount(document.querySelector('.main')!);
-      this.agenda.show();
-      this.sidebar.setMode('agenda', this.agenda.sidebar.el);
-      if (this.agenda.sidebar.stale) void this.agenda.sidebar.render();
+      await space.mount();
+      space.show();
+      this.sidebar.setMode(mode, space.sidebarEl());
+      space.afterMount();
       this.findbar.close();
       this.panels.close();
     } else {
-      this.agenda.hide();
       this.sidebar.setMode('docs');
       this.ribbon.update();
       if (this.doc && !this.mobile) this.editor.commands.focus();
     }
+    this.rail.setActive(mode);
     this.view.updateBreadcrumb();
-    setWindowTitle(mode === 'agenda' ? 'Agenda — Folio' : `${this.doc?.meta.title || 'Sin título'} — Folio`);
+    setWindowTitle(mode !== 'docs' ? this.spaces[mode].title : `${this.doc?.meta.title || 'Sin título'} — Folio`);
   }
 
   /**
@@ -612,9 +650,9 @@ export class App {
       if (this.painterOnce) { this.painterOnce = false; document.body.classList.remove('painter'); return; }
     }
     const sc = findShortcut(e, this.keymap);
-    // En la agenda solo valen los atajos generales; el resto los gestiona la agenda
-    if (this.mode === 'agenda') {
-      if (sc && ['modeDocs', 'modeAgenda', 'palette', 'help', 'sidebar', 'new', 'open'].includes(sc.action)) {
+    // En la agenda y en Gastos solo valen los atajos generales; el resto lo gestiona cada espacio
+    if (this.mode === 'agenda' || this.mode === 'gastos') {
+      if (sc && ['modeDocs', 'modeAgenda', 'modeGastos', 'palette', 'help', 'sidebar', 'new', 'open'].includes(sc.action)) {
         e.preventDefault();
         e.stopPropagation();
         closeMenu();
@@ -645,6 +683,7 @@ export class App {
     const chain = () => ed.chain().focus();
     if (action === 'modeDocs') return void this.setMode('docs');
     if (action === 'modeAgenda') return void this.setMode('agenda');
+    if (action === 'modeGastos') return void this.setMode('gastos');
     const needsDoc = !['new', 'open', 'palette', 'help', 'sidebar', 'ribbon', 'focus', 'zoomIn', 'zoomOut', 'zoomReset', 'showMarks'].includes(action);
     if (needsDoc && !this.doc) return;
     switch (action) {

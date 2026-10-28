@@ -52,36 +52,24 @@ export class Sidebar {
       this.navItem('settings', 'Ajustes', '', () => dialogs.settingsDialog(app)),
     );
     this.docsPart = h('div', { class: 'sb-part' }, nav, h('div', { class: 'sb-scroll' }, this.favSection, docsSection), foot);
-    this.agendaPart = h('div', { class: 'sb-part sb-agenda', hidden: true });
-    // Mismo control segmentado que en Ajustes (Tema: Sistema · Claro · Oscuro)
-    const modeBtn = (m: 'docs' | 'agenda', ic: string, label: string, key: string) => h('button', {
-      type: 'button', role: 'tab', class: 'seg-btn sb-mode', 'data-mode': m, title: `${label} (${key})`, onclick: () => app.setMode(m),
-    }, h('span', { html: icon(ic, 14) }), label);
-    this.modes = h('div', { class: 'seg sb-modes', role: 'tablist', 'aria-label': 'Espacio' },
-      modeBtn('docs', 'docs', 'Documentos', 'Ctrl+Mayús+1'), modeBtn('agenda', 'calendar', 'Agenda', 'Ctrl+Mayús+2'));
-    this.el.append(head, this.modes, this.docsPart, this.agendaPart);
-    this.setMode(this.mode, this.agendaEl);
+    this.extraPart = h('div', { class: 'sb-part sb-agenda', hidden: true });
+    this.el.append(head, this.docsPart, this.extraPart);
+    this.setMode(this.mode, this.extraEl);
   }
 
   private docsPart!: HTMLElement;
-  private agendaPart!: HTMLElement;
-  private modes!: HTMLElement;
-  private mode: 'docs' | 'agenda' = 'docs';
-  private agendaEl?: HTMLElement;
+  private extraPart!: HTMLElement;
+  private mode: 'docs' | 'agenda' | 'gastos' = 'docs';
+  private extraEl?: HTMLElement;
 
-  /** Muestra la parte del panel de Documentos o de la Agenda. */
-  setMode(mode: 'docs' | 'agenda', agendaEl?: HTMLElement) {
+  /** Muestra la parte del panel de Documentos o la del espacio activo (Agenda o Gastos). */
+  setMode(mode: 'docs' | 'agenda' | 'gastos', partEl?: HTMLElement) {
     this.mode = mode;
-    this.agendaEl = agendaEl ?? this.agendaEl;
-    agendaEl = this.agendaEl;
+    this.extraEl = partEl ?? this.extraEl;
+    partEl = this.extraEl;
     this.docsPart.hidden = mode !== 'docs';
-    this.agendaPart.hidden = mode !== 'agenda';
-    if (agendaEl && agendaEl.parentElement !== this.agendaPart) this.agendaPart.append(agendaEl);
-    this.modes.querySelectorAll<HTMLElement>('.sb-mode').forEach((b) => {
-      const on = b.dataset.mode === mode;
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-selected', String(on));
-    });
+    this.extraPart.hidden = mode === 'docs';
+    if (partEl && this.extraPart.firstElementChild !== partEl) this.extraPart.replaceChildren(partEl);
   }
 
   private navItem(ic: string, label: string, hint: string, run: () => void) {

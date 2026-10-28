@@ -88,6 +88,7 @@ export interface SyncResult {
   changed: boolean;
   docsChanged: string[] | null;
   agendaChanged: boolean;
+  gastosChanged: boolean;
   conflicts: number;
   errors: string[] | null;
   at: string;

@@ -26,6 +26,7 @@ type Report struct {
 	Changed       bool     `json:"changed"`       // algún archivo local ha cambiado
 	DocsChanged   []string `json:"docsChanged"`   // documentos con archivos cambiados aquí
 	AgendaChanged bool     `json:"agendaChanged"` // la agenda ha cambiado aquí
+	GastosChanged bool     `json:"gastosChanged"` // Gastos ha cambiado aquí
 	Extras        []Extra  `json:"-"`             // versiones de conflicto por guardar en el historial
 	Conflicts     int      `json:"conflicts"`     // documentos con versión de conflicto
 	Errors        []string `json:"errors"`
@@ -301,6 +302,9 @@ func (e *Engine) touched(p string, rep *Report, docs map[string]bool) {
 	}
 	if strings.HasPrefix(p, "agenda/") {
 		rep.AgendaChanged = true
+	}
+	if strings.HasPrefix(p, "gastos/") {
+		rep.GastosChanged = true
 	}
 }
 

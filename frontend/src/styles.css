@@ -117,6 +117,13 @@ kbd { font: 11px/1 var(--font-ui); color: var(--text-faint); background: transpa
 
 /* ---------- Layout ---------- */
 .app { display: flex; height: 100vh; }
+.rail { width: 56px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; background: var(--chrome); border-right: 1px solid var(--chrome-line); }
+.rail-btn { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: var(--text-muted); }
+.rail-btn:hover { background: var(--bg-hover); }
+.rail-btn.on { background: var(--accent-soft); color: var(--accent); }
+body.is-mobile .rail { display: none; }
+.gx-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; }
+body.mode-gastos #topbar, body.mode-gastos #ribbon, body.mode-gastos .work { display: none; }
 .sidebar {
   width: var(--sidebar-w); flex: none; background: var(--bg-sidebar); display: flex; flex-direction: column;
   border-right: 1px solid var(--border); min-width: 0;
