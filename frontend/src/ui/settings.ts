@@ -4,6 +4,7 @@ import type { App } from '../app';
 import { defaultSetup } from '../app';
 import type { ExportFormat, Settings } from '../types';
 import { isAndroid, isDesktop } from '../platform/platform';
+import { REMIND_CHOICES, getDefaultRemind, remindLabel, remindersSupported, setDefaultRemind } from '../platform/reminders';
 import { h, debounce, toast } from './dom';
 import { icon } from './icons';
 import { api } from '../api';
@@ -156,9 +157,25 @@ export function settingsPage(app: App, main: HTMLElement, opts: {
         ];
       },
     },
-    ...(isDesktop ? [{
-      id: 'background' as const, ic: 'bell', title: 'Avisos y segundo plano', short: 'Segundo plano', desc: 'Para recibir los avisos de la agenda, Folio tiene que estar abierto, aunque sea oculto.',
+    ...(remindersSupported ? [{
+      id: 'background' as const, ic: 'bell', title: isDesktop ? 'Avisos y segundo plano' : 'Avisos', short: 'Avisos',
+      desc: isDesktop ? 'Para recibir los avisos de la agenda, Folio tiene que estar abierto, aunque sea oculto.' : 'Notificaciones antes de las tareas que lo pidan.',
       body: () => {
+        // Aviso que llevan de entrada las tareas nuevas con hora (cada tarea lo puede cambiar)
+        const remindSel = h('select', { class: 'input input-sm', 'aria-label': 'Aviso de las tareas nuevas' },
+          ...REMIND_CHOICES.filter((m) => m !== 0).map((m) => h('option', { value: m === null ? '' : String(m), selected: m === getDefaultRemind() }, remindLabel(m))));
+        remindSel.addEventListener('change', async () => {
+          const m = remindSel.value ? Number(remindSel.value) : null;
+          if (m !== null && !(await app.reminders.ensurePermission())) {
+            remindSel.value = '';
+            toast('Sin permiso para las notificaciones: actívalo en los ajustes de Android.', { kind: 'error', ms: 6000 });
+            return;
+          }
+          setDefaultRemind(m);
+          saved();
+        });
+        const defaultRow = row('Aviso de las tareas nuevas', 'Solo en este dispositivo. Cada tarea puede cambiarlo en «Avisar».', remindSel);
+        if (!isDesktop) return [defaultRow];
         // Preferencias de este equipo: las guarda la ventana (no van en los ajustes sincronizados)
         const bg = toggle(false, (v) => void apply({ background: v }), 'Seguir en segundo plano al cerrar');
         const login = toggle(false, (v) => void apply({ openAtLogin: v }), 'Abrir al iniciar sesión');
@@ -171,7 +188,7 @@ export function settingsPage(app: App, main: HTMLElement, opts: {
         return [
           row('Seguir en segundo plano al cerrar', 'La ventana se oculta y Folio queda en la bandeja del sistema. Para salir del todo: «Salir de Folio» en la bandeja.', bg),
           row('Abrir al iniciar sesión', 'Arranca oculto, solo para avisar. Requiere el segundo plano.', login),
-          row('Aviso de las tareas nuevas', null, h('span', { class: 'muted small' }, 'Se elige en Agenda > Plan. Cada tarea tiene el suyo en «Avisar».')),
+          defaultRow,
         ];
       },
     }] : []),

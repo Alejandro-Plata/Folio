@@ -24,11 +24,9 @@ import { taskDialog, askScope } from './editor';
 import { doneDialog } from './done';
 import { QuickAdd } from './quickadd';
 import { AgendaSidebar } from './sidebar';
-import { planDialog } from './plansettings';
 import { topicsDialog } from './topics';
 import { memoryPanel } from './memory';
 import { statsDialog } from './stats';
-import { templatesMenu } from './templates';
 import './agenda.css';
 
 const VIEW_KEY = 'folio-agenda-view';
@@ -151,9 +149,7 @@ export class AgendaView implements ViewHost {
     const tools = h('div', { class: 'ag-tools' },
       h('button', { type: 'button', class: 'btn btn-sm', title: 'Repartir estudio y repasos hasta el examen', onclick: () => void this.state.plan().then(() => this.showReport(true)) }, h('span', { html: icon('sparkles', 15) }), 'Planificar'),
       h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Temas y apuntes', onclick: () => void topicsDialog(this, this.app) }, h('span', { html: icon('layers', 15) }), 'Temario'),
-      h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Tiempo de estudio, examen y repasos', onclick: () => void planDialog(this) }, h('span', { html: icon('clock', 15) }), 'Plan'),
-      h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Progreso del estudio', onclick: () => void statsDialog(this, this.app) }, h('span', { html: icon('barChart', 15) }), 'Progreso'),
-      h('button', { type: 'button', class: 'btn btn-sm btn-ghost ag-tpl-btn', title: 'Semanas tipo', onclick: (e: MouseEvent) => templatesMenu(this, e.currentTarget as HTMLElement) }, h('span', { html: icon('template', 15) }), 'Semana tipo'));
+      h('button', { type: 'button', class: 'btn btn-sm btn-ghost', title: 'Progreso del estudio', onclick: () => void statsDialog(this, this.app) }, h('span', { html: icon('barChart', 15) }), 'Progreso'));
     const row2 = h('div', { class: 'ag-head-row ag-head-row2' }, this.quick.el, tools);
     this.root.append(h('header', { class: 'ag-head' }, row1, row2));
   }
@@ -442,7 +438,6 @@ export class AgendaView implements ViewHost {
       h('span', { class: 'ag-banner-ic', html: icon(warnings.length ? 'alert' : 'checkCircle', 18) }),
       h('div', { class: 'ag-banner-text' },
         ...(warnings.length ? warnings.map((w) => h('p', {}, w)) : [h('p', {}, `Plan al día: ${r.studies} bloques de estudio y ${r.reviews} repasos hasta ${longDate(r.horizon, true)}. ${finish}`)])),
-      warnings.length ? h('button', { type: 'button', class: 'btn btn-sm', onclick: () => void planDialog(this) }, 'Ajustar el plan') : null,
       h('button', { type: 'button', class: 'icon-btn', title: 'Cerrar', 'aria-label': 'Cerrar aviso', html: icon('x', 15), onclick: () => { this.banner.hidden = true; } }),
     ].filter((x): x is HTMLElement => !!x));
   }

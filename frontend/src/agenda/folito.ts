@@ -83,7 +83,7 @@ export class Folito {
     this.panel.append(
       h('header', { class: 'folito-head' },
         h('span', { class: 'folito-head-ic', html: FOLITO_SVG }),
-        h('div', { class: 'folito-head-text' }, h('strong', {}, 'Folito'), h('span', {}, 'Asistente de la agenda · funciona en tu equipo')),
+        h('div', { class: 'folito-head-text' }, h('strong', {}, 'Folito'), h('span', {}, 'Asistente de la agenda')),
         h('button', { type: 'button', class: 'icon-btn', title: 'Cerrar (Esc)', 'aria-label': 'Cerrar', html: icon('x', 16), onclick: () => this.close() })),
       this.body);
     this.input.addEventListener('keydown', (e) => {
@@ -133,22 +133,13 @@ export class Folito {
       const mb = Math.round(i.modelSize / 1e6);
       this.body.replaceChildren(h('div', { class: 'folito-setup' },
         h('p', {}, 'Folito entiende frases normales y las convierte en tareas, cambios y avisos de tu agenda.'),
-        h('p', { class: 'muted small' }, `Funciona en tu equipo, sin conexión ni cuentas: lo que escribes no sale de aquí. Necesita descargar su modelo una vez (${mb.toLocaleString('es-ES')} MB).`),
+        h('p', { class: 'muted small' }, `Necesita descargar su modelo una vez (${mb.toLocaleString('es-ES')} MB).`),
         h('div', { class: 'folito-progress', hidden: !i.downloading }, h('span')),
         h('div', { class: 'btn-row' },
           i.downloading
             ? h('button', { type: 'button', class: 'btn btn-sm', onclick: () => void api.FolitoCancelDownload() }, 'Cancelar')
             : h('button', { type: 'button', class: 'btn btn-sm btn-primary', onclick: () => void this.download() }, h('span', { html: icon('download', 15) }), 'Descargar Folito'))));
       return;
-    }
-    if (!this.log.childElementCount) {
-      this.say(this.bubble('folito',
-        h('p', {}, '¡Hola! Dime qué quieres apuntar, cambiar o consultar.'),
-        h('div', { class: 'folito-examples' }, ...[
-          'Mañana tengo dentista a las 10, avísame media hora antes',
-          'La reunión del jueves se pasa al viernes a las 12',
-          '¿Qué tengo esta semana?',
-        ].map((ex) => h('button', { type: 'button', class: 'folito-example', onclick: () => { this.input.value = ex; void this.ask(); } }, ex)))));
     }
     this.body.replaceChildren(this.log, h('div', { class: 'folito-compose' }, this.input, this.send));
     setTimeout(() => this.input.focus(), 30);

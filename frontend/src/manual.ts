@@ -13,7 +13,7 @@ import cover from './assets/manual-portada.png?inline';
 import { fontStack } from './fonts';
 
 export const MANUAL_TITLE = 'Manual de Folio';
-export const MANUAL_VERSION = 4;
+export const MANUAL_VERSION = 5;
 /** Página del manual: letra con serifa para el texto, como un libro. */
 export const MANUAL_SETUP = { fontFamily: 'Literata', fontSize: 11, lineHeight: 1.5, pageNumbers: true, header: 'Manual de Folio' };
 
@@ -66,7 +66,7 @@ const PARTS: Part[] = [
   { title: 'Primeros pasos', intro: 'La ventana de Folio, cómo se organizan los documentos y las plantillas para empezar.', sections: ['La interfaz', 'Documentos y carpetas', 'Plantillas'] },
   { title: 'Escribir', intro: 'Todo lo que cabe en una página: formato, bloques, tablas, imágenes, ecuaciones y referencias.', sections: ['Escribir y dar formato', 'Bloques y menú «/»', 'Tablas', 'Imágenes', 'Ecuaciones', 'Notas al pie, comentarios, vínculos e índice'] },
   { title: 'Preparar y compartir', intro: 'Del documento a la clase o a otra persona: hojas, impresión, versiones y formatos.', sections: ['Herramientas para clase', 'Página, hojas e impresión', 'Buscar y reemplazar', 'Guardado y versiones', 'Exportar e importar'] },
-  { title: 'La agenda', intro: 'Un calendario para organizar el tiempo y el estudio: tareas, avisos, Folito, plan, repasos y progreso.', sections: ['La agenda', 'Crear tareas', 'Órdenes en la barra rápida', 'Avisos', 'Folito', 'Varios días y semanas tipo', 'Temario, plan y repasos', 'Progreso'] },
+  { title: 'La agenda', intro: 'Un calendario para organizar el tiempo y el estudio: tareas, avisos, Folito, plan, repasos y progreso.', sections: ['La agenda', 'Crear tareas', 'Órdenes en la barra rápida', 'Avisos', 'Folito', 'Varios días a la vez', 'Temario, plan y repasos', 'Progreso'] },
   { title: 'Varios dispositivos', intro: 'Compartir con otras personas y tener lo mismo en el ordenador y en el móvil.', sections: ['Cuenta, círculos y citas', 'Sincronización', 'Folio en el móvil'] },
   { title: 'Ajustes y atajos', intro: 'Preferencias, actualizaciones y la referencia del teclado.', sections: ['Ajustes', 'Actualizaciones', 'Atajos de teclado'] },
 ];
@@ -266,7 +266,7 @@ const SECTIONS: Section[] = [
     title: 'La agenda',
     summary: 'Calendario por días, semanas, meses y años, con navegación por teclado.',
     body: [
-      p('Agenda (Ctrl+Mayús+2) muestra las vistas Día, Semana, Mes y Año (en el móvil, también Lista y 3 días). El panel lateral tiene un minicalendario, las próximas tareas, los accesos a Temario, Plan y Progreso, y los tipos de tarea.'),
+      p('Agenda (Ctrl+Mayús+2) muestra las vistas Día, Semana, Mes y Año (en el móvil, también Lista y 3 días). El panel lateral tiene un minicalendario, las próximas tareas, los accesos a Temario y Progreso, y los tipos de tarea.'),
       ul(
         ['Hoy (H), anterior y siguiente (← →), vistas D, S, M y A.'],
         ['Ir a (G) entiende «15 marzo», «semana 12» o «+3 semanas».'],
@@ -313,7 +313,7 @@ const SECTIONS: Section[] = [
     body: [
       p('Cada tarea puede avisar: en su editor, el campo Avisar ofrece a la hora, 5, 10, 15 o 30 minutos, 1 o 2 horas, o 1 día antes. Las tareas sin hora avisan a las 9:00 del mismo día o del día anterior. Una campana marca las tareas con aviso.'),
       ul(
-        [b('Aviso por defecto: '), 'Plan > «Aviso de las tareas nuevas» fija el que llevan de entrada las tareas nuevas con hora. Es una preferencia de cada dispositivo.'],
+        [b('Aviso por defecto: '), 'Ajustes > Avisos > «Aviso de las tareas nuevas» fija el que llevan de entrada las tareas nuevas con hora. Es una preferencia de cada dispositivo.'],
         [b('En el ordenador: '), 'el aviso aparece en el centro de notificaciones del sistema; al pulsarlo se abre la tarea. Para recibirlos con la ventana cerrada, Ajustes > Avisos y segundo plano.'],
         [b('En el móvil: '), 'notificación de Android con el botón «Hecha».'],
       ),
@@ -327,18 +327,18 @@ const SECTIONS: Section[] = [
       p('Folito es el asistente de la agenda. Se abre con su botón, en la esquina inferior derecha de la agenda, y se le escribe como a una persona: «el dentista me lo han pasado al viernes por la tarde», «apúntame tutoría con la familia de Lucía el martes a las 5 y avísame antes».'),
       p('Responde con una frase y con tarjetas de acción (crear, mover, borrar, marcar como hecha, poner aviso o consultar). Nada cambia hasta pulsar Crear, Aplicar o Aplicar todo.'),
       ul(
-        [b('En tu equipo: '), 'usa un modelo de lenguaje pequeño que funciona sin conexión ni cuentas; lo que se escribe no sale del ordenador. La primera vez se descarga (alrededor de 1 GB).'],
+        [b('Primera vez: '), 'descarga su modelo de lenguaje (alrededor de 1 GB).'],
         [b('Memoria: '), 'se pone en marcha con la primera pregunta y se detiene tras 10 minutos sin uso.'],
         [b('Disponible '), 'en Linux y Windows. En el móvil, la barra rápida entiende las mismas órdenes por reglas.'],
       ),
     ],
   },
   {
-    title: 'Varios días y semanas tipo',
-    summary: 'Seleccionar días para copiar, mover, marcar descanso o borrar; reutilizar semanas.',
+    title: 'Varios días a la vez',
+    summary: 'Seleccionar días para copiar, mover, marcar descanso o borrar.',
     body: [
       p('Arrastrando sobre el mes (o con Mayús+clic) se seleccionan varios días. La barra inferior permite añadir la misma tarea a todos, copiar (Ctrl+C) y pegar (Ctrl+V) en otro sitio, mover, marcar descanso (el plan no pondrá estudio) o borrar sus tareas. En el móvil, con una pulsación larga sobre el primer día.'),
-      p('Semana tipo guarda la semana visible y la aplica a una o varias semanas. Los cambios de la agenda se deshacen con Ctrl+Z.'),
+      p('Los cambios de la agenda se deshacen con Ctrl+Z.'),
     ],
   },
   {
@@ -347,8 +347,8 @@ const SECTIONS: Section[] = [
     body: [
       hd(3, 'Temario'),
       p('Los temas se escriben a mano, se pegan como lista (un tema por línea) o se sacan del índice de un documento. A cada tema se le adjuntan sus apuntes (PDF, Word u otros); Añadir apuntes… asigna varios archivos a la vez según el número de su nombre («Tema 3.pdf»). También se puede enlazar un documento de Folio.'),
-      hd(3, 'Plan de estudio'),
-      p('Plan fija la fecha objetivo, el tiempo de estudio por día (horas, franja horaria o ambas), los días de descanso y la fase final de solo repaso. Planificar reparte el estudio nuevo y los repasos en ese tiempo, respetando las tareas fijas, y avisa si el temario no cabe.'),
+      hd(3, 'Planificar'),
+      p('Planificar reparte el estudio nuevo y los repasos del temario en el tiempo libre, respetando las tareas fijas, y avisa si el temario no cabe. El plan se rehace solo una vez al día para recolocar lo que no se hizo.'),
       hd(3, 'Repasos'),
       p('Al marcar como hecha una tarea con tema se anota el tiempo real y cuánto se recordaba (Otra vez, Difícil, Bien, Fácil). Con eso se calcula el siguiente repaso (repetición espaciada FSRS) y el plan se ajusta. Bajo cada tarea con tema, un desplegable muestra el historial, el recuerdo estimado para ese día, el próximo repaso y los apuntes.'),
     ],
@@ -491,13 +491,13 @@ function mapPage(): JSONContent[] {
 /** Diagrama de pasos con cajas de color suave (el texto lleva su color: se lee igual en tema oscuro). */
 function flow(): JSONContent {
   const steps: [string, string, string][] = [
-    ['Temario', '#dce8fb', '#1d4ed8'], ['Plan', '#ebe3fb', '#6d28d9'], ['Planificar', '#fde8cc', '#b45309'],
+    ['Temario', '#dce8fb', '#1d4ed8'], ['Planificar', '#fde8cc', '#b45309'],
     ['Estudiar', '#fbdcdc', '#b91c1c'], ['Repasar', '#d9f1df', '#15803d'], ['Progreso', '#d3eeea', '#0f766e'],
   ];
   const cells: JSONContent[] = [];
   // Pasos numerados en vez de flechas: las celdas de flecha, con su margen, no cabían a lo ancho
   steps.forEach(([name, bg, fg], i) => {
-    cells.push(box([pc({ textAlign: 'center' }, st(`${i + 1} `, { color: fg, font: SANS, size: 8 }), st(name, { color: fg, font: SANS, size: 8.5, bold: true }))], { bg, width: 96 }));
+    cells.push(box([pc({ textAlign: 'center' }, st(`${i + 1} `, { color: fg, font: SANS, size: 8 }), st(name, { color: fg, font: SANS, size: 8.5, bold: true }))], { bg, width: 116 }));
   });
   return { type: 'table', content: [row(...cells)] };
 }

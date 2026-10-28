@@ -7,7 +7,6 @@ import { icon } from '../ui/icons';
 import type { Task, TaskType } from './model';
 import { MONTHS, WEEKDAYS_LETTER, addDays, addMonths, longDate, minutesOf, range, startOfMonth, startOfWeek, toDate } from './dates';
 import { taskChip } from './views/common';
-import { planDialog } from './plansettings';
 import { topicsDialog } from './topics';
 import { statsDialog } from './stats';
 import type { AgendaView } from './view';
@@ -135,7 +134,6 @@ export class AgendaSidebar {
     const studied = topics.filter((t) => t.studied).length;
     return h('section', { class: 'ag-side-sec ag-side-nav' }, h('div', { class: 'sb-title' }, 'Estudio'),
       item('layers', `Temario${topics.length ? ` · ${studied}/${topics.length}` : ''}`, 'Temas y apuntes', () => void topicsDialog(v, this.app)),
-      item('clock', 'Plan de estudio', 'Examen, tiempo de estudio y repasos', () => void planDialog(v)),
       item('barChart', 'Progreso', 'Horas, temario y repasos', () => void statsDialog(v, this.app)));
   }
 }

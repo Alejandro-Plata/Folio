@@ -191,8 +191,8 @@ function mobileAgendaSteps(app: App): TourStep[] {
     },
     {
       title: 'Estudio y repasos, intercalados',
-      body: '<p>El plan reparte estudio y repasos en el tiempo disponible; los repasos se espacian según lo que se recuerda cada tema.</p><p><b>Más &gt; Plan de estudio</b>: fecha objetivo y tiempo por día.</p>',
-      target: moreRow('Plan de estudio'),
+      body: '<p>El plan reparte estudio y repasos en el tiempo disponible; los repasos se espacian según lo que se recuerda cada tema.</p>',
+      target: moreRow('Progreso'),
       before: async () => { await shell().go('more'); },
     },
     {
