@@ -88,7 +88,7 @@ export async function accountDialog(app: App) {
         : 'La cuenta no sincroniza tus documentos ni tu agenda: van por Sincronización, con tu Google Drive o tu servidor WebDAV. Vincula la misma nube en cada dispositivo.'),
       h('div', { class: 'btn-row' },
         h('button', { type: 'button', class: `btn btn-sm ${app.sync?.linked ? '' : 'btn-primary'}`, onclick: () => { closeFn?.(null); void import('../sync/syncsettings').then((m) => m.syncDialog(app)); } },
-          h('span', { html: icon(app.sync?.linked ? 'cloudCheck' : 'cloud', 14) }), app.sync?.linked ? 'Sincronización' : 'Vincular la sincronización')),
+          h('span', { html: icon(app.sync?.linked ? 'cloudCheck' : 'cloud', 14) }), app.sync?.linked ? 'Sincronización' : 'Vincular')),
       h('div', { class: 'so-section' }, 'Sesión'),
       h('div', { class: 'btn-row' },
         h('button', { type: 'button', class: 'btn btn-sm', disabled: busy, onclick: () => void busyRun(async () => {

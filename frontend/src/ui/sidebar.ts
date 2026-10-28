@@ -49,7 +49,6 @@ export class Sidebar {
     const docsSection = h('div', { class: 'sb-section sb-grow' }, docsTitle, this.tree);
     const foot = h('div', { class: 'sb-foot' },
       this.navItem('trash', 'Papelera', '', () => this.trashDialog()),
-      this.navItem('settings', 'Ajustes', '', () => dialogs.settingsDialog(app)),
     );
     this.docsPart = h('div', { class: 'sb-part' }, nav, h('div', { class: 'sb-scroll' }, this.favSection, docsSection), foot);
     this.extraPart = h('div', { class: 'sb-part sb-agenda', hidden: true });

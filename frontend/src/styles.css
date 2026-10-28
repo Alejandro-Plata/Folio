@@ -123,7 +123,7 @@ kbd { font: 11px/1 var(--font-ui); color: var(--text-faint); background: transpa
 .rail-btn.on { background: var(--accent-soft); color: var(--accent); }
 body.is-mobile .rail { display: none; }
 .gx-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; }
-body.mode-gastos #topbar, body.mode-gastos #ribbon, body.mode-gastos .work { display: none; }
+body.mode-gastos #topbar, body.mode-gastos #ribbon, body.mode-gastos .work, body.mode-gastos #statusbar, body.mode-gastos .block-handle { display: none; }
 .sidebar {
   width: var(--sidebar-w); flex: none; background: var(--bg-sidebar); display: flex; flex-direction: column;
   border-right: 1px solid var(--border); min-width: 0;

@@ -13,7 +13,7 @@ import cover from './assets/manual-portada.png?inline';
 import { fontStack } from './fonts';
 
 export const MANUAL_TITLE = 'Manual de Folio';
-export const MANUAL_VERSION = 5;
+export const MANUAL_VERSION = 6;
 /** Página del manual: letra con serifa para el texto, como un libro. */
 export const MANUAL_SETUP = { fontFamily: 'Literata', fontSize: 11, lineHeight: 1.5, pageNumbers: true, header: 'Manual de Folio' };
 
@@ -67,6 +67,7 @@ const PARTS: Part[] = [
   { title: 'Escribir', intro: 'Todo lo que cabe en una página: formato, bloques, tablas, imágenes, ecuaciones y referencias.', sections: ['Escribir y dar formato', 'Bloques y menú «/»', 'Tablas', 'Imágenes', 'Ecuaciones', 'Notas al pie, comentarios, vínculos e índice'] },
   { title: 'Preparar y compartir', intro: 'Del documento a la clase o a otra persona: hojas, impresión, versiones y formatos.', sections: ['Herramientas para clase', 'Página, hojas e impresión', 'Buscar y reemplazar', 'Guardado y versiones', 'Exportar e importar'] },
   { title: 'La agenda', intro: 'Un calendario para organizar el tiempo y el estudio: tareas, avisos, Folito, plan, repasos y progreso.', sections: ['La agenda', 'Crear tareas', 'Órdenes en la barra rápida', 'Avisos', 'Folito', 'Varios días a la vez', 'Temario, plan y repasos', 'Progreso'] },
+  { title: 'Gastos', intro: 'Las cuentas del mes: apuntar gastos e ingresos en segundos, ver a qué ritmo se gasta y poner presupuestos.', sections: ['Apuntar un movimiento', 'El resumen del mes', 'Movimientos y filtros', 'Presupuestos'] },
   { title: 'Varios dispositivos', intro: 'Compartir con otras personas y tener lo mismo en el ordenador y en el móvil.', sections: ['Cuenta, círculos y citas', 'Sincronización', 'Folio en el móvil'] },
   { title: 'Ajustes y atajos', intro: 'Preferencias, actualizaciones y la referencia del teclado.', sections: ['Ajustes', 'Actualizaciones', 'Atajos de teclado'] },
 ];
@@ -86,11 +87,12 @@ interface Section { title: string; summary: string; body: JSONContent[] }
 const SECTIONS: Section[] = [
   {
     title: 'La interfaz',
-    summary: 'Panel lateral, cinta, barra de estado y los dos espacios: Documentos y Agenda.',
+    summary: 'Riel, panel lateral, cinta, barra de estado y los tres espacios: Documentos, Agenda y Gastos.',
     body: [
-      p('La ventana se divide en el panel lateral (izquierda), la cinta de opciones (arriba), el documento o la agenda (centro) y la barra de estado (abajo).'),
+      p('La ventana se divide en el riel (el borde izquierdo), el panel lateral, la cinta de opciones (arriba), el documento, la agenda o los gastos (centro) y la barra de estado (abajo).'),
       ul(
-        [b('Panel lateral: '), 'cambia entre Documentos y Agenda (Ctrl+Mayús+1 y Ctrl+Mayús+2), da acceso a Nuevo documento, Buscar, Plantillas e Importar, y muestra el árbol de documentos. Al pie están la Papelera y los Ajustes. Ctrl+\\ lo muestra u oculta; su borde derecho se arrastra para cambiar el ancho.'],
+        [b('Riel: '), 'cambia entre Documentos, Agenda y Gastos (Ctrl+Mayús+1, 2 y 3). Abajo están Ajustes y Tu cuenta.'],
+        [b('Panel lateral: '), 'en Documentos da acceso a Nuevo documento, Buscar, Plantillas e Importar, muestra el árbol de documentos y, al pie, la Papelera; en Agenda y Gastos muestra lo de ese espacio. Ctrl+\\ lo muestra u oculta; su borde derecho se arrastra para cambiar el ancho.'],
         [b('Barra superior: '), 'mostrar el panel, guardar, deshacer y rehacer; en el centro, la ruta del documento; a la derecha, Buscar (Alt+Q), comentarios, historial, ayuda (?) y Exportar.'],
         [b('Cinta: '), 'pestañas Archivo, Inicio, Insertar, Disposición, Referencias, Revisar y Vista, con los grupos rotulados como en Word. Las pestañas Tabla e Imagen aparecen al trabajar con una tabla o una imagen. Ctrl+F1 o doble clic en una pestaña la pliega.'],
         [b('Barra de estado: '), 'página actual y total, palabras y tiempo de lectura, estado del guardado y de la sincronización, mapa de atajos, vista (hojas o lectura) y zoom.'],
@@ -361,6 +363,57 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    title: 'Apuntar un movimiento',
+    summary: 'Un gasto en segundos: el importe, la categoría y listo.',
+    body: [
+      p('Añadir (o el botón + en el móvil) abre la alta rápida. Arriba se elige ', b('Gasto'), ' o ', b('Ingreso'), '; después se escribe el importe, que admite sumas y restas («12,50+3» apunta 15,50 €), y se toca la categoría. Lo demás es opcional: forma de pago, fecha (Hoy, Ayer u otra) y una nota. Sin nota, el gasto toma el nombre de la categoría. Intro guarda.'),
+      ul(
+        [b('Bizum y transferencias: '), 'piden la otra persona (destinatario o emisor) y un concepto.'],
+        [b('Ingresos: '), 'nómina o ingreso mensual, Bizum o transferencia.'],
+        [b('Editar y borrar: '), 'tocar un movimiento lo abre; Eliminar se puede deshacer desde el aviso.'],
+      ),
+      p('En un mes pasado, el movimiento nuevo cae en ese mes. Las ocho categorías de serie (Compra, Ocio, Gastos comunes, Luz, Agua, Gas, Estudio y Gimnasio) tienen color e icono propios.'),
+    ],
+  },
+  {
+    title: 'El resumen del mes',
+    summary: 'Cuánto llevas gastado, a qué ritmo y en qué.',
+    body: [
+      p('La cabecera elige el mes (‹ Octubre ›; tocar el nombre vuelve al actual). La pestaña Resumen empieza por lo gastado en el mes y lo compara con el mes anterior hasta el mismo día: así se sabe si se va por delante o por detrás sin esperar a fin de mes. La gráfica muestra el gasto acumulado de este mes (línea continua) junto al del anterior (punteada). Si hay presupuestos, a la derecha aparece cuánto queda.'),
+      ul(
+        [b('Cifras: '), 'ingresos, ahorro (y qué parte de lo ingresado se guarda) y saldo con todos los movimientos hasta hoy.'],
+        [b('Por categoría: '), 'el reparto del gasto y su variación frente al mes anterior. Tocar una categoría abre sus movimientos.'],
+        [b('Día a día: '), 'un calendario en el que cada día es más oscuro cuanto más se gastó; el punto verde marca ingresos. Tocar un día abre sus movimientos.'],
+        [b('Evolución: '), 'gastos e ingresos de los últimos seis meses.'],
+      ),
+    ],
+  },
+  {
+    title: 'Movimientos y filtros',
+    summary: 'Buscar, filtrar y seleccionar movimientos.',
+    body: [
+      p('La pestaña Movimientos agrupa por día, con el neto de cada uno, y muestra arriba cuántos hay y lo que suman. La búsqueda mira el nombre, la otra persona y el concepto, sin distinguir mayúsculas ni tildes.'),
+      ul(
+        [b('Tipo y periodo: '), 'Todo, Gastos o Ingresos; el mes elegido o el historial completo.'],
+        [b('Filtros: '), 'categorías, forma de pago, importe mínimo y máximo, y ordenar por fecha o por importe. Los filtros activos aparecen como fichas que se quitan con un toque.'],
+        [b('Varios a la vez '), '(ordenador): Ctrl+clic o Mayús+clic selecciona movimientos para borrarlos juntos.'],
+      ),
+    ],
+  },
+  {
+    title: 'Presupuestos',
+    summary: 'Límites por categoría, ritmo ideal y avisos.',
+    body: [
+      p('La pestaña Presupuestos muestra cuánto queda del mes y una barra por cada categoría con límite: verde, ámbar desde el 80 % y roja al pasarse. La marca vertical es el ritmo ideal de hoy: si la barra la sobrepasa, se va más rápido de lo previsto. En el mes en curso, Folio calcula además dónde acabará el mes a este ritmo.'),
+      ul(
+        [b('Poner un límite: '), 'tocar una categoría (o «Poner límite»). Se aplica a todos los meses o solo al visible; el del mes manda sobre el general. Como referencia, se muestra lo gastado el mes anterior.'],
+        [b('Editar todos: '), 'una tabla con todas las categorías a la vez (también en Más > Categorías y presupuestos, en el móvil).'],
+        [b('Avisos: '), 'al apuntar un gasto que llega al 80 % o supera el límite de su categoría.'],
+      ),
+      p('Ajustes de Gastos (el engranaje de la cabecera, o Más en el móvil) fija la moneda, el saldo inicial y la fecha desde la que cuenta el saldo.'),
+    ],
+  },
+  {
     title: 'Cuenta, círculos y citas',
     summary: 'Compartir eventos con otras personas y proponer citas.',
     body: [
@@ -375,7 +428,7 @@ const SECTIONS: Section[] = [
     title: 'Sincronización',
     summary: 'Los mismos documentos y la misma agenda en todos los dispositivos.',
     body: [
-      p('Ajustes > Cuenta y nube (o Más > Sincronización en el móvil) vincula Nextcloud u otro servidor WebDAV, o Google Drive. Documentos y agenda se fusionan entre dispositivos; si dos editan lo mismo, se conserva la versión más reciente y la otra queda en el historial. Las credenciales se guardan en el almacén seguro del sistema. En el móvil, un código QR copia la configuración desde otro dispositivo.'),
+      p('Ajustes > Cuenta y nube (o Más > Sincronización en el móvil) vincula Nextcloud u otro servidor WebDAV, o Google Drive. Documentos, agenda y gastos se fusionan entre dispositivos; si dos editan lo mismo, se conserva la versión más reciente y la otra queda en el historial. Las credenciales se guardan en el almacén seguro del sistema. En el móvil, un código QR copia la configuración desde otro dispositivo.'),
     ],
   },
   {
@@ -383,7 +436,8 @@ const SECTIONS: Section[] = [
     summary: 'Navegación inferior, barra de formato y avisos de tareas.',
     body: [
       ul(
-        [b('Secciones: '), 'Documentos, Agenda, Buscar y Más (plantillas, importar, unir PDF, temario, plan, progreso, tipos, papelera, ajustes y tutoriales).'],
+        [b('Secciones: '), 'la barra inferior lleva a Documentos, Agenda, Gastos, Buscar y Más (plantillas, importar, unir PDF, presupuestos, temario, progreso, tipos, papelera y tutoriales). Los Ajustes están en el engranaje de la barra superior.'],
+        [b('Gastos: '), 'el botón + abre la alta rápida; el importe sale con el teclado numérico.'],
         [b('Escribir: '), 'al editar aparece una barra de formato sobre el teclado; Aa abre estilos, fuente, color y párrafo, y + inserta bloques.'],
         [b('Agenda: '), 'deslizar a los lados cambia de periodo y tocar el título salta a cualquier día. El botón + abre la barra rápida; mantenerlo pulsado dicta.'],
         [b('Avisos: '), 'los de cada tarea (campo Avisar), con el botón «Hecha» en la notificación. Véase ', to('Avisos'), '.'],
@@ -394,7 +448,7 @@ const SECTIONS: Section[] = [
     title: 'Ajustes',
     summary: 'Apariencia, escritura, exportación, página, versiones, segundo plano, cuenta y ayuda.',
     body: [
-      p('Ajustes (al pie del panel lateral o en Archivo) reúne en una página: tema claro u oscuro, vista de los documentos, cinta, marcas de formato, mapa de atajos (Word en español o en inglés), revisión ortográfica, comillas tipográficas, formato y opciones de exportación por defecto, página de los documentos nuevos, intervalo de las versiones automáticas, carpeta del espacio de trabajo, cuenta, nube y ayuda. Los cambios se aplican al momento.'),
+      p('Ajustes (el engranaje al pie del riel izquierdo, o en Archivo) reúne en una página: tema claro u oscuro, vista de los documentos, cinta, marcas de formato, mapa de atajos (Word en español o en inglés), revisión ortográfica, comillas tipográficas, formato y opciones de exportación por defecto, página de los documentos nuevos, intervalo de las versiones automáticas, carpeta del espacio de trabajo, cuenta, nube y ayuda. Los cambios se aplican al momento.'),
       p(b('Avisos y segundo plano '), '(solo en el ordenador): «Seguir en segundo plano al cerrar» oculta la ventana en lugar de salir y deja Folio en la bandeja del sistema, para que lleguen los avisos; «Salir de Folio», en la bandeja, lo cierra del todo. «Abrir al iniciar sesión» lo arranca oculto al encender el equipo. En GNOME, la bandeja necesita la extensión AppIndicator; sin ella, abrir Folio desde el menú muestra la ventana oculta.'),
     ],
   },
