@@ -5,6 +5,27 @@ import type { GastosView } from './view';
 
 const CURRENCIES: [string, string][] = [['EUR', 'Euro (€)'], ['USD', 'Dólar estadounidense ($)'], ['GBP', 'Libra esterlina (£)']];
 
+/**
+ * «¿Cuánto tienes ahora?»: recalcula el saldo inicial para que el saldo de hoy
+ * coincida con el del banco, sin tocar los movimientos ni la fecha de inicio.
+ */
+export async function balanceDialog(view: GastosView) {
+  const st = view.state;
+  const now = view.summary?.balanceCents ?? st.settings.openingCents;
+  const input = h('input', { class: 'input', inputMode: 'decimal', placeholder: '0,00' });
+  input.value = now ? (now / 100).toFixed(2).replace('.', ',') : '';
+  const body = h('label', { class: 'field' }, h('span', { class: 'field-label' }, '¿Cuánto tienes ahora en la cuenta?'), input);
+  const res = await modal<'save' | null>('Ajustar saldo', body, [
+    { label: 'Cancelar', value: null, kind: 'ghost' },
+    { label: 'Guardar', value: 'save', kind: 'primary' },
+  ], { onOpen: () => setTimeout(() => input.select(), 30) });
+  if (res !== 'save') return;
+  const target = parseMoney(input.value);
+  if (target === null) return;
+  await st.saveSettings({ ...st.settings, openingCents: st.settings.openingCents + (target - now) });
+  await view.reload();
+}
+
 export async function gastosSettingsDialog(view: GastosView) {
   const st = view.state;
   const currencySel = h('select', { class: 'input', 'aria-label': 'Moneda' },

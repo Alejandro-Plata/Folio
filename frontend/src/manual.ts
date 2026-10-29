@@ -379,12 +379,12 @@ const SECTIONS: Section[] = [
     title: 'El resumen del mes',
     summary: 'Cuánto llevas gastado, a qué ritmo y en qué.',
     body: [
-      p('La cabecera elige el mes (‹ Octubre ›; tocar el nombre vuelve al actual). La pestaña Resumen empieza por lo gastado en el mes y lo compara con el mes anterior hasta el mismo día: así se sabe si se va por delante o por detrás sin esperar a fin de mes. La gráfica muestra el gasto acumulado de este mes (línea continua) junto al del anterior (punteada). Si hay presupuestos, a la derecha aparece cuánto queda.'),
+      p('La cabecera elige el mes (‹ Octubre ›; tocar el nombre vuelve al actual). La pestaña Resumen empieza por el dinero que tienes en la cuenta ahora, junto a los ingresos, los gastos y el ahorro del mes. Debajo, lo gastado en el mes y lo compara con el mes anterior hasta el mismo día: así se sabe si se va por delante o por detrás sin esperar a fin de mes. La gráfica muestra el gasto acumulado de este mes (línea continua) junto al del anterior (punteada). Si hay presupuestos, a la derecha aparece cuánto queda.'),
       ul(
-        [b('Cifras: '), 'ingresos, ahorro (y qué parte de lo ingresado se guarda) y saldo con todos los movimientos hasta hoy.'],
+        [b('En tu cuenta ahora: '), 'el saldo inicial más todos los movimientos hasta hoy. Con «Ajustar saldo» escribes lo que marca el banco y Folio cuadra el saldo inicial para que coincida.'],
         [b('Por categoría: '), 'el reparto del gasto y su variación frente al mes anterior. Tocar una categoría abre sus movimientos.'],
         [b('Día a día: '), 'un calendario en el que cada día es más oscuro cuanto más se gastó; el punto verde marca ingresos. Tocar un día abre sus movimientos.'],
-        [b('Evolución: '), 'gastos e ingresos de los últimos seis meses.'],
+        [b('Evolución: '), 'por semanas, meses o años: el saldo al cerrar cada periodo (línea) y sus ingresos y gastos (columnas), con las cifras del periodo actual y el gasto medio.'],
       ),
     ],
   },

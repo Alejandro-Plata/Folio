@@ -45,6 +45,8 @@ export class GastosView {
   monthMovs: Movement[] = [];
   prevMovs: Movement[] = [];
   listMovs: Movement[] = [];
+  /** Todo el historial, para la evolución semanal, mensual y anual. */
+  allMovs: Movement[] = [];
   summary: Summary | null = null;
   selection = new Set<string>();
   get mobile() { return document.body.classList.contains('is-mobile'); }
@@ -175,14 +177,15 @@ export class GastosView {
     const [from, to] = monthBounds(this.month);
     const [pf, pt] = monthBounds(shiftMonth(this.month, -1));
     const listFilter: Filter = { ...this.filter, from: this.scope === 'month' ? from : '', to: this.scope === 'month' ? to : '' };
-    const [monthMovs, prevMovs, listMovs, summary] = await Promise.all([
+    const [monthMovs, prevMovs, listMovs, allMovs, summary] = await Promise.all([
       this.state.query({ from, to }),
       this.state.query({ from: pf, to: pt }),
       this.state.query(listFilter),
+      this.state.query({}),
       api.GastosSummary({ from, to }),
     ]);
     if (token !== this.loadToken) return;
-    Object.assign(this, { monthMovs, prevMovs, listMovs, summary });
+    Object.assign(this, { monthMovs, prevMovs, listMovs, allMovs, summary });
     this.selection.clear();
     this.monthLabel.textContent = monthTitle(this.month, this.state.today);
     this.todayBtn.hidden = this.isCurrentMonth;

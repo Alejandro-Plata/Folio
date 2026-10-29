@@ -1,8 +1,8 @@
 // Gráficas de Gastos, en SVG y HTML a mano (patrón de agenda/stats.ts): ritmo
-// de gasto del mes, calendario de calor, evolución mensual y barra de progreso.
+// de gasto del mes, calendario de calor, evolución por periodos y barra de progreso.
 import { h } from '../ui/dom';
-import { MONTHS_SHORT, WEEKDAYS_LETTER, weekday, longDate } from '../agenda/dates';
-import type { MonthPoint } from './model';
+import { WEEKDAYS_LETTER, weekday, longDate } from '../agenda/dates';
+import type { PeriodPoint } from './calc';
 import { fmtMoney, monthName } from './model';
 
 const ns = 'http://www.w3.org/2000/svg';
@@ -77,36 +77,67 @@ export function calendarHeat(month: string, spent: number[], income: number[], t
   return grid;
 }
 
-/** Columnas de gasto e ingreso por mes; el mes elegido, resaltado. */
-export function monthlyTrend(points: MonthPoint[], currency: string, current: string, compact = false): HTMLElement {
+/**
+ * Evolución por periodos: arriba, el saldo al cerrar cada uno (línea); abajo,
+ * ingresos y gastos (columnas). El periodo elegido, resaltado.
+ */
+export function evolutionChart(points: PeriodPoint[], currency: string, currentKey: string, compact = false): HTMLElement {
   if (!points.length) return h('p', { class: 'muted small' }, 'Sin datos suficientes.');
-  const W = compact ? 360 : 460, H = 160, pad = { l: 44, r: 8, t: 10, b: 22 };
+  const W = compact ? 360 : 980, H = compact ? 250 : 270, pad = { l: 8, r: 52, t: 22, b: 22 };
   const n = points.length;
-  const top = Math.max(100, ...points.map((p) => Math.max(p.expense, p.income)));
   const groupW = (W - pad.l - pad.r) / n;
+  const cx = (i: number) => pad.l + i * groupW + groupW / 2;
+
+  const lineTop = pad.t, lineBot = Math.round(H * 0.4);
+  const bal = points.map((p) => p.balance).filter((v): v is number => v !== null);
+  const lo = Math.min(0, ...bal), hi = Math.max(100, ...bal);
+  const yl = (v: number) => lineTop + (1 - (v - lo) / (hi - lo)) * (lineBot - lineTop);
+
+  const barTop = lineBot + 34, barBot = H - pad.b;
+  const topBar = Math.max(100, ...points.flatMap((p) => [p.income, p.expense]));
+  const yb = (v: number) => barTop + (1 - v / topBar) * (barBot - barTop);
   const barW = Math.min(22, Math.max(3, groupW / 2 - 4));
-  const y = (v: number) => pad.t + (1 - v / top) * (H - pad.t - pad.b);
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, class: 'ag-chart', role: 'img', 'aria-label': `Ingresos y gastos de los últimos ${n} meses` });
-  for (let i = 0; i <= 2; i++) {
-    const v = (top * i) / 2;
-    svg.append(el('line', { x1: pad.l, x2: W - pad.r, y1: y(v), y2: y(v), class: 'ag-grid' }));
-    svg.append(el('text', { x: pad.l - 6, y: y(v) + 4, class: 'ag-axis', 'text-anchor': 'end' }, abbrev(v, currency)));
+
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, class: 'ag-chart gx-evo', role: 'img', 'aria-label': `Saldo, ingresos y gastos de los últimos ${n} periodos` });
+  svg.append(el('text', { x: pad.l, y: lineTop - 8, class: 'ag-axis gx-evo-cap' }, 'Saldo'));
+  for (const v of lo < 0 ? [lo, 0, hi] : [0, hi]) {
+    svg.append(el('line', { x1: pad.l, x2: W - pad.r, y1: yl(v), y2: yl(v), class: v === 0 && lo < 0 ? 'ag-grid gx-evo-zero' : 'ag-grid' }));
+    svg.append(el('text', { x: W - pad.r + 6, y: yl(v) + 4, class: 'ag-axis' }, abbrev(v, currency)));
   }
+  svg.append(el('text', { x: pad.l, y: barTop - 8, class: 'ag-axis gx-evo-cap' }, 'Ingresos y gastos'));
+  for (const v of [0, topBar]) {
+    svg.append(el('line', { x1: pad.l, x2: W - pad.r, y1: yb(v), y2: yb(v), class: 'ag-grid' }));
+    if (v) svg.append(el('text', { x: W - pad.r + 6, y: yb(v) + 4, class: 'ag-axis' }, abbrev(v, currency)));
+  }
+
+  // Tramos de la línea: se corta donde no hay saldo (antes del inicial o en el futuro)
+  let d = '';
   points.forEach((p, i) => {
-    const cx = pad.l + i * groupW + groupW / 2;
-    const g = el('g', { class: `gx-trend-g ${p.month === current ? 'is-current' : ''}` });
-    for (const [v, cls, dx, label] of [[p.expense, 'gx-trend-exp', -barW - 2, 'gastos'], [p.income, 'gx-trend-inc', 2, 'ingresos']] as const) {
-      const bh = Math.max(v ? 2 : 0, y(0) - y(v));
-      const r = el('rect', { x: cx + dx, y: y(0) - bh, width: barW, height: bh, rx: 3, class: cls });
-      r.append(el('title', {}, `${monthName(p.month)} de ${p.month.slice(0, 4)}: ${label} ${fmtMoney(v, currency)}`));
-      g.append(r);
+    if (p.balance === null) return;
+    d += `${i && points[i - 1].balance !== null ? 'L' : 'M'}${cx(i).toFixed(1)},${yl(p.balance).toFixed(1)}`;
+  });
+  if (d) svg.append(el('path', { d, class: 'gx-evo-line' }));
+
+  const maxLen = Math.max(...points.map((p) => p.label.length));
+  const every = Math.max(1, Math.ceil((maxLen * 6.4 + 8) / groupW));
+  points.forEach((p, i) => {
+    const current = p.key === currentKey;
+    const g = el('g', { class: `gx-trend-g ${current ? 'is-current' : ''}` });
+    for (const [v, cls, dx] of [[p.expense, 'gx-trend-exp', -barW - 2], [p.income, 'gx-trend-inc', 2]] as const) {
+      const bh = Math.max(v ? 2 : 0, yb(0) - yb(v));
+      g.append(el('rect', { x: cx(i) + dx, y: yb(0) - bh, width: barW, height: bh, rx: 3, class: cls }));
     }
-    g.append(el('text', { x: cx, y: H - 5, class: 'ag-axis gx-trend-label', 'text-anchor': 'middle' }, MONTHS_SHORT[Number(p.month.slice(5, 7)) - 1]));
+    if (p.balance !== null) g.append(el('circle', { cx: cx(i), cy: yl(p.balance), r: current ? 5 : 3, class: 'gx-evo-dot' }));
+    if ((n - 1 - i) % every === 0) g.append(el('text', { x: cx(i), y: H - 5, class: 'ag-axis gx-trend-label', 'text-anchor': 'middle' }, p.label));
+    const hit = el('rect', { x: cx(i) - groupW / 2, y: 0, width: groupW, height: H, class: 'gx-evo-hit' });
+    hit.append(el('title', {}, `${p.title}: ingresos ${fmtMoney(p.income, currency)}, gastos ${fmtMoney(p.expense, currency)}${p.balance !== null ? `, saldo ${fmtMoney(p.balance, currency)}` : ''}`));
+    g.append(hit);
     svg.append(g);
   });
   const legend = h('div', { class: 'gx-legend' },
-    h('span', {}, h('span', { class: 'gx-sw gx-sw-exp' }), 'Gastos'),
-    h('span', {}, h('span', { class: 'gx-sw gx-sw-inc' }), 'Ingresos'));
+    h('span', {}, h('span', { class: 'gx-sw gx-sw-line' }), 'Saldo'),
+    h('span', {}, h('span', { class: 'gx-sw gx-sw-inc' }), 'Ingresos'),
+    h('span', {}, h('span', { class: 'gx-sw gx-sw-exp' }), 'Gastos'));
   return h('div', {}, h('div', { class: 'ag-chart-wrap' }, svg as unknown as HTMLElement), legend);
 }
 

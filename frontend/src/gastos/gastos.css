@@ -64,12 +64,38 @@
 .gx-pace-prev { fill: none; stroke: var(--text-faint); stroke-width: 1.75; stroke-dasharray: 4 5; stroke-linecap: round; }
 .gx-pace-dot { fill: var(--accent); stroke: var(--bg-elev); stroke-width: 2.5; }
 
-.gx-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .gx-kpi { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-elev); min-width: 0; }
 .gx-kpi-label { font-size: 12.5px; color: var(--text-muted); }
 .gx-kpi-value { font-size: 22px; font-weight: 650; color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gx-kpi-value.is-neg { color: var(--danger); }
 .gx-kpi-sub { font-size: 12px; color: var(--text-faint); }
+
+/* Dinero en la cuenta: el saldo de hoy y las cifras del mes */
+.gx-account { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2.2fr); gap: 12px; align-items: stretch; }
+.gx-account-main { display: flex; flex-direction: column; gap: 3px; padding: 16px 18px; border-radius: 16px; border: 1px solid var(--border); background: linear-gradient(160deg, color-mix(in srgb, var(--ok) 9%, var(--bg-elev)), var(--bg-elev)); }
+.gx-account-amount { font-size: 34px; line-height: 1.15; font-weight: 700; color: var(--text-strong); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.gx-account-amount.is-neg { color: var(--danger); }
+.gx-account-adjust { align-self: flex-start; margin: 6px 0 0 -8px; }
+.gx-account-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.gx-kpi.is-inc .gx-kpi-value { color: var(--ok); }
+.gx-kpi.is-inc, .gx-kpi.is-exp { border-top: 3px solid color-mix(in srgb, var(--c-kpi) 70%, transparent); }
+.gx-kpi.is-inc { --c-kpi: var(--ok); }
+.gx-kpi.is-exp { --c-kpi: var(--danger); }
+
+/* Evolución semanal, mensual y anual */
+.gx-evo-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.gx-evo-dot { fill: var(--accent); stroke: var(--bg-elev); stroke-width: 2; }
+.gx-evo-zero { stroke: var(--text-faint); stroke-dasharray: 3 4; }
+.gx-evo-cap { font-weight: 600; }
+.gx-evo-hit { fill: transparent; }
+.gx-trend-g:hover .gx-evo-hit { fill: var(--bg-hover); fill-opacity: 0.5; }
+.gx-evo-body { display: flex; flex-direction: column; gap: 10px; }
+.gx-evo-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: 13px; color: var(--text-muted); padding-top: 10px; border-top: 1px solid var(--border); }
+.gx-evo-stats strong { color: var(--text-strong); font-variant-numeric: tabular-nums; font-weight: 600; }
+.gx-evo-stats strong.is-good { color: var(--ok); }
+.gx-evo-stats strong.is-bad { color: var(--danger); }
+.gx-evo-stat-title { font-weight: 650; color: var(--text-strong); }
+.gx-card-wide { grid-column: 1 / -1; }
 
 .gx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 
@@ -255,12 +281,12 @@
 
 /* ---------- Pantallas pequeñas ---------- */
 @media (max-width: 900px) {
-  .gx-grid { grid-template-columns: minmax(0, 1fr); }
+  .gx-grid, .gx-account { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
-  .gx-kpis { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .gx-kpis > :last-child { grid-column: 1 / -1; }
   .gx-hero-amount { font-size: 34px; }
+  .gx-account-figs { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .gx-account-figs > :last-child { grid-column: 1 / -1; }
 }
 
 body.is-mobile .gx-head { padding: 8px 10px; gap: 4px; }
@@ -283,6 +309,9 @@ body.is-mobile .gx-cal { gap: 2px; }
 body.is-mobile .gx-cal-day { min-height: 44px; min-width: 44px; aspect-ratio: auto; }
 body.is-mobile .gx-cal-amt { display: none; }
 body.is-mobile .gx-kpi { padding: 12px; }
+body.is-mobile .gx-account-main { padding: 14px; }
+body.is-mobile .gx-account-adjust { min-height: 44px; }
+body.is-mobile .gx-evo-stats { padding: 10px 6px 0; }
 body.is-mobile .gx-kpi-value { font-size: 19px; }
 body.is-mobile .gx-toolbar-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 body.is-mobile .gx-toolbar-row > .seg { display: flex; min-width: 0; }
