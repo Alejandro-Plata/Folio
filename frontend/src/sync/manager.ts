@@ -38,8 +38,9 @@ export class SyncManager {
       this.progress = total ? `${done} de ${total}` : '';
       this.notify();
     });
-    // Cualquier cambio (escribir, tocar la agenda) programa una sincronización
+    // Cualquier cambio (escribir, tocar la agenda o los gastos) programa una sincronización
     on('agenda:changed', () => this.noteChange());
+    on('gastos:changed', () => this.noteChange());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) void this.run('foco'); });
     window.addEventListener('online', () => void this.run('conexión'));
     setInterval(() => void this.run('periódica'), EVERY_MS);
