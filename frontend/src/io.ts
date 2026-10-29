@@ -226,7 +226,7 @@ export function exportCSS(s: PageSetup, title: string, author: string): string {
 * { box-sizing: border-box; orphans: 1; widows: 1; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body { margin: 0; background: #fff; }
-.doc { --doc-font: ${fontStack(s.fontFamily)}; --doc-size: ${s.fontSize}pt; --doc-lh: ${s.lineHeight}; --content-h: ${(h - s.marginTop - s.marginBottom).toFixed(2)}mm; }
+.doc { --doc-font: ${fontStack(s.fontFamily)}; --doc-size: ${s.fontSize}pt; --doc-lh: ${s.lineHeight};${s.titleSize ? ` --title-size: ${s.titleSize}pt;` : ''} --content-h: ${(h - s.marginTop - s.marginBottom).toFixed(2)}mm; }
 button { font: inherit; }
 ${contentCSS('.doc-body')}
 ${PAGE_EXTRAS_CSS}

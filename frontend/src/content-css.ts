@@ -111,7 +111,7 @@ ${s} .page-break { height: 0; margin: 0; }
 export const PAGE_EXTRAS_CSS = `
 .doc-title {
   display: block; width: 100%; border: 0; outline: 0; resize: none; background: transparent; overflow: hidden;
-  font: 700 calc(var(--doc-size) * 2.45)/1.2 var(--doc-font); letter-spacing: -0.01em; color: var(--text-strong);
+  font: 700 var(--title-size, calc(var(--doc-size) * 2.45))/1.2 var(--doc-font); letter-spacing: -0.01em; color: var(--text-strong);
   padding: 0; margin: 0 0 calc(var(--doc-size) * 1.1); white-space: pre-wrap; overflow-wrap: break-word; font-variant-ligatures: none; font-feature-settings: "liga" 0;
 }
 .footnotes-area { padding-top: 2.2em; font-family: var(--doc-font); font-size: calc(var(--doc-size) * 0.85); line-height: var(--doc-lh); }

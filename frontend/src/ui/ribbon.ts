@@ -229,10 +229,10 @@ export class Ribbon {
     this.sizeInput = h('input', { class: 'rb-size', list: 'font-sizes', title: this.tip('Tamaño de fuente', 'fontSize'), 'aria-label': 'Tamaño de fuente', inputmode: 'decimal' });
     const applySize = () => {
       const n = parseFloat(this.sizeInput!.value.replace(',', '.'));
-      if (Number.isFinite(n) && n >= 1 && n <= 400) this.ed().setFontSize(`${n}pt`).run();
+      if (Number.isFinite(n) && n >= 1 && n <= 400) app.applyFontSize(n);
     };
     this.sizeInput.addEventListener('change', applySize);
-    this.sizeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applySize(); app.editor.commands.focus(); } });
+    this.sizeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applySize(); if (app.view.titleActive) app.view.focusTitle(); else app.editor.commands.focus(); } });
 
     this.colorBar = h('span', { class: 'rb-colorbar', style: { background: this.lastColor } });
     const colorBtn = this.split(this.ib('color', 'g:A|rb-a', 'Color de fuente', () => this.ed().setColor(this.lastColor).run()), (a) => this.colorPicker(a));

@@ -57,6 +57,7 @@ type PageSetup struct {
 	FontFamily   string  `json:"fontFamily"`
 	FontSize     float64 `json:"fontSize"`
 	LineHeight   float64 `json:"lineHeight"`
+	TitleSize    float64 `json:"titleSize,omitempty"` // pt; 0 = proporcional al texto
 }
 
 func DefaultSetup() PageSetup {

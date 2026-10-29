@@ -130,7 +130,8 @@ body.mode-gastos #topbar, body.mode-gastos #ribbon, body.mode-gastos .work, body
 }
 .sidebar-resizer { width: 4px; margin-left: -4px; cursor: col-resize; flex: none; z-index: 2; }
 .sidebar-resizer:hover { background: var(--accent-soft); }
-body.sidebar-closed .sidebar { margin-left: calc(-1 * var(--sidebar-w) - 1px); }
+/* visibility y sin sombra: en ventanas estrechas el panel flota y su sombra asomaba al plegarlo */
+body.sidebar-closed .sidebar { margin-left: calc(-1 * var(--sidebar-w)); visibility: hidden; box-shadow: none; }
 body.sidebar-closed .sidebar-resizer { display: none; }
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
 .work { flex: 1; display: flex; min-height: 0; position: relative; }

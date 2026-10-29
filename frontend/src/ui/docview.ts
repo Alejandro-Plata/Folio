@@ -22,6 +22,8 @@ export class DocView {
   private empty = document.getElementById('empty')!;
   private topbar = document.getElementById('topbar')!;
   private titleEl!: HTMLTextAreaElement;
+  /** El título tiene el foco o lo cedió a la cinta: el tamaño de fuente se aplica a él. */
+  titleActive = false;
   private filler = h('div', { id: 'page-filler', class: 'page-filler', contenteditable: 'false' });
   private undoBtn!: HTMLButtonElement;
   private redoBtn!: HTMLButtonElement;
@@ -150,6 +152,8 @@ export class DocView {
         this.app.focusEditorStart();
       }
     });
+    this.titleEl.addEventListener('focus', () => { this.titleActive = true; this.app.ribbon.update(); });
+    this.titleEl.addEventListener('blur', (e) => { this.titleActive = !!(e.relatedTarget as Element | null)?.closest('#ribbon'); this.app.ribbon.update(); });
     this.page.prepend(this.headerPreview);
     this.head.append(this.titleEl);
     this.page.querySelector('.page-inner')!.append(this.filler);
@@ -228,6 +232,7 @@ export class DocView {
     st.setProperty('--doc-font', fontStack(s.fontFamily));
     st.setProperty('--doc-size', `${s.fontSize}pt`);
     st.setProperty('--doc-lh', String(s.lineHeight));
+    if (s.titleSize) st.setProperty('--title-size', `${s.titleSize}pt`); else st.removeProperty('--title-size');
     // Altura útil: las imágenes nunca superan una página (igual que en el PDF)
     st.setProperty('--content-h', `${((hgt - s.marginTop - s.marginBottom) * MM).toFixed(1)}px`);
     const header = expandPlaceholders(s.header || '', d.meta.title, this.app.settings.authorName);

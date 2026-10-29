@@ -24,6 +24,8 @@ export interface PageSetup {
   fontFamily: string;
   fontSize: number;
   lineHeight: number;
+  /** Tamaño del título en pt; sin él, proporcional al texto. */
+  titleSize?: number;
 }
 
 export interface Doc {

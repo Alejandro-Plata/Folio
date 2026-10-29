@@ -783,6 +783,7 @@ export class App {
   }
 
   currentFontSize(): number {
+    if (this.view.titleActive) return this.doc?.setup.titleSize ?? Math.round((this.doc?.setup.fontSize ?? 11) * 2.45);
     const fs = this.editor.getAttributes('textStyle').fontSize as string | undefined;
     if (fs) return parseFloat(fs);
     if (this.editor.isActive('heading')) {
@@ -795,7 +796,14 @@ export class App {
   stepFont(dir: 1 | -1) {
     const cur = this.currentFontSize();
     const next = dir > 0 ? FONT_SIZES.find((s) => s > cur) ?? cur + 10 : [...FONT_SIZES].reverse().find((s) => s < cur) ?? Math.max(1, cur - 1);
-    this.editor.chain().focus().setFontSize(`${next}pt`).run();
+    this.applyFontSize(next);
+  }
+
+  /** Aplica el tamaño a la selección o, si el título está activo, al título. */
+  applyFontSize(pt: number) {
+    if (!this.view.titleActive) return void this.editor.chain().focus().setFontSize(`${pt}pt`).run();
+    if (this.doc) void this.setSetup({ ...this.doc.setup, titleSize: pt }).then(() => { this.view.autosize(); this.paginator.schedule(); this.ribbon.update(); });
+    this.view.focusTitle();
   }
 
   copyFormat() {
